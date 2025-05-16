@@ -1196,19 +1196,29 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getSubscriberByEmail(email: string): Promise<Subscriber | undefined> {
-    const [subscriber] = await db
-      .select()
-      .from(subscribers)
-      .where(eq(subscribers.email, email));
-    return subscriber;
+    try {
+      const [subscriber] = await db
+        .select()
+        .from(subscribers)
+        .where(eq(subscribers.email, email));
+      return subscriber;
+    } catch (error) {
+      console.error("Error fetching subscriber by email:", error);
+      return undefined;
+    }
   }
   
   async getSubscriberByDiscountCode(code: string): Promise<Subscriber | undefined> {
-    const [subscriber] = await db
-      .select()
-      .from(subscribers)
-      .where(eq(subscribers.discountCode, code));
-    return subscriber;
+    try {
+      const [subscriber] = await db
+        .select()
+        .from(subscribers)
+        .where(eq(subscribers.discountCode, code));
+      return subscriber;
+    } catch (error) {
+      console.error("Error fetching subscriber by discount code:", error);
+      return undefined;
+    }
   }
   
   async createSubscriber(data: InsertSubscriber): Promise<Subscriber> {

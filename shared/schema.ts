@@ -601,7 +601,7 @@ export type PageVisit = typeof pageVisits.$inferSelect;
 export type InsertPageVisit = z.infer<typeof insertPageVisitSchema>;
 
 // Newsletter subscribers
-export const subscribers = pgTable("subscribers", {
+export const subscribers = pgTable("subscriber", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   discountCode: text("discount_code").notNull(),
