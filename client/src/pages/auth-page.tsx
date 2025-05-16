@@ -111,7 +111,7 @@ export default function AuthPage() {
       
       if (token) {
         try {
-          const response = await fetch(`/api/verify-email?token=${token}`);
+          const response = await fetch(`/api/verify-email/${token}`);
           const data = await response.json();
           
           if (response.ok) {
