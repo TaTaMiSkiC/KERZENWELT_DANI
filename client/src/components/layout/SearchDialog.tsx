@@ -97,13 +97,15 @@ export function SearchDialog({ trigger }: SearchDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('search.title') || "Pretraži proizvode"}</DialogTitle>
+          <DialogTitle>
+            {t('search.title') ? t('search.title') : "Pretraži proizvode"}
+          </DialogTitle>
         </DialogHeader>
         <div className="relative">
           <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             id="search-input"
-            placeholder={t('search.placeholder') || "Pretražite proizvode..."}
+            placeholder={t('search.placeholder') ? t('search.placeholder') : "Pretražite proizvode..."}
             className="pl-8 pr-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -123,7 +125,7 @@ export function SearchDialog({ trigger }: SearchDialogProps) {
             </div>
           ) : !debouncedSearchQuery ? (
             <p className="text-center text-sm text-muted-foreground py-4">
-              {t('search.enterTerm') || "Unesite pojam za pretraživanje..."}
+              {t('search.enterTerm') ? t('search.enterTerm') : "Unesite pojam za pretraživanje..."}
             </p>
           ) : filteredProducts && filteredProducts.length > 0 ? (
             <div className="space-y-2">
@@ -161,7 +163,7 @@ export function SearchDialog({ trigger }: SearchDialogProps) {
             </div>
           ) : (
             <p className="text-center text-sm text-muted-foreground py-4">
-              {t('search.noResults') || `Nema rezultata za "${debouncedSearchQuery}"`}
+              {t('search.noResults') ? t('search.noResults') : `Nema rezultata za "${debouncedSearchQuery}"`}
             </p>
           )}
         </div>

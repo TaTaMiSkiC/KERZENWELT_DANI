@@ -49,6 +49,25 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.enterTerm": "Suchbegriff eingeben...",
     "search.noResults": "Keine Ergebnisse gefunden",
 
+    //PRODUKT DETALJI
+    "product.scent": "Duft",
+    "product.selectOptions": "Optionen auswählen",
+    "cart.addToCart": "In den Warenkorb",
+    "product.color": "Farbe",
+    "product.multipleColorsHint": "Mehrere Farben auswählen",
+    "product.quantity": "Menge",
+    "product.errorTitle": "Fehler",
+    "product.errorMessage":
+      "Bitte wählen Sie alle erforderlichen Optionen aus.",
+    "product.errorAddingToCart":
+      "Fehler beim Hinzufügen des Produkts zum Warenkorb. Bitte melden Sie sich an, um fortzufahren.",
+    "product.successTitle": "Erfolg",
+    "product.successMessage": "Produkt erfolgreich zum Warenkorb hinzugefügt.",
+    "product.addToCartSuccess":
+      "Produkt erfolgreich zum Warenkorb hinzugefügt.",
+    "product.addToCartError":
+      "Fehler beim Hinzufügen des Produkts zum Warenkorb.",
+
     // Auth Page
     "auth.title": "Anmelden / Registrieren | Kerzenwelt by Dani",
     "auth.description":
@@ -286,6 +305,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Fügen Sie ein neues Produkt zum Katalog hinzu",
     "admin.product.categoryPlaceholder": "Wählen Sie eine Kategorie",
     "admin.product.burntimePlaceholder": "Brenndauer in Stunden",
+    "orders.cancelledStatus": "Storniert",
 
     // AdminPanel PageTitle
     "admin.panelTitle": "Admin Panel",
@@ -1569,7 +1589,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.heroTitle": "Handgefertigte Kerzen für besondere Momente",
     "home.heroSubtitle":
       "Entdecken Sie unsere Kollektion von Premium-Duftkerzen, die mit Liebe hergestellt werden",
-    "home.exploreCollection": "Kollektion erkunden",
     "home.aboutUs": "Über uns",
     "home.featuredSubtitle":
       "Unsere beliebtesten Produkte, die unsere Kunden lieben",
@@ -1759,7 +1778,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.title": "Prijava / Registracija | Kerzenwelt by Dani",
     "auth.description":
       "Prijavite se ili registrirajte kako biste kupovali ručno izrađene svijeće, pratili svoje narudžbe i uživali u posebnim ponudama.",
-    "products.productCount": " Proizvoda",
     "auth.login": "Prijava",
     "auth.register": "Registracija",
     "auth.loginTitle": "Prijava",
@@ -1810,7 +1828,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.date": "Datum",
     "orders.total": "Ukupno",
     "orders.status": "Status",
-    "orders.paymentMethod": "Način plaćanja",
     "orders.actions": "Akcije",
     "orders.details": "Detalji",
     "orders.loadingError": "Došlo je do greške prilikom učitavanja narudžbi.",
@@ -1820,27 +1837,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.processing": "U obradi",
     "orders.shipped": "Poslano",
     "orders.completed": "Završeno",
-    "orders.cancelled": "Otkazano",
     // Products page
-    "products.allProducts": "Svi proizvodi",
     "orders.price": "Cjena",
     "products.product": "Proizvod",
-    "products.products": "Proizvodi",
-    "products.filters": "Filteri",
-    "products.search": "Pretraga",
     "products.searchPlaceholder": "Traži proizvode...",
-    "products.categories": "Kategorije",
-    "products.allCategories": "Sve kategorije",
-    "products.selectCategory": "Odaberi kategoriju",
-    "products.price": "Cijena",
     "products.sortBy": "Sortiraj po",
-    "products.newest": "Najnovije",
-    "products.priceAsc": "Cijena (najniža prvo)",
-    "products.priceDesc": "Cijena (najviša prvo)",
     "products.nameAZ": "Ime (A-Z)",
-    "products.clear": "Očisti",
-    "products.clearFilters": "Očisti filtere",
-    "products.applyFilters": "Primijeni filtere",
     "products.noProductsFound": "Nema pronađenih proizvoda",
     "products.tryDifferentFilters":
       "Pokušajte s drugačijim filterima ili pogledajte našu cjelokupnu ponudu.",
@@ -3153,13 +3155,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "products.newest": "Najnovije",
     "products.priceAsc": "Cijena (najniža prvo)",
     "products.priceDesc": "Cijena (najviša prvo)",
-    "products.nameAZ": "Ime (A-Z)",
     "products.noProducts": "Nema pronađenih proizvoda",
     "products.tryDifferent":
       "Pokušajte s drugačijim filterima ili pogledajte našu cjelokupnu ponudu.",
     "products.showAll": "Prikaži sve proizvode",
-    "products.productCount": "{count} proizvoda",
-    "products.productCountSingular": "{count} proizvod",
+    "products.productCount": " proizvoda",
+    "products.productCountSingular": " proizvod",
 
     // Košarica
     "cart.title": "Vaša košarica",
@@ -3244,13 +3245,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "dialog.cancel": "Odustani",
     "dialog.confirm": "Potvrdi",
 
-    // Instagram
-    "instagram.followUs": "Pratite nas na Instagramu",
-    "instagram.followUsText":
-      "Pratite nas na Instagramu za najnovije kreacije i inspiracije",
-    "instagram.loadingPhotos": "Učitavanje fotografija...",
-    "instagram.emptyFeed": "Instagram feed je prazan",
-
     // Profile Page
     "profile.myProfile": "Moj profil",
     "profile.profile": "Profil",
@@ -3259,21 +3253,14 @@ export const translations: Record<Language, Record<string, string>> = {
     // Order Details
     "orders.order": "Narudžba",
     "orders.backToOrders": "Natrag na narudžbe",
-    "orders.status": "Status",
-    "orders.pending": "Na čekanju",
-    "orders.processing": "U obradi",
-    "orders.shipped": "Poslano",
     "orders.delivered": "Dostavljeno",
     "orders.cancelled": "Otkazano",
-    "orders.date": "Datum",
     "orders.items": "Stavke",
-    "orders.total": "Ukupno",
     "orders.subtotal": "Međuzbroj",
     "orders.shipping": "Dostava",
     "orders.discount": "Popust",
     "orders.paymentMethod": "Način plaćanja",
     "orders.cash": "Gotovina",
-    "orders.bankTransfer": "Bankovni transfer",
     "orders.paypal": "PayPal",
     "orders.creditCard": "Kreditna kartica",
     "orders.notDefined": "Nije definirano",
@@ -3361,6 +3348,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "newsletter.success":
       "Hvala na prijavi! Uskoro ćete primiti naš newsletter.",
     "newsletter.error": "Molimo unesite vašu email adresu.",
+    "orders.cancelledStatus": "Otkazano",
 
     // Admin panel
     "admin.backToStore": "Natrag na trgovinu",
@@ -3462,7 +3450,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.orderNumber": "Order Number",
     "orders.date": "Date",
     "orders.total": "Total",
-    "orders.status": "Status",
     "orders.paymentMethod": "Payment Method",
     "orders.actions": "Actions",
     "orders.details": "Details",
@@ -3472,31 +3459,28 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.processing": "Processing",
     "orders.shipped": "Shipped",
     "orders.completed": "Completed",
-    "orders.cancelled": "Cancelled",
+    "orders.cancelledStatus": "Cancelled",
 
     // Order Details
     "orders.order": "Order",
     "orders.backToOrders": "Back to Orders",
     "orders.status": "Status",
     "orders.priceLabel": "Price",
-    "orders.pending": "Pending",
-    "orders.processing": "Processing",
-    "orders.shipped": "Shipped",
-    "orders.delivered": "Delivered",
-    "orders.cancelled": "Cancelled",
-    "orders.date": "Date",
-    "orders.items": "Items",
-    "orders.totalItems": "Total items",
-    "orders.total": "Total",
-    "orders.product": "Product",
-    "orders.subtotal": "Subtotal",
-    "orders.shipping": "Shipping",
-    "orders.discount": "Discount",
-    "orders.paymentMethod": "Payment Method",
-    "orders.cash": "Cash",
-    "orders.bankTransfer": "Bank Transfer",
-    "orders.paypal": "PayPal",
-    "orders.creditCard": "Credit Card",
+    "orders.pendingStatus": "Pending",
+    "orders.processingStatus": "Processing",
+    "orders.shippedStatus": "Shipped",
+    "orders.deliveredStatus": "Delivered",
+    "orders.orderDate": "Date",
+    "orders.totalOrderItems": "Total items",
+    "orders.orderTotal": "Total",
+    "orders.orderSubtotal": "Subtotal",
+    "orders.shippingCost": "Shipping",
+    "orders.discountAmount": "Discount",
+    "orders.paymentMethodTitle": "Payment Method",
+    "orders.cashPayment": "Cash",
+    "orders.bankTransferPayment": "Bank Transfer",
+    "orders.paypalPayment": "PayPal",
+    "orders.creditCardPayment": "Credit Card",
     "orders.notDefined": "Not defined",
     "orders.paymentStatus": "Payment Status",
     "orders.paid": "Paid",
