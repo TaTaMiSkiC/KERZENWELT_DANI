@@ -1223,10 +1223,12 @@ export class DatabaseStorage implements IStorage {
   
   async createSubscriber(data: InsertSubscriber): Promise<Subscriber> {
     try {
+      console.log("Inserting subscriber with data:", data);
       const [subscriber] = await db
         .insert(subscribers)
         .values(data)
         .returning();
+      console.log("Created subscriber:", subscriber);
       return subscriber;
     } catch (error) {
       console.error("Error creating subscriber:", error);
