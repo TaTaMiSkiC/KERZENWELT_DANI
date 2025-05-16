@@ -48,6 +48,9 @@ function Router() {
       <Route path="/auth">
         <AuthPage />
       </Route>
+      <Route path="/verify-email">
+        <AuthPage />
+      </Route>
       <Route path="/products">
         <ProductsPage />
       </Route>
