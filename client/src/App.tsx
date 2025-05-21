@@ -100,7 +100,10 @@ function Router() {
         <ProtectedRoute path="/admin/colors" component={AdminColors} />
       </Route>
       <Route path="/admin/collections">
-        <ProtectedRoute path="/admin/collections" component={AdminCollections} />
+        <ProtectedRoute
+          path="/admin/collections"
+          component={AdminCollections}
+        />
       </Route>
       <Route path="/admin/orders">
         <ProtectedRoute path="/admin/orders" component={AdminOrders} />
@@ -112,19 +115,31 @@ function Router() {
         <ProtectedRoute path="/admin/users" component={AdminUsers} />
       </Route>
       <Route path="/admin/delivery-settings">
-        <ProtectedRoute path="/admin/delivery-settings" component={DeliverySettingsPage} />
+        <ProtectedRoute
+          path="/admin/delivery-settings"
+          component={DeliverySettingsPage}
+        />
       </Route>
       <Route path="/admin/settings">
         <ProtectedRoute path="/admin/settings" component={AdminSettings} />
       </Route>
       <Route path="/admin/page-settings">
-        <ProtectedRoute path="/admin/page-settings" component={PageSettingsPage} />
+        <ProtectedRoute
+          path="/admin/page-settings"
+          component={PageSettingsPage}
+        />
       </Route>
       <Route path="/admin/contact-settings">
-        <ProtectedRoute path="/admin/contact-settings" component={ContactSettingsPage} />
+        <ProtectedRoute
+          path="/admin/contact-settings"
+          component={ContactSettingsPage}
+        />
       </Route>
       <Route path="/admin/documents">
-        <ProtectedRoute path="/admin/documents" component={DocumentManagementPage} />
+        <ProtectedRoute
+          path="/admin/documents"
+          component={DocumentManagementPage}
+        />
       </Route>
       <Route component={NotFound} />
     </Switch>

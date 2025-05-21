@@ -1,4 +1,14 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp, json, varchar } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  decimal,
+  timestamp,
+  json,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -18,8 +28,14 @@ export const users = pgTable("users", {
   phone: text("phone"),
   isAdmin: boolean("is_admin").default(false).notNull(),
   emailVerified: boolean("email_verified").default(false).notNull(), // Whether email has been verified
-  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
-  discountMinimumOrder: decimal("discount_minimum_order", { precision: 10, scale: 2 }).default("0"),
+  discountAmount: decimal("discount_amount", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
+  discountMinimumOrder: decimal("discount_minimum_order", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
   discountExpiryDate: timestamp("discount_expiry_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -39,17 +55,27 @@ export const verificationTokens = pgTable("verification_tokens", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertVerificationTokenSchema = createInsertSchema(verificationTokens).omit({
+export const insertVerificationTokenSchema = createInsertSchema(
+  verificationTokens,
+).omit({
   id: true,
   createdAt: true,
 });
 
-export const verificationTokensRelations = relations(verificationTokens, ({ one }) => ({
-  user: one(users, { fields: [verificationTokens.userId], references: [users.id] }),
-}));
+export const verificationTokensRelations = relations(
+  verificationTokens,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [verificationTokens.userId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export type VerificationToken = typeof verificationTokens.$inferSelect;
-export type InsertVerificationToken = z.infer<typeof insertVerificationTokenSchema>;
+export type InsertVerificationToken = z.infer<
+  typeof insertVerificationTokenSchema
+>;
 
 // Products table
 export const products = pgTable("products", {
@@ -60,18 +86,20 @@ export const products = pgTable("products", {
   imageUrl: text("image_url"),
   categoryId: integer("category_id"),
   stock: integer("stock").default(0).notNull(),
-  scent: text("scent"),  // Direktno pohranjen miris za proizvod
-  color: text("color"),  // Direktno pohranjena boja za proizvod
+  scent: text("scent"), // Direktno pohranjen miris za proizvod
+  color: text("color"), // Direktno pohranjena boja za proizvod
   burnTime: text("burn_time"),
   featured: boolean("featured").default(false).notNull(),
-  hasColorOptions: boolean("has_color_options").default(true).notNull(),  // Treba li proizvod imati opcije boja
-  allowMultipleColors: boolean("allow_multiple_colors").default(false).notNull(), // Omogućuje odabir više boja
+  hasColorOptions: boolean("has_color_options").default(true).notNull(), // Treba li proizvod imati opcije boja
+  allowMultipleColors: boolean("allow_multiple_colors")
+    .default(false)
+    .notNull(), // Omogućuje odabir više boja
   active: boolean("active").default(true).notNull(), // Kontrolira je li proizvod vidljiv kupcima
-  dimensions: text("dimensions"),  // Dimenzije proizvoda
-  weight: text("weight"),  // Težina proizvoda
-  materials: text("materials"),  // Materijali od kojih je proizvod napravljen
-  instructions: text("instructions"),  // Upute za korištenje
-  maintenance: text("maintenance"),  // Upute za održavanje
+  dimensions: text("dimensions"), // Dimenzije proizvoda
+  weight: text("weight"), // Težina proizvoda
+  materials: text("materials"), // Materijali od kojih je proizvod napravljen
+  instructions: text("instructions"), // Upute za korištenje
+  maintenance: text("maintenance"), // Upute za održavanje
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -123,8 +151,13 @@ export const orders = pgTable("orders", {
   status: text("status").notNull().default("pending"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }),
-  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
-  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0"),
+  discountAmount: decimal("discount_amount", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default(
+    "0",
+  ),
   paymentMethod: text("payment_method").notNull(),
   paymentStatus: text("payment_status").default("pending").notNull(),
   customerNote: text("customer_note"), // Napomena kupca
@@ -145,7 +178,7 @@ export const orderItems = pgTable("order_items", {
   id: serial("id").primaryKey(),
   orderId: integer("order_id").notNull(),
   productId: integer("product_id").notNull(),
-  productName: text("product_name"),  // Dodajemo ime proizvoda za prikaz
+  productName: text("product_name"), // Dodajemo ime proizvoda za prikaz
   quantity: integer("quantity").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   // Dodajemo polja za varijante proizvoda
@@ -154,16 +187,18 @@ export const orderItems = pgTable("order_items", {
   colorId: integer("color_id"),
   colorName: text("color_name"),
   // Polja za podršku višestrukih boja
-  colorIds: text("color_ids"),       // JSON string s nizom ID-jeva boja za višestruki odabir
+  colorIds: text("color_ids"), // JSON string s nizom ID-jeva boja za višestruki odabir
   hasMultipleColors: boolean("has_multiple_colors").default(false).notNull(),
 });
 
-export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
-  id: true,
-}).extend({
-  colorIds: z.string().optional(),
-  hasMultipleColors: z.boolean().optional(),
-});
+export const insertOrderItemSchema = createInsertSchema(orderItems)
+  .omit({
+    id: true,
+  })
+  .extend({
+    colorIds: z.string().optional(),
+    hasMultipleColors: z.boolean().optional(),
+  });
 
 // Cart items table
 export const cartItems = pgTable("cart_items", {
@@ -173,17 +208,19 @@ export const cartItems = pgTable("cart_items", {
   quantity: integer("quantity").notNull(),
   scentId: integer("scent_id"),
   colorId: integer("color_id"),
-  colorName: text("color_name"),     // Ime boje ili spojeni nazivi više boja
-  colorIds: text("color_ids"),       // JSON string s nizom ID-jeva boja za višestruki odabir
+  colorName: text("color_name"), // Ime boje ili spojeni nazivi više boja
+  colorIds: text("color_ids"), // JSON string s nizom ID-jeva boja za višestruki odabir
   hasMultipleColors: boolean("has_multiple_colors").default(false).notNull(),
 });
 
-export const insertCartItemSchema = createInsertSchema(cartItems).omit({
-  id: true,
-}).extend({
-  colorIds: z.string().optional(),
-  hasMultipleColors: z.boolean().optional(),
-});
+export const insertCartItemSchema = createInsertSchema(cartItems)
+  .omit({
+    id: true,
+  })
+  .extend({
+    colorIds: z.string().optional(),
+    hasMultipleColors: z.boolean().optional(),
+  });
 
 // Product-Scent relations table
 export const productScents = pgTable("product_scents", {
@@ -399,7 +436,10 @@ export type CartItemWithProduct = CartItem & {
   hasMultipleColors?: boolean;
 };
 
-export type OrderItemWithProduct = Omit<OrderItem, 'scentId' | 'colorId' | 'scentName' | 'colorName'> & {
+export type OrderItemWithProduct = Omit<
+  OrderItem,
+  "scentId" | "colorId" | "scentName" | "colorName"
+> & {
   product: Product;
   scent?: Scent;
   color?: Color;
@@ -408,7 +448,7 @@ export type OrderItemWithProduct = Omit<OrderItem, 'scentId' | 'colorId' | 'scen
   scentName: string | null;
   colorName: string | null;
   // hasMultipleColors je već prisutan u OrderItem
-}
+};
 
 // Definiranje tablice za stranice (O nama, Kontakt, Blog)
 export const pages = pgTable("pages", {
@@ -457,12 +497,16 @@ export const productCollections = pgTable("product_collections", {
   collectionId: integer("collection_id").notNull(),
 });
 
-export const insertProductCollectionSchema = createInsertSchema(productCollections).omit({
+export const insertProductCollectionSchema = createInsertSchema(
+  productCollections,
+).omit({
   id: true,
 });
 
 export type ProductCollection = typeof productCollections.$inferSelect;
-export type InsertProductCollection = z.infer<typeof insertProductCollectionSchema>;
+export type InsertProductCollection = z.infer<
+  typeof insertProductCollectionSchema
+>;
 
 // Relacije za kolekcije
 export const collectionsRelations = relations(collections, ({ many }) => ({
@@ -470,16 +514,19 @@ export const collectionsRelations = relations(collections, ({ many }) => ({
 }));
 
 // Dodajemo relacije za proizvode s kolekcijama
-export const productCollectionsRelations = relations(productCollections, ({ one }) => ({
-  product: one(products, {
-    fields: [productCollections.productId],
-    references: [products.id],
+export const productCollectionsRelations = relations(
+  productCollections,
+  ({ one }) => ({
+    product: one(products, {
+      fields: [productCollections.productId],
+      references: [products.id],
+    }),
+    collection: one(collections, {
+      fields: [productCollections.collectionId],
+      references: [collections.id],
+    }),
   }),
-  collection: one(collections, {
-    fields: [productCollections.collectionId],
-    references: [collections.id],
-  }),
-}));
+);
 
 // Tablica za račune
 export const invoices = pgTable("invoices", {
@@ -567,7 +614,9 @@ export const companyDocuments = pgTable("company_documents", {
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
-export const insertCompanyDocumentSchema = createInsertSchema(companyDocuments).omit({
+export const insertCompanyDocumentSchema = createInsertSchema(
+  companyDocuments,
+).omit({
   id: true,
   uploadedAt: true,
 });
@@ -575,12 +624,15 @@ export const insertCompanyDocumentSchema = createInsertSchema(companyDocuments).
 export type CompanyDocument = typeof companyDocuments.$inferSelect;
 export type InsertCompanyDocument = z.infer<typeof insertCompanyDocumentSchema>;
 
-export const companyDocumentsRelations = relations(companyDocuments, ({ one }) => ({
-  uploader: one(users, {
-    fields: [companyDocuments.uploadedBy],
-    references: [users.id],
+export const companyDocumentsRelations = relations(
+  companyDocuments,
+  ({ one }) => ({
+    uploader: one(users, {
+      fields: [companyDocuments.uploadedBy],
+      references: [users.id],
+    }),
   }),
-}));
+);
 
 // Tablica za praćenje posjeta na stranici
 export const pageVisits = pgTable("page_visits", {

@@ -21,7 +21,7 @@ export default function CookieConsent() {
     analytics: false,
     marketing: false,
   });
-  
+
   useEffect(() => {
     // Check if user already accepted cookies
     const cookieConsent = localStorage.getItem("cookieConsent");
@@ -29,7 +29,7 @@ export default function CookieConsent() {
       setOpen(true);
     }
   }, []);
-  
+
   const acceptAll = () => {
     localStorage.setItem(
       "cookieConsent",
@@ -39,31 +39,32 @@ export default function CookieConsent() {
         analytics: true,
         marketing: true,
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
     setOpen(false);
   };
-  
+
   const savePreferences = () => {
     localStorage.setItem(
       "cookieConsent",
       JSON.stringify({
         ...preferences,
         timestamp: new Date().toISOString(),
-      })
+      }),
     );
     setSettingsOpen(false);
     setOpen(false);
   };
-  
+
   if (!open) return null;
-  
+
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-4 flex flex-col md:flex-row justify-between items-center z-50">
         <div className="mb-4 md:mb-0 md:mr-4">
           <p className="text-text-dark">
-            <strong>Koristimo kolačiće</strong> - Kako bismo vam pružili najbolje iskustvo korištenja naše stranice.
+            <strong>Wir verwenden Cookies</strong> -Um Ihnen die bestmögliche
+            Erfahrung bei der Nutzung unserer Website zu bieten.
           </p>
         </div>
         <div className="flex space-x-3">
@@ -74,21 +75,22 @@ export default function CookieConsent() {
               setOpen(false);
             }}
           >
-            Postavke
+            Einstellungen
           </Button>
-          <Button onClick={acceptAll}>Prihvati sve</Button>
+          <Button onClick={acceptAll}>Akzeptiere alles</Button>
         </div>
       </div>
-      
+
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Postavke kolačića</DialogTitle>
             <DialogDescription>
-              Prilagodite koje kolačiće želite prihvatiti. Nužni kolačići su obavezni za funkcioniranje stranice.
+              Prilagodite koje kolačiće želite prihvatiti. Nužni kolačići su
+              obavezni za funkcioniranje stranice.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="flex items-start space-x-3">
               <Checkbox id="necessary" checked disabled />
@@ -97,17 +99,21 @@ export default function CookieConsent() {
                   Nužni kolačići
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Ovi kolačići su neophodni za funkcioniranje stranice i ne mogu se isključiti.
+                  Ovi kolačići su neophodni za funkcioniranje stranice i ne mogu
+                  se isključiti.
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="functional" 
+              <Checkbox
+                id="functional"
                 checked={preferences.functional}
-                onCheckedChange={(checked) => 
-                  setPreferences({ ...preferences, functional: checked === true })
+                onCheckedChange={(checked) =>
+                  setPreferences({
+                    ...preferences,
+                    functional: checked === true,
+                  })
                 }
               />
               <div className="space-y-1 leading-none">
@@ -119,13 +125,16 @@ export default function CookieConsent() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="analytics" 
+              <Checkbox
+                id="analytics"
                 checked={preferences.analytics}
-                onCheckedChange={(checked) => 
-                  setPreferences({ ...preferences, analytics: checked === true })
+                onCheckedChange={(checked) =>
+                  setPreferences({
+                    ...preferences,
+                    analytics: checked === true,
+                  })
                 }
               />
               <div className="space-y-1 leading-none">
@@ -137,13 +146,16 @@ export default function CookieConsent() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-3">
-              <Checkbox 
-                id="marketing" 
+              <Checkbox
+                id="marketing"
                 checked={preferences.marketing}
-                onCheckedChange={(checked) => 
-                  setPreferences({ ...preferences, marketing: checked === true })
+                onCheckedChange={(checked) =>
+                  setPreferences({
+                    ...preferences,
+                    marketing: checked === true,
+                  })
                 }
               />
               <div className="space-y-1 leading-none">
@@ -151,17 +163,15 @@ export default function CookieConsent() {
                   Marketinški kolačići
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Koriste se za praćenje posjetitelja na web stranicama radi prikaza relevantnih oglasa.
+                  Koriste se za praćenje posjetitelja na web stranicama radi
+                  prikaza relevantnih oglasa.
                 </p>
               </div>
             </div>
           </div>
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setSettingsOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>
               Odustani
             </Button>
             <Button onClick={savePreferences}>Spremi postavke</Button>

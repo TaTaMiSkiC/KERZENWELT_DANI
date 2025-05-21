@@ -198,7 +198,9 @@ export async function sendVerificationEmail(
   try {
     // Build the verification link with the token
     // const verificationLink = `https://kerzenweltbydani.com/verify-email?token=${token}`;
-    const verificationLink = `https://kerzenwelt-by-dani.replit.app/verify-email?token=${token}`;
+    const verificationLink = `https://d07915c1-4b7a-458a-8b3d-720e6c5131b7-00-6gbh8d6ubmp1.spock.replit.dev/verify-email?token=${token}`;
+
+    //const verificationLink = `https://kerzenwelt-by-dani.replit.app/verify-email?token=${token}`;
     // Generate the email HTML using our template
     const html = generateVerificationEmailTemplate(
       username,
