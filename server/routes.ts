@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import { createPaymentIntent } from "./stripe";
 import { upload, resizeImage } from "./imageUpload";
 import fs from 'fs';
 import path from 'path';
@@ -45,17 +46,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up document routes for company documents
   registerDocumentRoutes(app);
 
-  // PayPal routes
-  app.get("/api/paypal/setup", async (req, res) => {
-    await loadPaypalDefault(req, res);
-  });
-
-  app.post("/api/paypal/order", async (req, res) => {
-    await createPaypalOrder(req, res);
-  });
-
-  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
-    await capturePaypalOrder(req, res);
+  // Stripe routes
+  app.post("/api/create-payment-intent", async (req, res) => {
+    await createPaymentIntent(req, res);
   });
 
   // Enable serving static files from the public directory

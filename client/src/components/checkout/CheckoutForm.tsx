@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings-api";
-import PayPalButton from "@/components/PayPalButton";
+import StripePaymentForm from "@/components/StripePaymentForm";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
@@ -50,7 +50,7 @@ const checkoutSchema = z.object({
   postalCode: z.string().min(4, "Poštanski broj mora imati najmanje 4 znaka"),
   country: z.string().min(2, "Država je obavezna"),
   customerNote: z.string().optional(),
-  paymentMethod: z.enum(["credit_card", "paypal", "bank_transfer"]),
+  paymentMethod: z.enum(["stripe"]),
   saveAddress: z.boolean().optional(),
   sameAsBilling: z.boolean().optional(),
 });
@@ -65,8 +65,8 @@ export default function CheckoutForm() {
   const { getSetting } = useSettings();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("credit_card");
-  const [paypalOrderComplete, setPaypalOrderComplete] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("stripe");
+  const [stripePaymentComplete, setStripePaymentComplete] = useState(false);
   
   // Dohvati postavke za dostavu
   const { data: freeShippingThresholdSetting } = getSetting("freeShippingThreshold");
@@ -114,11 +114,11 @@ export default function CheckoutForm() {
       return;
     }
     
-    // Ako je odabran PayPal kao način plaćanja, provjeri je li plaćanje izvršeno
-    if (data.paymentMethod === "paypal" && !paypalOrderComplete) {
+    // Ako je odabran Stripe kao način plaćanja, provjeri je li plaćanje izvršeno
+    if (data.paymentMethod === "stripe" && !stripePaymentComplete) {
       toast({
         title: "Plaćanje nije izvršeno",
-        description: "Morate završiti plaćanje putem PayPal-a prije potvrde narudžbe.",
+        description: "Morate završiti plaćanje putem Stripe-a prije potvrde narudžbe.",
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -219,36 +219,41 @@ export default function CheckoutForm() {
   
   const watchPaymentMethod = form.watch("paymentMethod");
 
-  // PayPal handleri
-  const handlePayPalSuccess = async (paypalData: any) => {
-    console.log("PayPal payment successful", paypalData);
-    setPaypalOrderComplete(true);
+  // Stripe handleri
+  const handleStripeSuccess = async (paymentIntent: any) => {
+    console.log("Stripe payment successful", paymentIntent);
+    setStripePaymentComplete(true);
     setIsSubmitting(true);
     
     try {
       // Preuzmite vrijednosti obrasca
       const formData = form.getValues();
       
-      // Kreirajte narudžbu na temelju podataka obrasca i PayPal odgovora
+      // Kreirajte narudžbu na temelju podataka obrasca i Stripe odgovora
       const orderItems = cartItems?.map(item => ({
         productId: item.productId,
         quantity: item.quantity,
-        price: item.product.price
+        price: item.product.price,
+        scentId: item.scentId || null,
+        scentName: item.scent?.name || null,
+        colorId: item.colorId || null,
+        colorName: item.colorName || null,
+        colorIds: item.colorIds || null,
+        hasMultipleColors: item.hasMultipleColors || false
       })) || [];
       
       // Kreirajte podatke narudžbe
       const orderData = {
         total: total.toString(),
-        paymentMethod: "paypal",
-        paymentStatus: "completed", // PayPal uspješno plaćanje
+        paymentMethod: "stripe",
+        paymentStatus: "completed", // Stripe uspješno plaćanje
         shippingAddress: formData.address,
         shippingCity: formData.city,
         shippingPostalCode: formData.postalCode,
         shippingCountry: formData.country,
         customerNote: formData.customerNote,
         items: orderItems,
-        paypalOrderId: paypalData.id,
-        paypalTransactionId: paypalData.purchase_units?.[0]?.payments?.captures?.[0]?.id
+        stripePaymentIntentId: paymentIntent.id
       };
       
       const response = await apiRequest("POST", "/api/orders", orderData);
@@ -274,13 +279,13 @@ export default function CheckoutForm() {
       // Poruka o uspjehu
       toast({
         title: "Narudžba uspješno kreirana",
-        description: `Vaša narudžba #${order.id} je uspješno zaprimljena. Zahvaljujemo na plaćanju putem PayPal-a.`,
+        description: `Vaša narudžba #${order.id} je uspješno zaprimljena. Zahvaljujemo na plaćanju.`,
       });
       
       // Preusmjeravanje na stranicu uspjeha
       navigate(`/order-success?orderId=${order.id}`);
     } catch (error) {
-      console.error("Error creating order after PayPal payment:", error);
+      console.error("Error creating order after Stripe payment:", error);
       toast({
         title: "Greška pri kreiranju narudžbe",
         description: "Plaćanje je bilo uspješno, ali došlo je do greške prilikom kreiranja narudžbe. Kontaktirajte nas za pomoć.",
@@ -291,11 +296,11 @@ export default function CheckoutForm() {
     }
   };
   
-  const handlePayPalError = (error: any) => {
-    console.error("PayPal payment error", error);
+  const handleStripeError = (error: any) => {
+    console.error("Stripe payment error", error);
     toast({
-      title: "Greška pri PayPal plaćanju",
-      description: "Došlo je do greške prilikom procesiranja PayPal plaćanja. Molimo pokušajte ponovno ili odaberite drugi način plaćanja.",
+      title: "Greška pri plaćanju",
+      description: "Došlo je do greške prilikom procesiranja plaćanja. Molimo pokušajte ponovno.",
       variant: "destructive",
     });
   };
