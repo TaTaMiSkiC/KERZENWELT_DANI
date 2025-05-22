@@ -1,26 +1,29 @@
 import { Loader2, Check } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/lib/hooks/use-language";
+import { useLanguage } from "@/hooks/use-language";
 import type { Collection, Product } from "@/types";
 
 export default function CollectionBanner() {
   const { t } = useLanguage();
 
-  // Dohvati "featured" kolekcije
   const { data: featuredCollections, isLoading: isLoadingCollections } =
     useQuery<Collection[]>({
       queryKey: ["/api/collections/featured"],
+      queryFn: () =>
+        fetch("/api/collections")
+          .then((res) => res.json())
+          .then((collections: Collection[]) =>
+            collections.filter((c) => c.featuredOnHome),
+          ),
     });
 
-  // Uzmemo prvu featured kolekciju ako postoji
   const collection =
     featuredCollections && featuredCollections.length > 0
       ? featuredCollections[0]
       : null;
 
-  // Dohvati proizvode za kolekciju ako postoji
   const { data: collectionProducts, isLoading: isLoadingProducts } = useQuery<
     Product[]
   >({
@@ -34,7 +37,9 @@ export default function CollectionBanner() {
     enabled: !!collection,
   });
 
-  // Prikaži loader dok se kolekcije učitavaju
+  console.log("Featured kolekcije:", featuredCollections);
+  console.log("Proizvodi iz kolekcije:", collectionProducts);
+
   if (isLoadingCollections) {
     return (
       <section className="py-16 bg-muted">
@@ -45,17 +50,18 @@ export default function CollectionBanner() {
     );
   }
 
-  // Ako nema niti jedne featured kolekcije — ne prikazuj ništa
   if (!collection) {
     return null;
   }
 
-  // Prikaži kolekciju iz baze
   return (
     <section
       className="py-16 bg-cover bg-center relative"
       style={{
-        backgroundImage: `url('${collection.imageUrl || "https://pixabay.com/get/g8e2f0ab9fd933a4f95a13e49fdf8085b52ca4a5bedcb5ce350d22dc4ea759bff5b101615776d64d0ace352b4ee82b8d59b79a7333527cda411e43f4a66b85e42_1280.jpg"}')`,
+        backgroundImage: `url('${
+          collection.imageUrl ||
+          "https://pixabay.com/get/g8e2f0ab9fd933a4f95a13e49fdf8085b52ca4a5bedcb5ce350d22dc4ea759bff5b101615776d64d0ace352b4ee82b8d59b79a7333527cda411e43f4a66b85e42_1280.jpg"
+        }')`,
       }}
     >
       <div className="absolute inset-0 bg-primary bg-opacity-60"></div>
@@ -81,14 +87,16 @@ export default function CollectionBanner() {
                 ))
               ) : (
                 <li className="text-muted-foreground">
-                  {t("home.noProducts")}
+                  {t("home.noProducts") || "No products available."}
                 </li>
               )}
             </ul>
           )}
 
           <Link to={`/products?collection=${collection.id}`}>
-            <Button size="lg">{t("home.viewCollection")}</Button>
+            <Button size="lg">
+              {t("home.viewCollection") || "View Collection"}
+            </Button>
           </Link>
         </div>
       </div>

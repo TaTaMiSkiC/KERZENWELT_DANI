@@ -224,7 +224,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "product.favorite": "Favorit",
     "products.showAll": "Alle anzeigen",
     "products.noProducts": "Keine Produkte gefunden",
-    "products.tryDifferent": "Versuchen Sie andere Filter oder sehen Sie sich unser gesamtes Angebot an.",
+    "products.tryDifferent":
+      "Versuchen Sie andere Filter oder sehen Sie sich unser gesamtes Angebot an.",
 
     // Instagram
     "instagram.followUs": "Folge uns auf Instagram",
@@ -1606,6 +1607,81 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.metaDescription": "Meta-Beschreibung",
     "admin.favicon": "Favicon",
     "admin.settingsSaved": "Einstellungen erfolgreich gespeichert",
+    "admin.product.deleteConfirmation": "Produkt löschen bestätigen",
+    "admin.product.deleteConfirmationMessage":
+      "Möchten Sie dieses Produkt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "common.cancel": "Abbrechen",
+    "common.close": "Schließen",
+    "admin.product.allCategories": "Alle Kategorien",
+    "admin.product.burnTimePlaceholder": "Brenndauer in Stunden",
+    "admin.product.instructionsPlaceholder": "Anleitung für die Verwendung",
+    "common.name": "Name",
+    "common.description": "Beschreibung",
+    "common.status": "Status",
+    "admin.collections.featuredOnHome": "Auf Startseite hervorheben",
+    "common.yes": "Ja",
+    "common.active": "Aktiv",
+    "common.actions": "Aktion",
+    "admin.collections.manageProductsHelp":
+      "Verwalten Sie die Produkte, die in dieser Kollektion angezeigt werden sollen",
+    "admin.collections.currentProducts": "Aktuelle Produkte",
+    "admin.collections.addProductsToCollection":
+      "Produkte zur Kollektion hinzufügen",
+    "common.add": "Hinzufügen",
+    "common.saveChanges": "Speichern",
+    "paymentMethods.cash": "Barzahlung",
+    "paymentMethods.bankTransfer": "Banküberweisung",
+    "paymentMethods.creditCard": "Kreditkarte",
+    "admin.orders.placeholderSearch":
+      "Bestellnummer oder Kundennamen suchen...",
+    "admin.orders.noOrdersFound": "Keine Bestellungen gefunden",
+    "admin.orders.amount": "Betrag",
+    "admin.orders.action": "Aktion",
+    "checkout.metaDescription":
+      "Überprüfen Sie Ihre Bestellung und geben Sie Ihre Zahlungsinformationen ein.",
+    "checkout.discountApplied": "Gutscheincode erfolgreich angewendet!",
+    "checkout.discountNotApplied":
+      "Gutscheincode konnte nicht angewendet werden.",
+    "checkout.discountMinimumOrder":
+      "Der Mindestbestellwert für diesen Gutscheincode beträgt {amount}€.",
+    "checkout.securePayment": "Sichere Zahlung",
+    "checkout.securePaymentDescription":
+      "Ihre Zahlungsinformationen sind sicher und verschlüsselt.",
+    "admin.invoiceCreated": "Rechnung erstellt",
+    "admin.invoiceCreatedDescription":
+      "Die Rechnung wurde erfolgreich erstellt und kann jetzt heruntergeladen werden.",
+    "admin.orders.errorFetchingOrderItems":
+      "Fehler beim Abrufen der Bestellartikel.",
+    "admin.general.errordescription":
+      "Es gab ein Problem beim Speichern der Einstellungen. Bitte versuchen Sie es später erneut.",
+    "admin.orders.updateStatusDescription": "Bestellstatus ",
+    "admin.orders.updateStatusDescription2": " wurde aktualisiert auf ",
+    "admin.orders.updateStatusError":
+      "Fehler beim Aktualisieren des Bestellstatus.",
+    "admin.orders.filterStatus": "Nach Status filtern",
+    "admin.orders.allStatuses": "Alle Statuse",
+    "admin.orders.cardTitle": "Bestellungen",
+    "admin.orders.foundOrders": " Bestellungen gefunden",
+    "admin.orders.loadingOrders": "Bestellungen werden geladen...",
+    "admin.orders.orderPlacedOn": "Bestellung aufgegeben am",
+    "admin.orders.paymentDetails": "Zahlungsdetails",
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    //
 
     // Document Management
     "admin.uploadDocument": "Dokument hochladen",
@@ -1965,6 +2041,64 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.categories.errorDeleteDesc":
       "Došlo je do greške prilikom brisanja kategorije: {error}",
 
+    "admin.product.deleteConfirmation": "Proizvod obrisati potvrditi",
+    "admin.product.deleteConfirmationMessage":
+      "Zelite li zaista izbrisati ovaj proizvod? Ova radnja je nepovratna.",
+    "common.cancel": "Odustani",
+    "admin.product.allCategories": "Sve kategorije",
+    "admin.product.burnTimePlaceholder": "Brenje vrijeme u sati",
+    "admin.product.instructionsPlaceholder": "Upute za upotrebu",
+    "common.name": "Ime",
+    "common.description": "Opis",
+    "common.status": "Status",
+    "admin.collections.featuredOnHome": "Istaknuto na početnoj stranici",
+    "common.yes": "Da",
+    "common.active": "Aktivno",
+    "common.action": "Akcija",
+    "admin.collections.manageProductsHelp":
+      "Upravljajte proizvodima koji će se prikazati u ovoj kolekciji",
+    "admin.collections.currentProducts": "Trenutni proizvodi",
+    "admin.collections.addProductsToCollection":
+      "Dodajte proizvode u kolekciju",
+    "common.add": "Dodaj",
+    "common.saveChanges": "Spremi promjene",
+    "paymentMethods.cash": "Gotovina",
+    "paymentMethods.bankTransfer": "Bankovni transfer",
+    "paymentMethods.creditCard": "Kreditna kartica",
+    "admin.orders.placeholderSearch":
+      "Pretražite po broju narudžbe ili imenu kupca...",
+    "admin.orders.noOrdersFound": "Nema pronađenih narudžbi",
+    "admin.orders.amount": "Iznos",
+    "admin.orders.action": "Akcija",
+    "checkout.metaDescription":
+      "Provjerite svoju narudžbu i unesite svoje podatke za plaćanje.",
+    "checkout.discountApplied": "Kod za popust uspješno primijenjen!",
+    "checkout.discountNotApplied": "Kod za popust nije primijenjen.",
+    "checkout.discountMinimumOrder":
+      "Minimalni iznos narudžbe za ovaj kod za popust je {amount}€.",
+    "checkout.securePayment": "Sigurna plaćanja",
+    "checkout.securePaymentDescription":
+      "Vaši podaci o plaćanju su sigurni i šifrirani.",
+    "admin.invoiceCreated": "Račun kreiran",
+    "admin.invoiceCreatedDescription":
+      "Račun je uspješno kreiran i sada ga možete preuzeti.",
+    "admin.orders.errorFetchingOrderItems":
+      "Greška prilikom dohvaćanja stavki narudžbe.",
+    "admin.general.errordescription":
+      "Došlo je do problema prilikom spremanja postavki. Molimo pokušajte ponovno kasnije.",
+    "admin.orders.invoiceGenerationError": "Greška prilikom kreiranja računa.",
+    "admin.orders.updateStatusDescription": "Status narudžbe ",
+    "admin.orders.updateStatusDescription2": " je ažuriran na ",
+    "admin.orders.updateStatusError":
+      "Greška prilikom ažuriranja statusa narudžbe.",
+    "admin.orders.filterStatus": "Filtriraj po statusu",
+    "admin.orders.allStatuses": "Svi statusi",
+    "admin.orders.cardTitle": "Narudžbe",
+    "admin.orders.foundOrders": " pronađenih narudžbi",
+    "admin.orders.loadingOrders": "Učitavanje narudžbi...",
+    "admin.orders.orderPlacedOn": "Narudžba je napravljena ",
+    "admin.orders.paymentDetails": "Detalji plaćanja",
+
     // Admin Scents Page
     "admin.scents.title": "Mirisi",
     "admin.scents.subtitle": "Upravljajte mirisima proizvoda u trgovini",
@@ -2257,7 +2391,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.orders.backToOrders": "Povratak na narudžbe",
     "admin.orders.noInvoice": "Nema generiranog računa",
     "admin.orders.invoiceGenerated": "Račun je uspješno generiran",
-    "admin.orders.invoiceGenerationError": "Greška prilikom generiranja računa",
     "admin.orders.selectLanguage": "Odaberi jezik",
     "admin.orders.language": "Jezik računa",
     "admin.orders.loading": "Učitavanje...",
@@ -2400,7 +2533,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.invoices.viewAllInvoicesDescription":
       "Pregledajte sve kreirane račune",
     "admin.invoices.existingInvoices": "Postojeći računi",
-    "admin.invoices.createNewInvoice": "Kreiraj novi račun",
+    "admin.invoices.createNewInvoice": "Kreiraj novi raj�un",
     "admin.invoices.companyDocuments": "Dokumenti tvrtke",
     "admin.invoices.fillInformationForNewInvoice":
       "Ispunite informacije za novi račun",
@@ -6959,7 +7092,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.featuredSubtitle":
       "Naši najbolj priljubljeni izdelki, ki jih naše stranke obožujejo",
     "home.viewAllProducts": "Oglejte si vse izdelke",
-    "home.errorLoading": "Pri nalaganju izdelkov je prišlo do napake.",
+    "home.errorLoading": "Pri nalaganju izdelkov je prid�lo do napake.",
     "home.ourStory": "Naša zgodba",
     "home.storyDescription":
       "Vsaka naša sveča je izdelana s skrbjo in ljubeznijo, s pozornostjo na vsako podrobnost - od izbire najboljših dišav do končnega estetskega videza. Ponosni smo na naše rokodelstvo in strast, s katero pristopamo k vsakemu izdelku.",
