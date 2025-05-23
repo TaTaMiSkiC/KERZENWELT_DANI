@@ -42,77 +42,25 @@ export default function Hero() {
     }
   });
   
-  // Default titles za svaki jezik da ne dođe do prikaza ključeva prijevoda
-  const defaultTitles = {
-    de: [
-      { text: "Willkommen", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Kerzenwelt by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Wo Kerzen Wärme und Stil vereinen", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    hr: [
-      { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Svijet svijeća by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Gdje se toplina i stil spajaju", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    en: [
-      { text: "Welcome", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "The Candle World by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Where warmth and style unite", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    it: [
-      { text: "Benvenuti", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Il mondo delle candele di Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Dove calore e stile si incontrano", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    sl: [
-      { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Svet sveč by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Kjer se toplina in stil združita", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ]
-  };
-
-  // Get title array for the current language, or fallback to translation
+  // Get title array for the current language
   const getTitleItemsArray = (): TitleItem[] => {
-    // Prvo provjeri postavke iz baze
+    // Dohvati iz baze podataka
     if (heroSettings?.titleText && heroSettings.titleText[language]) {
       return heroSettings.titleText[language];
     }
     
-    // Zatim provjeri defaultne vrijednosti za jezik
-    if (defaultTitles[language as keyof typeof defaultTitles]) {
-      return defaultTitles[language as keyof typeof defaultTitles];
-    }
-    
-    // Krajnji fallback na prijevode (ovo bi trebalo rijetko biti potrebno)
-    return [
-      { text: t('home.heroTitle1') || "Welcome", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: t('home.heroTitle2') || "Kerzenwelt by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: t('home.heroTitle3') || "Where warmth and style unite", fontSize: "xl", fontWeight: "medium", color: "white" }
-    ];
+    // Prazan niz ako nema podataka
+    return [];
   };
   
-  // Default podnaslovi za sve jezike
-  const defaultSubtitles = {
-    de: "Handgemachte Kerzen aus natürlichen Inhaltsstoffen",
-    hr: "Ručno izrađene svijeće od prirodnih sastojaka",
-    en: "Handmade candles from natural ingredients",
-    it: "Candele artigianali da ingredienti naturali",
-    sl: "Ročno izdelane sveče iz naravnih sestavin"
-  };
-
   const getSubtitleText = () => {
-    // Prvo provjeri postavke iz baze
+    // Dohvati iz baze podataka
     if (heroSettings?.subtitleText && heroSettings.subtitleText[language]) {
       return heroSettings.subtitleText[language];
     }
     
-    // Zatim provjeri defaultne vrijednosti za jezik
-    if (defaultSubtitles[language as keyof typeof defaultSubtitles]) {
-      return defaultSubtitles[language as keyof typeof defaultSubtitles];
-    }
-    
-    // Krajnji fallback na prijevode
-    return t('home.heroSubtitle') || "Handmade candles from natural ingredients";
+    // Prazan tekst ako nema podataka
+    return "";
   };
   
   // Use inline styles for custom font properties
