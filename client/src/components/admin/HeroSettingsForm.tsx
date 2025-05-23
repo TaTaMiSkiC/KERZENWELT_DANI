@@ -310,7 +310,7 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
               {form.watch(`titleText.${selectedLanguage}`)?.map((titleItem, index) => (
                 <h1 
                   key={index}
-                  className={index > 0 ? "mt-1" : ""}
+                  className={`${index > 0 ? "mt-1" : ""} ${titleItem.fontFamily || ""}`}
                   style={{
                     color: titleItem.color || "white",
                     fontSize: getFontSizeValue(titleItem.fontSize),
