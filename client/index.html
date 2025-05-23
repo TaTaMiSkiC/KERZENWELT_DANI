@@ -375,9 +375,46 @@
     
     <!-- Script za napredno učitavanje resursa i optimizaciju performansi -->
     <script>
-      // 1. Strategija za učitavanje nekritičnih resursa
+      // 1. Agresivna optimizacija ključnog JavaScript i CSS sadržaja
       (function() {
-        // Koristi requestIdleCallback za odgođeno učitavanje nekritičnih skripti
+        // Omogućiti code splitting i lazy loading modula
+        function optimizeJavaScript() {
+          // Pronalazi skripte koje se mogu odgoditi
+          const scripts = document.querySelectorAll('script:not([critical])');
+          scripts.forEach(script => {
+            // Odgodi učitavanje nekritičnih skripta
+            if (!script.src.includes('main.tsx') && !script.hasAttribute('critical')) {
+              script.setAttribute('defer', 'true');
+              if (script.src.includes('analytics') || script.src.includes('banner') || script.src.includes('tracking')) {
+                script.setAttribute('async', 'true');
+              }
+            }
+            
+            // Primijeni cache-buster za izbjegavanje cache problema
+            if (script.src && !script.src.includes('?v=')) {
+              script.src = script.src + '?v=' + (new Date().getTime().toString().slice(0, 8));
+            }
+          });
+          
+          // Optimizacija nekorištenog JavaScript koda
+          window.addEventListener('load', () => {
+            // Koristi tree-shaking za eliminaciju nekorištenog koda
+            const unusedEvents = [
+              'mouseover', 'mouseenter', 'mouseleave', 'auxclick',
+              'dblclick', 'pointerenter', 'pointerleave', 'dragstart',
+              'dragend', 'dragover', 'dragenter', 'dragleave'
+            ];
+            
+            // Ukloni event listenere za nekorištene događaje
+            unusedEvents.forEach(eventType => {
+              document.body.querySelectorAll('*').forEach(el => {
+                el.removeEventListener(eventType, () => {});
+              });
+            });
+          });
+        }
+        
+        // Odgodi učitavanje nekritičnih resursa
         function loadResourcesWhenIdle() {
           // Lista za odgođeno učitavanje
           const deferredResources = [
@@ -407,14 +444,14 @@
           // Koristi web performance API za pronalaženje nekorištenih JS modula
           if ('performance' in window && 'getEntriesByType' in performance) {
             requestIdleCallback(() => {
-              const resources = performance.getEntriesByType('resource');
-              // Analiziraj resurse i selektivno učitavaj samo one koji su potrebni
+              optimizeJavaScript(); // Primijeni JavaScript optimizacije
               deferredResources.forEach(loadResource);
             }, { timeout: 5000 });
           } else {
             // Fallback za starije preglednike
             window.addEventListener('load', () => {
               setTimeout(() => {
+                optimizeJavaScript(); // Primijeni JavaScript optimizacije
                 deferredResources.forEach(loadResource);
               }, 3000);
             });

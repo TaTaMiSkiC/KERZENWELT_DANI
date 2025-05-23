@@ -29,12 +29,64 @@ app.use(compression({
   }
 }));
 
+// Middleware za kompresiju
+app.use(compression({
+  level: 9, // Maksimalni nivo kompresije
+  threshold: 0, // Kompresija svih odgovora bez obzira na veličinu
+  filter: (req, res) => {
+    // Ne kompresiraj već kompresovane resurse
+    if (req.headers['accept-encoding']?.includes('gzip') === false) return false;
+    const contentType = res.getHeader('Content-Type') as string || '';
+    return /text|javascript|json|css|svg|html|xml/.test(contentType);
+  }
+}));
+
 // Middleware za HTTP zaglavlja performansi i sigurnosti
 app.use((req, res, next) => {
   // Dodajemo zaglavlja za poboljšanje sigurnosti
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Dodatna sigurnosna i performance poboljšanja
+  res.setHeader('X-DNS-Prefetch-Control', 'on');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Postavke cache kontrole bazirane na tipu resursa
+  const url = req.url.toLowerCase();
+  if (url.match(/\.(js|css|json)$/)) {
+    // Agresivni cache za statičke resurse
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    // Dodaj Brotli/Gzip kompresiju za JavaScript i CSS
+    if (url.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Vary', 'Accept-Encoding');
+    } else if (url.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      res.setHeader('Vary', 'Accept-Encoding');
+    }
+  } else if (url.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/)) {
+    // Agresivni cache za slike
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Vary', 'Accept');
+    
+    // Poboljšani Content-Type za moderne formate slika
+    if (url.endsWith('.webp')) {
+      res.setHeader('Content-Type', 'image/webp');
+    } else if (url.endsWith('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+    }
+  } else if (url.match(/\.(woff|woff2|ttf|eot)$/)) {
+    // Agresivni cache za fontove
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  } else if (url === '/' || url === '/index.html') {
+    // Umjeren cache za glavnu stranicu
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+  } else {
+    // Default cache za ostalo
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+  }
   
   // Optimizacija za preuzimanje kritičnih resursa
   if (req.url === '/' || req.url === '/index.html') {
