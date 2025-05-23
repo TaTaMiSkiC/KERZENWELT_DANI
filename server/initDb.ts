@@ -106,23 +106,19 @@ async function checkCategoriesExist() {
 async function createDefaultCategories() {
   console.log("Kreiranje kategorija...");
 
-  await db.insert(categories).values([
-    // {
-    //   name: "Kerzenbox",
-    //   description: "Kolekcija ručno izrađenih svijeća",
-    //   imageUrl: "https://images.unsplash.com/photo-1603204077779-bed963ea7d0e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
-    // },
-    // {
-    //   name: "Dekorativne svijeće",
-    //   description: "Jedinstvene dekorativne svijeće za vaš dom",
-    //   imageUrl: "https://images.unsplash.com/photo-1574263039840-82c0aa6c0a68?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
-    // },
-    // {
-    //   name: "Posebne prigode",
-    //   description: "Svijeće za vjenčanja, rođendane i posebne prilike",
-    //   imageUrl: "https://images.unsplash.com/photo-1634317542867-0afe3dc09511?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
-    // }
-  ]);
+  // Dodajemo barem jednu kategoriju da izbjegnemo empty values() error
+  await db.insert(categories).values({
+    name: "Kerzenbox",
+    description: "Kolekcija ručno izrađenih svijeća",
+    imageUrl: "/assets/candle-category.jpg"
+  });
+  
+  // Možemo dodati još kategorija po potrebi
+  // await db.insert(categories).values({
+  //   name: "Dekorativne svijeće",
+  //   description: "Jedinstvene dekorativne svijeće za vaš dom",
+  //   imageUrl: "/assets/candle-decorative.jpg"
+  // });
 
   console.log("Kategorije uspješno kreirane");
 }
@@ -151,19 +147,19 @@ async function createDefaultProducts() {
     return;
   }
 
-  await db.insert(products).values([
-    // {
-    //   name: "Vanilla Dreams",
-    //   description: "Bogata i topla mirisna svijeća s aromom vanilije za ugodan dom.",
-    //   price: "25.99",
-    //   imageUrl: "https://images.unsplash.com/photo-1608181831718-c9ffd8685222?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80",
-    //   categoryId: mirisneKategorija.id,
-    //   stock: 12,
-    //   scent: "Vanilija",
-    //   color: "Krem",
-    //   burnTime: "40-50 sati",
-    //   featured: true
-    // },
+  // Dodajemo barem jedan proizvod s dostupnom kategorijom
+  await db.insert(products).values({
+    name: "Vanilla Dreams",
+    description: "Bogata i topla mirisna svijeća s aromom vanilije za ugodan dom.",
+    price: "25.99",
+    imageUrl: "/assets/vanilla-candle.jpg",
+    categoryId: categoryList[0]?.id || 1,
+    stock: 12,
+    scent: "Vanilija",
+    color: "Krem",
+    burnTime: "40-50 sati",
+    featured: true
+  });
     // {
     //   name: "Lavender Relax",
     //   description: "Opuštajuća svijeća s mirisom lavande idealna za spavaću sobu ili kupaonicu.",

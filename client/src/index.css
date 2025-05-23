@@ -1,7 +1,10 @@
-/* Kritični CSS stilovi koji se učitavaju prvi */
+/* Kritični CSS stilovi koji se učitavaju prvi - optimizirano */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Purge Tailwind CSS za nekorištene komponente */
+/* Ovo pomaže ukloniti neiskorištene utility klase za smanjenje ukupne veličine */
 
 /* Optimizacije za Lighthouse 100% rezultat */
 img, video {

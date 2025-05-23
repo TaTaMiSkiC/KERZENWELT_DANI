@@ -172,8 +172,9 @@ export default function Hero() {
           headingRef.current.style.visibility = 'visible';
           headingRef.current.style.opacity = '1';
           
-          // Bolje renderiranje teksta
-          headingRef.current.style.fontDisplay = 'swap';
+          // Bolje renderiranje teksta - ispravak za TS kompatibilnost
+          // Korištenje odgovarajućih CSS svojstava za optimizaciju teksta
+          headingRef.current.style.textRendering = 'optimizeLegibility';
         }
       }, { timeout: 500 });
     } else {
