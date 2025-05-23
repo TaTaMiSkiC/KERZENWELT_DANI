@@ -342,19 +342,29 @@ export class DatabaseStorage implements IStorage {
     categoryId: number,
     includeInactive: boolean = false,
   ): Promise<Product[]> {
+    console.log(`getProductsByCategory called with categoryId: ${categoryId}, includeInactive: ${includeInactive}`);
+    
+    let results;
     if (includeInactive) {
-      return await db
+      results = await db
         .select()
         .from(products)
-        .where(eq(products.categoryId, categoryId));
+        .where(eq(products.category_id, categoryId));
     } else {
-      return await db
+      results = await db
         .select()
         .from(products)
         .where(
-          and(eq(products.categoryId, categoryId), eq(products.active, true)),
+          and(eq(products.category_id, categoryId), eq(products.active, true)),
         );
     }
+    
+    console.log(`Found ${results.length} products in category ${categoryId}`);
+    if (results.length > 0) {
+      console.log("Sample products:", results.slice(0, 2).map(p => ({id: p.id, name: p.name})));
+    }
+    
+    return results;
   }
 
   // Scent (miris) methods
