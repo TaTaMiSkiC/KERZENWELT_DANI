@@ -3,54 +3,43 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { lazy, Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { dynamicImport } from "./lib/dynamic-import";
 
 // Preload samo osnovne komponente koje su dio inicijalnog renderiranja
 import HomePage from "@/pages/home-page";
 import NotFound from "@/pages/not-found";
 
-// Funkcija za stvaranje lazy-loaded komponentu s ispravnim tipovima
-function lazyLoad(importFunc: () => Promise<any>) {
-  const LazyComponent = lazy(importFunc);
-  return () => (
-    <Suspense fallback={<LoadingSpinner />}>
-      <LazyComponent />
-    </Suspense>
-  );
-}
-
-// Lazy Loading za ostatak komponenti
-const AuthPage = lazyLoad(() => import("@/pages/auth-page"));
-const ProductsPage = lazyLoad(() => import("@/pages/products-page"));
-const ProductDetailsPage = lazyLoad(() => import("@/pages/product-details-page"));
-const CartPage = lazyLoad(() => import("@/pages/cart-page"));
-const CheckoutPage = lazyLoad(() => import("@/pages/checkout-page"));
-const OrderSuccessPage = lazyLoad(() => import("@/pages/order-success-page"));
-const AboutPage = lazyLoad(() => import("@/pages/about-page"));
-const ContactPage = lazyLoad(() => import("@/pages/contact-page"));
-const BlogPage = lazyLoad(() => import("@/pages/blog-page"));
-const ProfilePage = lazyLoad(() => import("@/pages/profile-page"));
-const OrdersPage = lazyLoad(() => import("@/pages/orders-page"));
-const OrderDetailsPage = lazyLoad(() => import("@/pages/order-details-page"));
-const NewsletterPage = lazyLoad(() => import("@/pages/newsletter-page"));
+// Lazy Loading za korisnički dio aplikacije (uobičajene stranice)
+const AuthPage = dynamicImport(() => import("@/pages/auth-page"));
+const ProductsPage = dynamicImport(() => import("@/pages/products-page"));
+const ProductDetailsPage = dynamicImport(() => import("@/pages/product-details-page"));
+const CartPage = dynamicImport(() => import("@/pages/cart-page"));
+const CheckoutPage = dynamicImport(() => import("@/pages/checkout-page"));
+const OrderSuccessPage = dynamicImport(() => import("@/pages/order-success-page"));
+const AboutPage = dynamicImport(() => import("@/pages/about-page"));
+const ContactPage = dynamicImport(() => import("@/pages/contact-page"));
+const BlogPage = dynamicImport(() => import("@/pages/blog-page"));
+const ProfilePage = dynamicImport(() => import("@/pages/profile-page"));
+const OrdersPage = dynamicImport(() => import("@/pages/orders-page"));
+const OrderDetailsPage = dynamicImport(() => import("@/pages/order-details-page"));
+const NewsletterPage = dynamicImport(() => import("@/pages/newsletter-page"));
 
 // Admin komponente (učitavaju se samo kad su potrebne)
-const AdminDashboard = lazyLoad(() => import("@/pages/admin/admin-dashboard"));
-const AdminProducts = lazyLoad(() => import("@/pages/admin/admin-products"));
-const AdminCategories = lazyLoad(() => import("@/pages/admin/admin-categories"));
-const AdminScents = lazyLoad(() => import("@/pages/admin/admin-scents"));
-const AdminColors = lazyLoad(() => import("@/pages/admin/admin-colors"));
-const AdminCollections = lazyLoad(() => import("@/pages/admin/admin-collections"));
-const AdminOrders = lazyLoad(() => import("@/pages/admin/admin-orders"));
-const AdminUsers = lazyLoad(() => import("@/pages/admin/admin-users"));
-const AdminInvoices = lazyLoad(() => import("@/pages/admin/admin-invoices"));
-const AdminSubscribers = lazyLoad(() => import("@/pages/admin/admin-subscribers"));
-const DeliverySettingsPage = lazyLoad(() => import("@/pages/admin/delivery-settings-page"));
-const AdminSettings = lazyLoad(() => import("@/pages/admin/settings-page"));
-const PageSettingsPage = lazyLoad(() => import("@/pages/admin/page-settings"));
-const ContactSettingsPage = lazyLoad(() => import("@/pages/admin/contact-settings"));
-const DocumentManagementPage = lazyLoad(() => import("@/pages/admin/document-management"));
+const AdminDashboard = dynamicImport(() => import("@/pages/admin/admin-dashboard"));
+const AdminProducts = dynamicImport(() => import("@/pages/admin/admin-products"));
+const AdminCategories = dynamicImport(() => import("@/pages/admin/admin-categories"));
+const AdminScents = dynamicImport(() => import("@/pages/admin/admin-scents"));
+const AdminColors = dynamicImport(() => import("@/pages/admin/admin-colors"));
+const AdminCollections = dynamicImport(() => import("@/pages/admin/admin-collections"));
+const AdminOrders = dynamicImport(() => import("@/pages/admin/admin-orders"));
+const AdminUsers = dynamicImport(() => import("@/pages/admin/admin-users"));
+const AdminInvoices = dynamicImport(() => import("@/pages/admin/admin-invoices"));
+const AdminSubscribers = dynamicImport(() => import("@/pages/admin/admin-subscribers"));
+const DeliverySettingsPage = dynamicImport(() => import("@/pages/admin/delivery-settings-page"));
+const AdminSettings = dynamicImport(() => import("@/pages/admin/settings-page"));
+const PageSettingsPage = dynamicImport(() => import("@/pages/admin/page-settings"));
+const ContactSettingsPage = dynamicImport(() => import("@/pages/admin/contact-settings"));
+const DocumentManagementPage = dynamicImport(() => import("@/pages/admin/document-management"));
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
@@ -59,216 +48,150 @@ import { ThemeProvider } from "./hooks/use-theme";
 import { LanguageProvider } from "./hooks/use-language";
 import CookieConsent from "./components/CookieConsent";
 
-// Komponenta za prikaz učitavanja
-function LoadingSpinner() {
-  return (
-    <div className="flex items-center justify-center w-full h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <span className="ml-2">Učitavanje...</span>
-    </div>
-  );
-}
-
-// Komponenta s Suspense wrapperom
-const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
-  <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
-);
-
+/**
+ * Router komponenta koja definira sve rute u aplikaciji
+ * Komponente se učitavaju dinamički zbog optimizacije performansi
+ */
 function Router() {
   return (
     <Switch>
+      {/* Glavne stranice - direktno dostupne */}
       <Route path="/">
         <HomePage />
       </Route>
       <Route path="/auth">
-        <SuspenseWrapper>
-          <AuthPage />
-        </SuspenseWrapper>
+        <AuthPage />
       </Route>
       <Route path="/verify-email">
-        <SuspenseWrapper>
-          <AuthPage />
-        </SuspenseWrapper>
+        <AuthPage />
       </Route>
       <Route path="/products">
-        <SuspenseWrapper>
-          <ProductsPage />
-        </SuspenseWrapper>
+        <ProductsPage />
       </Route>
       <Route path="/products/:id">
-        <SuspenseWrapper>
-          <ProductDetailsPage />
-        </SuspenseWrapper>
+        <ProductDetailsPage />
       </Route>
       <Route path="/cart">
-        <SuspenseWrapper>
-          <CartPage />
-        </SuspenseWrapper>
+        <CartPage />
       </Route>
       <Route path="/about">
-        <SuspenseWrapper>
-          <AboutPage />
-        </SuspenseWrapper>
+        <AboutPage />
       </Route>
       <Route path="/contact">
-        <SuspenseWrapper>
-          <ContactPage />
-        </SuspenseWrapper>
+        <ContactPage />
       </Route>
       <Route path="/blog">
-        <SuspenseWrapper>
-          <BlogPage />
-        </SuspenseWrapper>
+        <BlogPage />
       </Route>
       <Route path="/newsletter">
-        <SuspenseWrapper>
-          <NewsletterPage />
-        </SuspenseWrapper>
+        <NewsletterPage />
       </Route>
       
-      {/* Zaštićene rute */}
+      {/* Zaštićene rute - potrebna prijava */}
       <Route path="/profile">
         <ProtectedRoute path="/profile">
-          <SuspenseWrapper>
-            <ProfilePage />
-          </SuspenseWrapper>
+          <ProfilePage />
         </ProtectedRoute>
       </Route>
       <Route path="/orders">
         <ProtectedRoute path="/orders">
-          <SuspenseWrapper>
-            <OrdersPage />
-          </SuspenseWrapper>
+          <OrdersPage />
         </ProtectedRoute>
       </Route>
       <Route path="/orders/:id">
         <ProtectedRoute path="/orders/:id">
-          <SuspenseWrapper>
-            <OrderDetailsPage />
-          </SuspenseWrapper>
+          <OrderDetailsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/checkout">
         <ProtectedRoute path="/checkout">
-          <SuspenseWrapper>
-            <CheckoutPage />
-          </SuspenseWrapper>
+          <CheckoutPage />
         </ProtectedRoute>
       </Route>
       <Route path="/order-success">
         <ProtectedRoute path="/order-success">
-          <SuspenseWrapper>
-            <OrderSuccessPage />
-          </SuspenseWrapper>
+          <OrderSuccessPage />
         </ProtectedRoute>
       </Route>
         
-      {/* Admin rute - učitavaju se naknadno */}
+      {/* Admin rute - zahtijevaju administratorske privilegije */}
       <Route path="/admin">
         <ProtectedRoute path="/admin">
-          <SuspenseWrapper>
-            <AdminDashboard />
-          </SuspenseWrapper>
+          <AdminDashboard />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/products">
         <ProtectedRoute path="/admin/products">
-          <SuspenseWrapper>
-            <AdminProducts />
-          </SuspenseWrapper>
+          <AdminProducts />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/categories">
         <ProtectedRoute path="/admin/categories">
-          <SuspenseWrapper>
-            <AdminCategories />
-          </SuspenseWrapper>
+          <AdminCategories />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/scents">
         <ProtectedRoute path="/admin/scents">
-          <SuspenseWrapper>
-            <AdminScents />
-          </SuspenseWrapper>
+          <AdminScents />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/colors">
         <ProtectedRoute path="/admin/colors">
-          <SuspenseWrapper>
-            <AdminColors />
-          </SuspenseWrapper>
+          <AdminColors />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/collections">
         <ProtectedRoute path="/admin/collections">
-          <SuspenseWrapper>
-            <AdminCollections />
-          </SuspenseWrapper>
+          <AdminCollections />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/orders">
         <ProtectedRoute path="/admin/orders">
-          <SuspenseWrapper>
-            <AdminOrders />
-          </SuspenseWrapper>
+          <AdminOrders />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/invoices">
         <ProtectedRoute path="/admin/invoices">
-          <SuspenseWrapper>
-            <AdminInvoices />
-          </SuspenseWrapper>
+          <AdminInvoices />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/users">
         <ProtectedRoute path="/admin/users">
-          <SuspenseWrapper>
-            <AdminUsers />
-          </SuspenseWrapper>
+          <AdminUsers />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/delivery-settings">
         <ProtectedRoute path="/admin/delivery-settings">
-          <SuspenseWrapper>
-            <DeliverySettingsPage />
-          </SuspenseWrapper>
+          <DeliverySettingsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/settings">
         <ProtectedRoute path="/admin/settings">
-          <SuspenseWrapper>
-            <AdminSettings />
-          </SuspenseWrapper>
+          <AdminSettings />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/page-settings">
         <ProtectedRoute path="/admin/page-settings">
-          <SuspenseWrapper>
-            <PageSettingsPage />
-          </SuspenseWrapper>
+          <PageSettingsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/contact-settings">
         <ProtectedRoute path="/admin/contact-settings">
-          <SuspenseWrapper>
-            <ContactSettingsPage />
-          </SuspenseWrapper>
+          <ContactSettingsPage />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/subscribers">
         <ProtectedRoute path="/admin/subscribers">
-          <SuspenseWrapper>
-            <AdminSubscribers />
-          </SuspenseWrapper>
+          <AdminSubscribers />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/documents">
         <ProtectedRoute path="/admin/documents">
-          <SuspenseWrapper>
-            <DocumentManagementPage />
-          </SuspenseWrapper>
+          <DocumentManagementPage />
         </ProtectedRoute>
       </Route>
+      
+      {/* Stranica za slučaj da ruta nije pronađena */}
       <Route>
         <NotFound />
       </Route>
