@@ -89,12 +89,12 @@ export default function Header() {
           
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center space-x-6">
-            <div 
+            <Link 
+              href="/"
               className={`font-body hover:text-[#D4AF37] transition cursor-pointer ${location === '/' ? 'text-[#D4AF37]' : 'text-foreground'}`}
-              onClick={() => window.location.href = '/'}
             >
               {t('nav.home')}
-            </div>
+            </Link>
             
             <div className="relative dropdown-container" ref={dropdownRef}>
               <button 

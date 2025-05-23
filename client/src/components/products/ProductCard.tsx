@@ -50,6 +50,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             <img
               src={imageUrl || ""}
               alt={name}
+              loading="lazy"
+              decoding="async"
+              width="300"
+              height="300"
               className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? "scale-110" : ""}`}
             />
           </Link>
