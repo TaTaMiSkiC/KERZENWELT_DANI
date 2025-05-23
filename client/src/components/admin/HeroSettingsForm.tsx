@@ -194,10 +194,22 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
         <div className="bg-background p-4 rounded-md border">
           <h3 className="text-lg font-medium mb-3">Titel und Untertitel Vorschau</h3>
           <div className="p-4 bg-gray-800 rounded-md">
-            <h1 style={getTitleStyle()} className="mb-2">
-              {form.watch(`titleText.${selectedLanguage}`)}
-            </h1>
-            <p style={getSubtitleStyle()} className="mb-0">
+            {Array.isArray(form.watch(`titleText.${selectedLanguage}`)) && 
+              form.watch(`titleText.${selectedLanguage}`).map((titlePart, index) => (
+                <h1 
+                  key={index}
+                  style={{
+                    ...getTitleStyle(),
+                    fontSize: index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem",
+                    fontWeight: index === 1 ? "700" : "500",
+                    marginBottom: "0.25rem"
+                  }}
+                >
+                  {titlePart}
+                </h1>
+              ))
+            }
+            <p style={getSubtitleStyle()} className="mb-0 mt-3">
               {form.watch(`subtitleText.${selectedLanguage}`)}
             </p>
           </div>
