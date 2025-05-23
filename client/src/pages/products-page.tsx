@@ -43,10 +43,14 @@ export default function ProductsPage() {
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
-  // Refetch when filters.category changes
+  // Set initial category from URL and refetch when category changes
   useEffect(() => {
-    console.log("Current category filter:", filters.category);
-  }, [filters.category]);
+    // If there's a category parameter in the URL, set it in our filter state
+    if (categoryParam) {
+      console.log("Setting category filter from URL parameter:", categoryParam);
+      setFilters(prev => ({ ...prev, category: categoryParam }));
+    }
+  }, [categoryParam]);
   
   // Fetch products with category filtering
   const { data: products, isLoading: productsLoading, refetch } = useQuery<Product[]>({
