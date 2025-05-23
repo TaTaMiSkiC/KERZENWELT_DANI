@@ -7382,7 +7382,7 @@ import {
 } from "@/lib/translation-service";
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+  const [language, setLanguageState] = useState<Language>("de");
 
   const setLanguage = (newLanguage: Language) => {
     localStorage.setItem("language", newLanguage);
@@ -7410,6 +7410,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const translateText = (text: string, sourceLanguage?: Language): string => {
     return translateTextService(text, language, sourceLanguage);
   };
+
+  // Učitaj jezik iz localStorage kada se komponenta učita
+  useEffect(() => {
+    const savedLanguage = getInitialLanguage();
+    if (savedLanguage !== language) {
+      setLanguageState(savedLanguage);
+    }
+  }, []);
 
   // Inicijalno postavi jezik
   useEffect(() => {
