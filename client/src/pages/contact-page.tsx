@@ -89,7 +89,7 @@ export default function ContactPage() {
                     <div className="flex items-start">
                       <MapPin className="h-5 w-5 mr-3 mt-0.5 text-primary" />
                       <div>
-                        <p className="font-medium">Adresa:</p>
+                        <p className="font-medium">Adresse:</p>
                         <p>{contactData?.address || "Nije uneseno"}</p>
                         <p>
                           {contactData?.postalCode || ""}{" "}
@@ -125,7 +125,7 @@ export default function ContactPage() {
 
                     {/* Društvene mreže */}
                     <div className="pt-4">
-                      <p className="font-medium mb-2">Follge und:</p>
+                      <p className="font-medium mb-2"></p>
                       <div className="flex space-x-2">
                         {contactData?.instagram && (
                           <Button variant="outline" size="icon" asChild>

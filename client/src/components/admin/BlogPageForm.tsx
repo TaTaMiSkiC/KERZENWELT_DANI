@@ -74,7 +74,7 @@ export default function BlogPageForm({ initialData }: BlogPageFormProps) {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      title: initialData?.title || "Slike",
+      title: initialData?.title || "Bilder",
       content: initialData?.content || "",
     },
   });
@@ -104,8 +104,8 @@ export default function BlogPageForm({ initialData }: BlogPageFormProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Stranica uspješno spremljena",
-        description: "Sadržaj stranice slika je uspješno ažuriran.",
+        title: "Seite erfolgreich gespeichert",
+        description: "Der Inhalt der Bilderseite wurde erfolgreich aktualisiert.",
       });
       
       // Osvježi podatke nakon uspješnog spremanja
@@ -113,7 +113,7 @@ export default function BlogPageForm({ initialData }: BlogPageFormProps) {
     },
     onError: (error: Error) => {
       toast({
-        title: "Greška pri spremanju stranice",
+        title: "Fehler beim Speichern der Seite",
         description: error.message,
         variant: "destructive",
       });

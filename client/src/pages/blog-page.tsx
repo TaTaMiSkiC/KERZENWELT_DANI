@@ -10,62 +10,79 @@ import { useLanguage } from "@/hooks/use-language";
 
 export default function SlikePage() {
   const { t } = useLanguage();
-  
+
   // Dohvati sadržaj slike stranice iz baze
-  const { data: pageData, isLoading, error } = useQuery({
+  const {
+    data: pageData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["/api/pages/blog"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/pages/blog");
-        
+
         if (!response.ok) {
           if (response.status === 404) {
-            return { title: "Slike", content: "Pogledajte našu galeriju slika." };
+            return {
+              title: "Bilder",
+              content: "Schauen Sie sich unsere Bildergalerie an.",
+            };
           }
-          throw new Error("Neuspješno dohvaćanje sadržaja stranice");
+          throw new Error("Seiteninhalt konnte nicht abgerufen werden.");
         }
-        
+
         return await response.json();
       } catch (error) {
         console.error("Greška pri dohvaćanju stranice:", error);
-        return { title: "Slike", content: "Pogledajte našu galeriju slika." };
+        return {
+          title: "Bilder",
+          content: "Schauen Sie sich unsere Bildergalerie an.",
+        };
       }
-    }
+    },
   });
 
   return (
     <>
       <Helmet>
         <title>{pageData?.title || "Slike"} | Kerzenwelt by Dani</title>
-        <meta 
-          name="description" 
-          content="Pogledajte najnovije fotografije naših proizvoda i kreacija na Instagram galeriji Kerzenwelt by Dani."
+        <meta
+          name="description"
+          content="Die neusten Fotos unserer Produkte und Kreationen sehen Sie in der Instagram-Galerie Kerzenwelt by Dani."
         />
       </Helmet>
-      
+
       <Layout>
         <div className="container py-8 md:py-12">
           <div className="mb-8 text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              {isLoading ? <Skeleton className="h-10 w-[250px] mx-auto" /> : pageData?.title || "Slike"}
+              {isLoading ? (
+                <Skeleton className="h-10 w-[250px] mx-auto" />
+              ) : (
+                pageData?.title || "Slike"
+              )}
             </h1>
             <div className="text-muted-foreground max-w-2xl mx-auto">
               {isLoading ? (
                 <Skeleton className="h-4 w-full mx-auto mb-4" />
               ) : (
                 <div className="flex items-center justify-center gap-2">
-                  <Instagram size={18} /> 
+                  <Instagram size={18} />
                   <span>{t("instagram.followUsText")}</span>
                 </div>
               )}
             </div>
           </div>
-          
+
           <div className="max-w-7xl mx-auto">
             {isLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="w-full aspect-square rounded-md" />
+                  <Skeleton
+                    key={i}
+                    className="w-full aspect-square rounded-md"
+                  />
                 ))}
               </div>
             ) : (
@@ -73,16 +90,16 @@ export default function SlikePage() {
                 {pageData?.content && (
                   <Card className="mb-8 mx-auto">
                     <CardContent className="pt-6">
-                      <div 
+                      <div
                         className="prose max-w-none"
-                        dangerouslySetInnerHTML={{ 
-                          __html: pageData.content.replace(/\n/g, '<br />') 
+                        dangerouslySetInnerHTML={{
+                          __html: pageData.content.replace(/\n/g, "<br />"),
                         }}
                       />
                     </CardContent>
                   </Card>
                 )}
-                
+
                 <InstagramGallery />
               </>
             )}
