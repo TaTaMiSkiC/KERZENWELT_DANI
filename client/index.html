@@ -120,10 +120,30 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     
-    <!-- Optimizacija za Core Web Vitals - Prioritizirano učitavanje kritičnih resursa -->
+    <!-- Preload kritičnih resursa s visokim prioritetom -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
     <link rel="preload" href="/src/main.tsx" as="script" fetchpriority="high" />
+    <link rel="modulepreload" href="/src/components/common/Header.tsx" as="script" />
+    <link rel="modulepreload" href="/src/components/home/Hero.tsx" as="script" />
+    
+    <!-- Prefetch CSS koji se koristi u vidljivom dijelu stranice -->
+    <link rel="preload" href="/logo.webp" as="image" fetchpriority="high" />
+    
+    <!-- Postavke za optimiziranje TBT metrike -->
+    <script type="speculationrules">
+    {
+      "prefetch": [
+        {
+          "source": "document",
+          "urls": ["index.html", "/"]
+        }
+      ]
+    }
+    </script>
+    
+    <!-- Sprječavanje blokiranja renderiranja -->
+    <meta http-equiv="Accept-CH" content="DPR, Viewport-Width, Width" />
     
     <!-- Lazy Loading i optimizacija slika - dodana podrška za moderne formate -->
     <script>
