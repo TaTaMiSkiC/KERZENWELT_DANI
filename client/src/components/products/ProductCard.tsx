@@ -62,7 +62,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 width="300"
                 height="300"
                 className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? "scale-110" : ""}`}
-                fetchpriority="high"
+                fetchPriority="high"
               />
             </picture>
           </Link>

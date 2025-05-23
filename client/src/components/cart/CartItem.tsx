@@ -83,11 +83,11 @@ export default function CartItem({ item }: CartItemProps) {
           <Link href={`/products/${product.id}`}>
             <picture>
               <source 
-                srcSet={imageUrl?.replace(/\.(jpg|jpeg|png)$/i, '.webp') || ""} 
+                srcSet={imageUrl ? imageUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp') : ""} 
                 type="image/webp" 
               />
               <img
-                src={imageUrl}
+                src={imageUrl || ""}
                 alt={name}
                 className="w-full h-full object-cover"
                 loading="lazy"
