@@ -55,10 +55,12 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         
         <div className="py-6 px-6">
           <nav className="flex flex-col space-y-1">
-            <Link href="/">
-              <a className="font-body text-text-dark py-2 hover:text-primary" onClick={onClose}>
-                {t('nav.home')}
-              </a>
+            <Link 
+              href="/" 
+              className="font-body text-text-dark py-2 hover:text-primary" 
+              onClick={onClose}
+            >
+              {t('nav.home')}
             </Link>
             
             <Accordion type="single" collapsible className="w-full">
@@ -142,15 +144,19 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             
             <Separator className="my-4" />
             
-            <Link href="/auth">
-              <a className="font-body text-text-dark py-2 hover:text-primary" onClick={onClose}>
-                {t('nav.login')}
-              </a>
+            <Link 
+              href="/auth" 
+              className="font-body text-text-dark py-2 hover:text-primary" 
+              onClick={onClose}
+            >
+              {t('nav.login')}
             </Link>
-            <Link href="/cart">
-              <a className="font-body text-text-dark py-2 hover:text-primary" onClick={onClose}>
-                {t('nav.cart')}
-              </a>
+            <Link 
+              href="/cart" 
+              className="font-body text-text-dark py-2 hover:text-primary" 
+              onClick={onClose}
+            >
+              {t('nav.cart')}
             </Link>
           </nav>
         </div>
