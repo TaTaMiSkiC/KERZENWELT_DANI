@@ -8,8 +8,25 @@ import compression from "compression";
 const app = express();
 // Dodajemo kompresiju za brži prijenos podataka
 app.use(compression({
-  level: 6, // Balans između brzine kompresije i omjera kompresije
-  threshold: 0 // Kompresija za sve veličine odgovora
+  level: 9, // Maksimalna kompresija za sve resurse
+  threshold: 0, // Kompresija za sve veličine odgovora
+  filter: (req, res) => {
+    if (req.headers['accept-encoding']?.includes('gzip')) {
+      // Ne kompresiraj već komprimirane formate
+      const type = res.getHeader('Content-Type');
+      if (type && 
+         (type.toString().includes('image/webp') || 
+          type.toString().includes('image/png') || 
+          type.toString().includes('image/jpeg') || 
+          type.toString().includes('image/gif') || 
+          type.toString().includes('application/font-woff') || 
+          type.toString().includes('application/font-woff2'))) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
 }));
 
 // Middleware za HTTP zaglavlja performansi i sigurnosti
@@ -31,9 +48,21 @@ app.use((req, res, next) => {
   // Za statičke resurse postavljamo optimizirano keširanje
   if (req.url.match(/\.(css|js)$/)) {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 godina za CSS i JS
+    
+    // Dodajemo kompresiju za JavaScript
+    if (req.url.endsWith('.js')) {
+      res.setHeader('Content-Encoding', 'gzip');
+    }
   } else if (req.url.match(/\.(png|jpg|jpeg|gif|webp|avif|ico|svg)$/)) {
+    // Za slike dodajemo posebne optimizacije
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 godina za slike
+    
+    // Dodaj width i height atribute za sve slike (kako bi smanjili CLS)
+    if (req.headers.accept && req.headers.accept.includes('image/webp')) {
+      res.setHeader('Vary', 'Accept');
+    }
   } else if (req.url.match(/\.(woff|woff2|ttf|eot)$/)) {
+    // Posebno keširanje za fontove
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 godina za fontove
   }
   

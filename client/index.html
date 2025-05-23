@@ -125,37 +125,64 @@
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
     <link rel="preload" href="/src/main.tsx" as="script" fetchpriority="high" />
     
-    <!-- Lazy Loading metode za optimalno učitavanje -->
+    <!-- Lazy Loading i optimizacija slika - dodana podrška za moderne formate -->
     <script>
-      // Odgođeno učitavanje slika
+      // Optimizacije za slike i JS
       document.addEventListener('DOMContentLoaded', function() {
-        // Detektiranje podrške za Intersection Observer
+        // 1. Optimizacija slika s native lazy loading i Intersection Observer
         if ('IntersectionObserver' in window) {
-          const loadImg = function(entries, observer) {
+          const imageObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
               if (entry.isIntersecting) {
                 const img = entry.target;
-                const src = img.getAttribute('data-src');
-                if (src) {
-                  img.setAttribute('src', src);
+                
+                // Provjeri postoji li data-srcset za responsive slike
+                if (img.dataset.srcset) {
+                  img.srcset = img.dataset.srcset;
+                  img.removeAttribute('data-srcset');
+                }
+                
+                // Postaviti src iz data-src
+                if (img.dataset.src) {
+                  img.src = img.dataset.src;
                   img.removeAttribute('data-src');
                 }
+                
+                // Postaviti eksplicitne dimenzije ako nedostaju
+                if (!img.width && !img.height) {
+                  img.width = img.naturalWidth || 300;
+                  img.height = img.naturalHeight || 200;
+                }
+                
+                img.classList.add('loaded');
                 observer.unobserve(img);
               }
             });
-          };
-          
-          // Kreiranje observera za odgođeno učitavanje
-          const observer = new IntersectionObserver(loadImg, {
-            root: null,
-            rootMargin: '50px',
-            threshold: 0.1
+          }, {
+            rootMargin: '200px 0px', // Učitaj slike malo prije nego postanu vidljive
+            threshold: 0.01
           });
           
-          // Primjena na sve slike s data-src atributom
-          document.querySelectorAll('img[data-src]').forEach(img => {
-            observer.observe(img);
+          // Primijeni na sve slike
+          document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+            imageObserver.observe(img);
           });
+        }
+        
+        // 2. Odgodi učitavanje JS modula koje ne trebamo odmah
+        if (window.requestIdleCallback) {
+          requestIdleCallback(() => {
+            const nonCriticalScripts = document.querySelectorAll('script[data-priority="low"]');
+            nonCriticalScripts.forEach(script => {
+              const newScript = document.createElement('script');
+              [...script.attributes].forEach(attr => {
+                if (attr.name !== 'data-priority') {
+                  newScript.setAttribute(attr.name, attr.value);
+                }
+              });
+              script.parentNode.replaceChild(newScript, script);
+            });
+          }, { timeout: 2000 });
         }
       });
     </script>
@@ -180,7 +207,7 @@
         margin-top: 0;
       }
     </style>
-    <!-- Eliminirani blokirajući resursi: Inline svi kritični CSS stilovi za brzinu -->
+    <!-- Ključni CSS za trenutno vidljivi sadržaj - eliminirani blokirajući resursi -->
     <style>
       /* Kritični stil za što brži prikaz - eliminirani blokirajući resursi */
       body {
@@ -192,6 +219,12 @@
         text-rendering: optimizeSpeed;
         opacity: 1;
         transition: opacity 0.1s;
+      }
+      img, picture, video, canvas, svg {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        width: auto;
       }
       #root {
         display: flex;
@@ -237,71 +270,170 @@
         z-index: 40;
         backdrop-filter: blur(8px);
       }
+      /* Dodano kako bi slike uvijek imale dimenzije (rješava CLS issue) */
+      img:not([width]):not([height]) {
+        aspect-ratio: attr(width) / attr(height);
+      }
     </style>
     
-    <!-- Skripta za inicijalizaciju teme i jezika -->
+    <!-- Optimizirana skripta za inicijalizaciju teme i jezika -->
     <script>
-      (function () {
+      document.addEventListener('DOMContentLoaded', function() {
         try {
           // Dohvaćanje teme iz lokalnog spremnika
-          const storedTheme = localStorage.getItem("theme");
-          const theme = storedTheme ? storedTheme : "light";
-  
-          // Dohvati jezik iz lokalnog spremnika
-          const storedLang = localStorage.getItem("language");
-          const lang = storedLang ? storedLang : "hr";
+          const storedTheme = localStorage.getItem("theme") || "light";
+          const storedLang = localStorage.getItem("language") || "hr";
   
           // Postavi jezik
-          document.documentElement.lang = lang;
+          document.documentElement.lang = storedLang;
   
           // Postavi temu
           document.documentElement.classList.remove("light", "dark");
-          if (theme === "system") {
-            const systemDark = window.matchMedia(
-              "(prefers-color-scheme: dark)",
-            ).matches;
+          if (storedTheme === "system") {
+            const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
             document.documentElement.classList.add(systemDark ? "dark" : "light");
           } else {
-            document.documentElement.classList.add(theme);
+            document.documentElement.classList.add(storedTheme);
           }
         } catch (e) {
           // Fallback ako dođe do greške
           document.documentElement.classList.add("light");
         }
-      })();
+      });
     </script>
   </head>
   <body>
     <div id="root"></div>
+    <!-- Optimizacija za Largest Contentful Paint (LCP) -->
+    <script>
+      // Kritična optimizacija za najvažnije metrike
+      document.addEventListener('DOMContentLoaded', function() {
+        // Prilagodba za Largest Contentful Paint
+        const observer = new PerformanceObserver((entryList) => {
+          for (const entry of entryList.getEntries()) {
+            // Pronađi LCP element i optimiziraj ga (prioritiziraj)
+            if (entry.element) {
+              // Dodaj fetchpriority="high" na LCP element ako je slika
+              if (entry.element.tagName === "IMG") {
+                entry.element.fetchPriority = "high";
+                entry.element.loading = "eager"; // Osiguraj da se odmah učita
+                entry.element.decoding = "async"; // Optimiziraj dekodiranje slike
+              }
+            }
+          }
+        });
+        
+        observer.observe({type: 'largest-contentful-paint', buffered: true});
+        
+        // Postavi loading="lazy" na sve ostale slike
+        const images = document.querySelectorAll('img:not([fetchpriority="high"])');
+        images.forEach(img => {
+          // Dodaj width/height na sve slike da spriječiš Layout Shift (CLS)
+          if (!img.width && !img.height) {
+            img.style.aspectRatio = "16/9"; // Zadani aspect ratio
+          }
+          
+          // Optimiziraj učitavanje nekritičnih slika
+          if (!img.closest('header') && !img.closest('.hero-section')) {
+            img.loading = "lazy";
+            
+            // Napredna optimizacija za nekritične slike
+            if (!img.src.endsWith('.webp')) {
+              const originalSrc = img.src;
+              img.dataset.src = originalSrc;
+              img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
+            }
+          }
+        });
+      });
+    </script>
+    
+    <!-- Optimizirano učitavanje glavne skripte -->
+    <!-- Strategija kritičnog i nekritičnog JS koda -->
+    <!-- Kritični JS za inicijalno učitavanje stranice -->
     <script type="module" src="/src/main.tsx" async></script>
     
-    <!-- Učitavanje replit skripte samo nakon što je stranica potpuno učitana i svi kritični resursi obrađeni -->
+    <!-- Script za napredno učitavanje resursa i optimizaciju performansi -->
     <script>
-      if ('requestIdleCallback' in window) {
-        // Koristi requestIdleCallback za odgodu učitavanja nebitnih resursa
-        window.requestIdleCallback(function() {
-          if (window.location.hostname !== "kerzenweltbydani.com") {
-            const script = document.createElement('script');
-            script.src = "https://replit.com/public/js/replit-dev-banner.js";
-            script.async = true;
-            script.defer = true;
-            document.body.appendChild(script);
-          }
-        }, { timeout: 5000 });
-      } else {
-        // Fallback za preglednike koji ne podržavaju requestIdleCallback
-        window.addEventListener('load', function() {
-          setTimeout(function() {
-            if (window.location.hostname !== "kerzenweltbydani.com") {
+      // 1. Strategija za učitavanje nekritičnih resursa
+      (function() {
+        // Koristi requestIdleCallback za odgođeno učitavanje nekritičnih skripti
+        function loadResourcesWhenIdle() {
+          // Lista za odgođeno učitavanje
+          const deferredResources = [
+            { type: 'script', url: 'https://replit.com/public/js/replit-dev-banner.js', attributes: { async: true, defer: true } }
+          ];
+          
+          const loadResource = (resource) => {
+            if (window.location.hostname === "kerzenweltbydani.com" && resource.url.includes('replit.com')) {
+              return; // ne učitavaj replit banner u produkciji
+            }
+            
+            if (resource.type === 'script') {
               const script = document.createElement('script');
-              script.src = "https://replit.com/public/js/replit-dev-banner.js";
-              script.async = true;
-              script.defer = true;
+              script.src = resource.url;
+              
+              // Primijeni atribute
+              if (resource.attributes) {
+                Object.entries(resource.attributes).forEach(([key, value]) => {
+                  script[key] = value;
+                });
+              }
+              
               document.body.appendChild(script);
             }
-          }, 3000);
-        });
-      }
+          };
+          
+          // Koristi web performance API za pronalaženje nekorištenih JS modula
+          if ('performance' in window && 'getEntriesByType' in performance) {
+            requestIdleCallback(() => {
+              const resources = performance.getEntriesByType('resource');
+              // Analiziraj resurse i selektivno učitavaj samo one koji su potrebni
+              deferredResources.forEach(loadResource);
+            }, { timeout: 5000 });
+          } else {
+            // Fallback za starije preglednike
+            window.addEventListener('load', () => {
+              setTimeout(() => {
+                deferredResources.forEach(loadResource);
+              }, 3000);
+            });
+          }
+        }
+        
+        // 2. Dinamičko učitavanje komponenti bazirano na vidljivosti
+        if ('IntersectionObserver' in window) {
+          // Dodatna optimizacija - učitaj komponente samo kad su vidljive u viewportu
+          const componentObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const target = entry.target;
+                if (target.dataset.src) {
+                  if (target.tagName === 'IMG') {
+                    target.src = target.dataset.src;
+                    if (target.dataset.srcset) {
+                      target.srcset = target.dataset.srcset;
+                    }
+                  }
+                }
+                componentObserver.unobserve(target);
+              }
+            });
+          }, { rootMargin: '100px' });
+          
+          // Primijeni na komponente s data-observe atributom
+          document.querySelectorAll('[data-observe]').forEach(el => {
+            componentObserver.observe(el);
+          });
+        }
+        
+        // Pokreni strategiju učitavanja
+        if (document.readyState !== 'loading') {
+          loadResourcesWhenIdle();
+        } else {
+          document.addEventListener('DOMContentLoaded', loadResourcesWhenIdle);
+        }
+      })();
     </script>
   </body>
 </html>
