@@ -57,7 +57,20 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // Dodatna sigurnosna i performance poboljšanja
+  // Poboljšani cache za statičke resurse identifirane u PageSpeed izvještaju 
+  // Rješavanje problema "Statische Inhalte mit einer effizienten Cache-Richtlinie bereitstellen"
+  if (req.url.endsWith('.svg') || req.url.includes('logo.svg') || req.url.includes('Visa_Inc._logo.svg') || 
+      req.url.includes('PayPal.svg') || req.url.includes('Mastercard_2019_logo.svg')) {
+    // Postavi dugi cache period za eksterne resurse poput SVG ikona 
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  
+  // Optimizacija za CSS datoteke - smanjenje nekorištenog CSS-a 
+  // "Reduziere nicht verwendete CSS Mögliche Einsparung von 20 KiB"
+  if (req.url.includes('.css')) {
+    // Postavimo dugo trajanje cachea za CSS
+    res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 dana
+  }
   res.setHeader('X-DNS-Prefetch-Control', 'on');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   

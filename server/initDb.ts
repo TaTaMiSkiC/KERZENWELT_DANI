@@ -160,30 +160,6 @@ async function createDefaultProducts() {
     burnTime: "40-50 sati",
     featured: true
   });
-    // {
-    //   name: "Lavender Relax",
-    //   description: "Opuštajuća svijeća s mirisom lavande idealna za spavaću sobu ili kupaonicu.",
-    //   price: "22.99",
-    //   imageUrl: "https://images.unsplash.com/photo-1607892379596-fb30e44508b5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80",
-    //   categoryId: mirisneKategorija.id,
-    //   stock: 15,
-    //   scent: "Lavanda",
-    //   color: "Ljubičasta",
-    //   burnTime: "35-45 sati",
-    //   featured: true
-    // },
-    // {
-    //   name: "Marble Pillar",
-    //   description: "Elegantna mramorna dekorativna svijeća koja će se uklopiti u svaki dom.",
-    //   price: "34.99",
-    //   imageUrl: "https://images.unsplash.com/photo-1636977564078-d5a893af0564?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80",
-    //   categoryId: dekorativneKategorija.id,
-    //   stock: 10,
-    //   color: "Crno-bijela",
-    //   burnTime: "60-70 sati",
-    //   featured: true
-    // }
-  ]);
 
   console.log("Proizvodi uspješno kreirani");
 }
