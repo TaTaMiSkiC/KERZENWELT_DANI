@@ -17,6 +17,7 @@ import BlogPage from "@/pages/blog-page";
 import ProfilePage from "@/pages/profile-page";
 import OrdersPage from "@/pages/orders-page";
 import OrderDetailsPage from "@/pages/order-details-page";
+import NewsletterPage from "@/pages/newsletter-page";
 import AdminDashboard from "@/pages/admin/admin-dashboard";
 import AdminProducts from "@/pages/admin/admin-products";
 import AdminCategories from "@/pages/admin/admin-categories";
@@ -68,6 +69,9 @@ function Router() {
       </Route>
       <Route path="/blog">
         <BlogPage />
+      </Route>
+      <Route path="/newsletter">
+        <NewsletterPage />
       </Route>
       <Route path="/profile">
         <ProtectedRoute path="/profile" component={ProfilePage} />
