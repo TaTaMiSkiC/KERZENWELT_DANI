@@ -68,8 +68,9 @@ export default function ProductsPage() {
     queryKey: ["/api/categories"],
   });
   
-  // Set initial category from URL and trigger refetch when URL parameter changes
+  // Set initial category from URL and sessionStorage
   useEffect(() => {
+    // Check for URL parameter first
     if (categoryParam) {
       console.log("Setting category filter from URL parameter:", categoryParam);
       
@@ -78,6 +79,21 @@ export default function ProductsPage() {
         console.log("Current category:", prev.category, "New category:", categoryParam);
         return { ...prev, category: categoryParam };
       });
+    } 
+    // Then check sessionStorage as backup
+    else {
+      try {
+        const storedCategory = sessionStorage.getItem('selectedCategory');
+        if (storedCategory) {
+          console.log("Retrieved category from sessionStorage:", storedCategory);
+          setFilters(prev => ({ ...prev, category: storedCategory }));
+          
+          // Clear sessionStorage after use to avoid persisting the selection
+          sessionStorage.removeItem('selectedCategory');
+        }
+      } catch (error) {
+        console.log("Error accessing sessionStorage:", error);
+      }
     }
   }, [categoryParam]);
   
