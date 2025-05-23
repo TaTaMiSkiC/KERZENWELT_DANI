@@ -102,9 +102,7 @@ const defaultHeroSettings: HeroSettings = {
     it: "Scopri la nostra collezione unica di candele artigianali, perfette per ogni occasione.",
     sl: "Odkrijte našo edinstveno zbirko ročno izdelanih sveč, popolnih za vsako priložnost."
   },
-  titleFontSize: "4xl md:text-5xl lg:text-6xl",
-  titleFontWeight: "bold",
-  titleColor: "white",
+
   subtitleFontSize: "lg md:text-xl",
   subtitleFontWeight: "normal",
   subtitleColor: "white opacity-90"
