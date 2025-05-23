@@ -63,13 +63,10 @@ export default function ProductsPage() {
     
     // Filter by category
     if (filters.category !== "all") {
-      // Get the category ID directly from the raw product object to ensure we catch both naming conventions
+      // Access the raw object to get the category_id field directly
       const rawProduct = product as any;
-      const productCategoryId = rawProduct.categoryId || rawProduct.category_id;
-      
-      console.log(`Comparing product ${product.name} (categoryId: ${productCategoryId}) with filter: ${filters.category}`);
-      
-      if (productCategoryId !== parseInt(filters.category)) {
+      // In the database, the field is definitely called category_id (snake_case)
+      if (rawProduct.category_id !== parseInt(filters.category)) {
         return false;
       }
     }
@@ -124,12 +121,24 @@ export default function ProductsPage() {
   
   // Log for debugging purposes
   useEffect(() => {
-    if (products && products.length > 0 && filters.category !== "all") {
-      console.log("Filtriranje po kategoriji:", filters.category);
-      console.log("Broj proizvoda:", products.length);
-      console.log("Broj filtriranih proizvoda:", filteredProducts.length);
+    if (products && products.length > 0) {
+      console.log("Detailed product info for debugging:");
+      console.log("Filter category:", filters.category);
+      console.log("First product complete object:", products[0]);
+      // Print out all product keys to see exact structure
+      const sampleKeys = Object.keys(products[0]);
+      console.log("Product keys:", sampleKeys);
+      
+      // Check if any products pass the filter criteria
+      if (filters.category !== "all") {
+        const matchingProducts = products.filter(p => {
+          const rawProduct = p as any;
+          return rawProduct.category_id === parseInt(filters.category);
+        });
+        console.log("Products matching category " + filters.category + ":", matchingProducts.length);
+      }
     }
-  }, [products, filters.category, filteredProducts.length]);
+  }, [products, filters.category]);
   
   // Get category name for title
   const getCategoryName = () => {
