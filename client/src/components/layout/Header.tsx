@@ -213,19 +213,19 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="text-foreground hover:text-[#D4AF37] transition cursor-pointer" onClick={() => window.location.href = '/auth'}>
+              <Link href="/auth" className="text-foreground hover:text-[#D4AF37] transition cursor-pointer">
                 <User size={20} />
-              </div>
+              </Link>
             )}
             
-            <div className="text-foreground hover:text-[#D4AF37] transition relative cursor-pointer" onClick={() => window.location.href = '/cart'}>
+            <Link href="/cart" className="text-foreground hover:text-[#D4AF37] transition relative cursor-pointer">
               <ShoppingBag size={20} />
               {cartItemCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-[#D4AF37] text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                   {cartItemCount}
                 </span>
               )}
-            </div>
+            </Link>
             
             {/* Mobile menu toggle */}
             <Button 

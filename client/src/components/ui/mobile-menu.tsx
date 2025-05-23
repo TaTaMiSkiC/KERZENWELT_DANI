@@ -71,18 +71,23 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     {categories && categories.length > 0 ? (
                       <>
                         {categories.map((category) => (
-                          <Link key={category.id} href={`/products?category=${category.id}`}>
-                            <a className="font-body text-text-dark py-1 hover:text-primary flex items-center" onClick={onClose}>
-                              <ChevronRight size={14} className="mr-1" />
-                              {category.name}
-                            </a>
+                          <Link 
+                            key={category.id} 
+                            href={`/products?category=${category.id}`}
+                            className="font-body text-text-dark py-1 hover:text-primary flex items-center"
+                            onClick={onClose}
+                          >
+                            <ChevronRight size={14} className="mr-1" />
+                            {category.name}
                           </Link>
                         ))}
-                        <Link href="/products">
-                          <a className="font-body text-text-dark py-1 hover:text-primary flex items-center" onClick={onClose}>
-                            <ChevronRight size={14} className="mr-1" />
-                            {t('nav.allCategories')}
-                          </a>
+                        <Link 
+                          href="/products"
+                          className="font-body text-text-dark py-1 hover:text-primary flex items-center"
+                          onClick={onClose}
+                        >
+                          <ChevronRight size={14} className="mr-1" />
+                          {t('nav.allCategories')}
                         </Link>
                       </>
                     ) : (
@@ -93,20 +98,26 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               </AccordionItem>
             </Accordion>
             
-            <Link href="/about">
-              <a className="font-body text-text-dark py-2 hover:text-primary" onClick={onClose}>
-                {t('nav.about')}
-              </a>
+            <Link 
+              href="/about"
+              className="font-body text-text-dark py-2 hover:text-primary"
+              onClick={onClose}
+            >
+              {t('nav.about')}
             </Link>
-            <Link href="/blog">
-              <a className="font-body text-text-dark py-2 hover:text-primary" onClick={onClose}>
-                {t('nav.pictures')}
-              </a>
+            <Link 
+              href="/blog"
+              className="font-body text-text-dark py-2 hover:text-primary"
+              onClick={onClose}
+            >
+              {t('nav.pictures')}
             </Link>
-            <Link href="/contact">
-              <a className="font-body text-text-dark py-2 hover:text-primary" onClick={onClose}>
-                {t('nav.contact')}
-              </a>
+            <Link 
+              href="/contact"
+              className="font-body text-text-dark py-2 hover:text-primary"
+              onClick={onClose}
+            >
+              {t('nav.contact')}
             </Link>
             
             <Separator className="my-4" />
