@@ -24,8 +24,10 @@ export default function CategoryCard({ category }: CategoryCardProps) {
             className="inline-block text-white font-accent text-sm border-b border-white pb-1 hover:border-primary hover:text-primary transition-colors cursor-pointer"
             onClick={(e) => {
               e.preventDefault();
-              // Use a direct window location change to navigate to the products page with the category parameter
+              // Use a completely new page load to ensure we get fresh data with the category filter
               window.location.href = `/products?category=${id}`;
+              // Force a full page reload rather than a client-side route change
+              setTimeout(() => window.location.reload(), 100);
             }}
           >
             {t('home.exploreCollection')}
