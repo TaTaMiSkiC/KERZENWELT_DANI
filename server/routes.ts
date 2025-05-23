@@ -2750,7 +2750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Send the email
     try {
-      await sendEmail(process.env.SENDGRID_API_KEY!, {
+      await sendEmail({
         to: email,
         from: "noreply@kerzenwelt.com",
         subject,
@@ -2762,7 +2762,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return true;
     } catch (error) {
       console.error("Error sending subscription email:", error);
-      throw error;
+      // Continue even if email fails
+      return false;
     }
   }
 
