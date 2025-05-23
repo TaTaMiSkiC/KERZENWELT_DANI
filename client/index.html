@@ -15,8 +15,8 @@
     <meta http-equiv="x-dns-prefetch-control" content="on" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/webp" href="/logo.webp" />
-    <link rel="apple-touch-icon" href="/logo.webp" />
+    <link rel="icon" type="image/webp" href="/logo.webp" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/logo.webp" sizes="180x180" />
     <!-- Fallback za starije preglednike -->
     <link rel="icon" type="image/png" href="/logo.png" />
 
@@ -78,7 +78,17 @@
       }
     </style>
     
-    <!-- Odgođeno učitavanje dodatnih fontova -->
+    <!-- Odgođeno učitavanje dodatnih fontova - poboljšana tehnika "Font Display Pattern" -->
+    <link 
+      rel="preconnect" 
+      href="https://fonts.googleapis.com" 
+      crossorigin
+    />
+    <link 
+      rel="preconnect" 
+      href="https://fonts.gstatic.com" 
+      crossorigin
+    />
     <link 
       rel="stylesheet" 
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap"
@@ -110,10 +120,45 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     
-    <!-- Optimizacija za Core Web Vitals -->
+    <!-- Optimizacija za Core Web Vitals - Prioritizirano učitavanje kritičnih resursa -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
     <link rel="preload" href="/src/main.tsx" as="script" fetchpriority="high" />
+    
+    <!-- Lazy Loading metode za optimalno učitavanje -->
+    <script>
+      // Odgođeno učitavanje slika
+      document.addEventListener('DOMContentLoaded', function() {
+        // Detektiranje podrške za Intersection Observer
+        if ('IntersectionObserver' in window) {
+          const loadImg = function(entries, observer) {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const img = entry.target;
+                const src = img.getAttribute('data-src');
+                if (src) {
+                  img.setAttribute('src', src);
+                  img.removeAttribute('data-src');
+                }
+                observer.unobserve(img);
+              }
+            });
+          };
+          
+          // Kreiranje observera za odgođeno učitavanje
+          const observer = new IntersectionObserver(loadImg, {
+            root: null,
+            rootMargin: '50px',
+            threshold: 0.1
+          });
+          
+          // Primjena na sve slike s data-src atributom
+          document.querySelectorAll('img[data-src]').forEach(img => {
+            observer.observe(img);
+          });
+        }
+      });
+    </script>
     <meta name="format-detection" content="telephone=no" />
     
     <!-- Kritični CSS za iznad fold-a -->
