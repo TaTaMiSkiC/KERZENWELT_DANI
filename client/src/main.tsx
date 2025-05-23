@@ -5,29 +5,19 @@ import "./index.css";
 // Učitaj App komponentu direktno umjesto lazy loading
 import App from "./App";
 
-// Dodajemo komponentu za učitavanje koja će se prikazati dok se glavna aplikacija učitava
-const LoadingFallback = () => (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    height: '100vh',
-    flexDirection: 'column',
-    gap: '1rem',
-    background: '#f8f9fa'
-  }}>
-    <img 
-      src="/logo.webp" 
-      alt="Kerzenwelt by Dani" 
-      style={{ 
-        width: '200px', 
-        height: 'auto',
-        animation: 'pulse 1.5s infinite ease-in-out'
-      }} 
-    />
-    <p style={{ fontFamily: 'sans-serif', color: '#666' }}>Laden...</p>
-  </div>
-);
+// Optimizirana komponenta za učitavanje
+function preloadImages() {
+  const images = ['/logo.webp'];
+  images.forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+}
+
+// Pozovi preload slika odmah
+if (typeof window !== 'undefined') {
+  preloadImages();
+}
 
 // Inicijalizacija jezika dokumenta
 if (typeof window !== "undefined") {

@@ -7,7 +7,6 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
     />
     <meta name="theme-color" content="#ffffff" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Kerzenwelt by Dani | Handgemachte Kerzen</title>
     <meta
       name="description"
@@ -21,10 +20,10 @@
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <!-- Cache Control -->
-    <meta http-equiv="Cache-Control" content="max-age=31536000" />
+    <meta http-equiv="Cache-Control" content="max-age=31536000, immutable" />
     
     <!-- Performance Optimizations -->
-    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
     <!-- SEO Improvements -->
@@ -57,20 +56,35 @@
     <meta name="twitter:image" content="/logo.webp">
     <link rel="dns-prefetch" href="https://kerzenweltbydani.com" />
 
-    <!-- Optimizirano učitavanje fontova -->
-    <link
-      rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
-      as="style"
-      crossorigin="anonymous"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+    <!-- Inline kritični CSS za fontove -->
+    <style>
+      /* Inline učitavanje kritičnih fontova za brži prikaz */
+      @font-face {
+        font-family: 'Montserrat';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Montserrat';
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+    </style>
+    
+    <!-- Odgođeno učitavanje dodatnih fontova -->
+    <link 
+      rel="stylesheet" 
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap"
       media="print" 
       onload="this.media='all'"
+      fetchpriority="low"
     />
-    <!-- Fallback za fontove ako JavaScript ne radi -->
     <noscript>
       <link
         rel="stylesheet"
@@ -85,7 +99,26 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    
+    <!-- Kritični CSS za iznad fold-a -->
+    <style>
+      /* Odmah prikažite važne elemente stranice bez čekanja na vanjske CSS datoteke */
+      body {
+        margin: 0;
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background-color: #ffffff;
+        color: #333333;
+      }
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .heading {
+        line-height: 1.2;
+        margin-top: 0;
+      }
+    </style>
     <!-- Skripta za inicijalizaciju teme i jezika -->
     <script>
       (function () {
