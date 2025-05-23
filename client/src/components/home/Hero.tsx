@@ -139,31 +139,62 @@ export default function Hero() {
   const imgRef = useRef<HTMLImageElement>(null);
   const [isImageLoaded, setIsImageLoaded] = useState(true);
 
-  // Učitaj sliku direktno preko inline base64 za najbrže moguće učitavanje
+  // Agresivna optimizacija za smanjenje Rendering-Verzögerung (11.05s u LCP-u)
   useEffect(() => {
-    // Direktno kreiramo sliku s viskokim prioritetom za LCP
-    const img = new Image();
-    img.src = candleBackground;
-    
-    // Označavamo sliku s najvećim prioritetom
-    if ('fetchPriority' in img) {
-      // @ts-ignore - Podržano u Chrome, ali ne u TypeScript tipovima
-      img.fetchPriority = 'high';
-    }
-    
+    // Prethodno učitavanje i priprema slike (preload)
     if (imgRef.current) {
-      imgRef.current.style.opacity = '1';
+      // Koristimo requestAnimationFrame za optimalan timing
+      requestAnimationFrame(() => {
+        if (imgRef.current) {
+          // Direktno optimiziramo performanse renderiranja slike
+          imgRef.current.style.transform = 'translateZ(0)'; // Hardware acceleration
+          imgRef.current.style.backfaceVisibility = 'hidden'; // Sprječava repainting
+          
+          // Dodatno smanjujemo kompleksnost renderiranja
+          imgRef.current.style.imageRendering = 'auto';
+          
+          // Sprječavamo layout shift vezan uz sliku
+          imgRef.current.width = imgRef.current.naturalWidth || 1920;
+          imgRef.current.height = imgRef.current.naturalHeight || 1080;
+          
+          // Označi kao direktno renderiran element (hint za browser)
+          imgRef.current.setAttribute('importance', 'high');
+        }
+      });
     }
     
-    // Direktno signaliziramo browseru koji je LCP element
-    if (headingRef.current && 'LargestContentfulPaint' in window) {
-      // Pretpriprema za LCP optimizaciju
+    // Optimize the critical rendering path
+    if ('requestIdleCallback' in window) {
+      // @ts-ignore - Moderni browseri podržavaju
+      window.requestIdleCallback(() => {
+        // Optimizacija naslova - ovo je glavni tekst
+        if (headingRef.current) {
+          headingRef.current.style.visibility = 'visible';
+          headingRef.current.style.opacity = '1';
+          
+          // Bolje renderiranje teksta
+          headingRef.current.style.fontDisplay = 'swap';
+        }
+      }, { timeout: 500 });
+    } else {
+      // Fallback za starije preglednike
       setTimeout(() => {
         if (headingRef.current) {
           headingRef.current.style.visibility = 'visible';
           headingRef.current.style.opacity = '1';
         }
-      }, 10);
+      }, 100);
+    }
+    
+    // Ubrzaj LCP metriku prema novim optimizacijama Chromea
+    if ('navigation' in window && 'addEventListener' in window) {
+      // @ts-ignore - Moderni browseri podržavaju
+      window.navigation?.addEventListener('navigate', () => {
+        if (imgRef.current) {
+          // Hint browseru da odmah preuzme sliku
+          imgRef.current.fetchPriority = 'high';
+        }
+      });
     }
   }, []);
   
@@ -178,7 +209,12 @@ export default function Hero() {
         className="absolute inset-0 w-full h-full object-cover object-center"
         loading="eager"
         fetchPriority="high" // Treba biti velika prioriteta
-        style={{ opacity: 0.7 }} // Smanjujemo zatamnjenje umjesto dodavanja overlay elementa
+        style={{ 
+          opacity: 0.7,
+          transform: 'translateZ(0)', // Aktivira hardware akceleraciju
+          willChange: 'opacity', // Daje hint browseru da će se ova vrijednost mijenjati
+          imageRendering: 'auto' // Optimizacija prikaza slike
+        }} // Optimizacije za smanjenje Rendering-Verzögerung
         decoding="async"
       />
       
