@@ -62,9 +62,12 @@ export default function ProductsPage() {
     }
     
     // Filter by category
-    if (filters.category !== "all" && product.categoryId !== parseInt(filters.category)) {
-      // Check if product has a categoryId that matches the filter
-      return false;
+    if (filters.category !== "all") {
+      // Check both camelCase and snake_case variants for backward compatibility
+      const productCategoryId = product.categoryId || product.category_id;
+      if (productCategoryId !== parseInt(filters.category)) {
+        return false;
+      }
     }
     
     // Filter by search term
