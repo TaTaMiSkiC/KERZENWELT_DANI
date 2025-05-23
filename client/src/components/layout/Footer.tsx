@@ -96,6 +96,13 @@ export default function Footer() {
                   </div>
                 </Link>
               </li>
+              <li>
+                <Link href="/newsletter">
+                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
+                    Newsletter
+                  </div>
+                </Link>
+              </li>
             </ul>
           </div>
 
