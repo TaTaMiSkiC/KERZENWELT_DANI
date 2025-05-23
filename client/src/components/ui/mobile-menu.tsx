@@ -139,8 +139,10 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 rel="noopener noreferrer"
                 className="text-text-dark hover:text-primary transition"
                 onClick={onClose}
+                aria-label="Instagram"
               >
                 <Instagram size={20} />
+                <span className="sr-only">Instagram</span>
               </a>
             </div>
             
@@ -165,8 +167,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         
         <div className="absolute bottom-4 right-4">
           <SheetClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Zatvori izbornik">
               <X size={18} />
+              <span className="sr-only">Zatvori izbornik</span>
             </Button>
           </SheetClose>
         </div>

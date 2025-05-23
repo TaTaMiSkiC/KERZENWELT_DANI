@@ -167,11 +167,11 @@ export default function Hero() {
                 {t('home.exploreCollection')}
               </Button>
             </Link>
-            <Link href="/about">
+            <Link href="/about" aria-label={t('home.aboutUs')}>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary w-full sm:w-auto"
+                className="bg-transparent border-2 border-white text-white hover:bg-[#f5d76e] hover:text-slate-900 w-full sm:w-auto"
               >
                 {t('home.aboutUs')}
               </Button>
