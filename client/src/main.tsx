@@ -1,9 +1,9 @@
 import { createRoot } from "react-dom/client";
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import "./index.css";
 
-// Lazy load App component for better initial loading performance
-const App = lazy(() => import("./App"));
+// Učitaj App komponentu direktno umjesto lazy loading
+import App from "./App";
 
 // Dodajemo komponentu za učitavanje koja će se prikazati dok se glavna aplikacija učitava
 const LoadingFallback = () => (
@@ -17,7 +17,7 @@ const LoadingFallback = () => (
     background: '#f8f9fa'
   }}>
     <img 
-      src="/logo.png" 
+      src="/logo.webp" 
       alt="Kerzenwelt by Dani" 
       style={{ 
         width: '200px', 
@@ -40,7 +40,5 @@ if (typeof window !== "undefined") {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <Suspense fallback={<LoadingFallback />}>
-    <App />
-  </Suspense>
+  <App />
 );
