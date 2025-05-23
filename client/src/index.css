@@ -101,6 +101,13 @@
     font-family: "Dancing Script", cursive;
   }
   
+  /* Animacija za loading screen */
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+  
   .product-card:hover {
     @apply shadow-lg transform -translate-y-1;
   }
