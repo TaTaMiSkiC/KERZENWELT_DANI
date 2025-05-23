@@ -7392,7 +7392,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   // Funkcija za prijevod
   const t = (key: string): string => {
-    return translations[language][key] || key;
+    // Pronađi prijevod za trenutni jezik
+    if (translations[language] && translations[language][key]) {
+      return translations[language][key];
+    }
+    
+    // Pokušaj pronaći prijevod u engleskom jeziku kao fallback
+    if (translations.en && translations.en[key]) {
+      return translations.en[key];
+    }
+    
+    // Ako niti engleski nema prijevod, vrati prazan string umjesto ključa
+    return "";
   };
 
   // Funkcija za prevođenje teksta
