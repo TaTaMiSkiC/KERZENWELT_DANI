@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { useTheme } from "next-themes";
+import { useTheme } from "./use-theme";
 
 type Theme = "light" | "dark" | "system";
 type Language = "hr" | "en" | "de";
