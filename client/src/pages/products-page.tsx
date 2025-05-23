@@ -63,8 +63,8 @@ export default function ProductsPage() {
     
     // Filter by category
     if (filters.category !== "all") {
-      // Check both camelCase and snake_case variants for backward compatibility
-      const productCategoryId = product.categoryId || product.category_id;
+      // Access category_id from the raw object data since TypeScript definitions might not match DB structure
+      const productCategoryId = product.categoryId || (product as any).category_id;
       if (productCategoryId !== parseInt(filters.category)) {
         return false;
       }
@@ -117,6 +117,15 @@ export default function ProductsPage() {
       setFilters(prev => ({ ...prev, category: categoryParam }));
     }
   }, [categoryParam]);
+  
+  // Log for debugging purposes
+  useEffect(() => {
+    if (products && products.length > 0 && filters.category !== "all") {
+      console.log("Filtriranje po kategoriji:", filters.category);
+      console.log("Broj proizvoda:", products.length);
+      console.log("Broj filtriranih proizvoda:", filteredProducts.length);
+    }
+  }, [products, filters.category, filteredProducts.length]);
   
   // Get category name for title
   const getCategoryName = () => {
