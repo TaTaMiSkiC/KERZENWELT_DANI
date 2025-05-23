@@ -125,7 +125,7 @@ export default function ContactPage() {
 
                     {/* Društvene mreže */}
                     <div className="pt-4">
-                      <p className="font-medium mb-2">Pratite nas:</p>
+                      <p className="font-medium mb-2">Follge und:</p>
                       <div className="flex space-x-2">
                         {contactData?.instagram && (
                           <Button variant="outline" size="icon" asChild>
