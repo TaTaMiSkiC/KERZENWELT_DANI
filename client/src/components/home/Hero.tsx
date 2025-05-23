@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useRef } from "react";
 import candleBackground from "@/assets/candle-background.jpg";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -133,93 +132,31 @@ export default function Hero() {
     return weightMap[weight] || undefined;
   };
   
-  // Kompletno reimplementirana optimizacija slike za rješavanje "Ladeverzögerung" problema (2.94s)
-  const sectionRef = useRef<HTMLElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [isImageLoaded, setIsImageLoaded] = useState(true);
-
-  // Jednostavnija, sigurnija verzija optimizacije za Rendering-Verzögerung
-  useEffect(() => {
-    // Osnovne optimizacije za sliku
-    if (imgRef.current) {
-      // Osnovna hardware akceleracija
-      imgRef.current.style.transform = 'translateZ(0)';
-      
-      // Postavi odmah vidljivost
-      if (headingRef.current) {
-        headingRef.current.style.visibility = 'visible';
-        headingRef.current.style.opacity = '1';
-      }
-    }
-  }, []);
-  
-  // Direktno rješavamo problem LCP "Ladeverzögerung" od 2.94s s drugačijim pristupom
   return (
-    <section className="relative h-[70vh] md:h-[80vh] bg-slate-800">
-      {/* Optimizirana implementacija slike sa <img> tagom umjesto background-image */}
-      <img 
-        ref={imgRef}
-        src={candleBackground}
-        alt="Candle background"
-        className="absolute inset-0 w-full h-full object-cover object-center"
-        loading="eager"
-        fetchPriority="high" // Treba biti velika prioriteta
-        style={{ 
-          opacity: 0.7,
-          transform: 'translateZ(0)', // Aktivira hardware akceleraciju
-          willChange: 'opacity', // Daje hint browseru da će se ova vrijednost mijenjati
-          imageRendering: 'auto' // Optimizacija prikaza slike
-        }} // Optimizacije za smanjenje Rendering-Verzögerung
-        decoding="async"
-      />
-      
+    <section className="relative h-[70vh] md:h-[80vh] bg-cover bg-center" style={{ backgroundImage: `url(${candleBackground})` }}>
+      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       <div className="container mx-auto px-4 h-full flex items-center relative z-10">
         <div className="max-w-xl">
           <div className="mb-4">
-            {/* Optimiziran prikaz teksta za LCP element */}
-            {getTitleItemsArray().length > 0 ? 
-              getTitleItemsArray().map((titleItem: TitleItem, index: number) => (
-                <h1 
-                  key={index}
-                  ref={index === 0 ? headingRef : undefined} // Glavni naslov postaje LCP element
-                  className={`${getTitleClasses()} ${index > 0 ? "mt-1" : ""} ${titleItem.fontFamily || ""}`}
-                  style={{
-                    color: titleItem.color || "white",
-                    fontSize: getFontSizeValue(titleItem.fontSize) || (index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem"),
-                    fontWeight: getFontWeightValue(titleItem.fontWeight) || (index === 1 ? "700" : "500"),
-                    // Posebno optimiziran prikaz prvog naslova kao LCP element
-                    ...(index === 0 ? {
-                      visibility: 'visible',
-                      opacity: 1,
-                      textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)'
-                    } : {})
-                  }}
-                  data-lcp={index === 0 ? 'true' : undefined}
-                >
-                  {titleItem.text}
-                </h1>
-              )) : 
-              // Direktno prikazan naslov za LCP umjesto čekanja na API
+            {getTitleItemsArray().map((titleItem: TitleItem, index: number) => (
               <h1 
-                ref={headingRef}
-                className="text-4xl md:text-5xl font-bold text-white"
-                style={{ 
-                  visibility: 'visible',
-                  opacity: 1,
-                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)'
+                key={index}
+                className={`${getTitleClasses()} ${index > 0 ? "mt-1" : ""} ${titleItem.fontFamily || ""}`}
+                style={{
+                  color: titleItem.color || "white",
+                  fontSize: getFontSizeValue(titleItem.fontSize) || (index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem"),
+                  fontWeight: getFontWeightValue(titleItem.fontWeight) || (index === 1 ? "700" : "500")
                 }}
-                data-lcp="true"
               >
-                Willkommen Kerzenwelt by Dani
+                {titleItem.text}
               </h1>
-            }
+            ))}
           </div>
           <p 
             className={getSubtitleClasses()}
             style={getSubtitleStyle()}
           >
-            {getSubtitleText() || "Wo Kerzen Wärme und Stil vereinen"}
+            {getSubtitleText()}
           </p>
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
             <Link href="/products">

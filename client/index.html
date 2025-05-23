@@ -7,24 +7,24 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
     />
     <meta name="theme-color" content="#ffffff" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>Kerzenwelt by Dani | Handgemachte Kerzen</title>
     <meta
       name="description"
       content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause."
     />
-    <meta http-equiv="x-dns-prefetch-control" content="on" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/webp" href="/logo.webp" sizes="32x32" />
-    <link rel="apple-touch-icon" href="/logo.webp" sizes="180x180" />
+    <link rel="icon" type="image/webp" href="/logo.webp" />
+    <link rel="apple-touch-icon" href="/logo.webp" />
     <!-- Fallback za starije preglednike -->
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <!-- Cache Control -->
-    <meta http-equiv="Cache-Control" content="max-age=31536000, immutable" />
+    <meta http-equiv="Cache-Control" content="max-age=31536000" />
     
     <!-- Performance Optimizations -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
     <!-- SEO Improvements -->
@@ -57,565 +57,63 @@
     <meta name="twitter:image" content="/logo.webp">
     <link rel="dns-prefetch" href="https://kerzenweltbydani.com" />
 
-    <!-- Inline kritični CSS za fontove -->
-    <style>
-      /* Inline učitavanje kritičnih fontova za brži prikaz */
-      @font-face {
-        font-family: 'Montserrat';
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: url(https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-      }
-      @font-face {
-        font-family: 'Montserrat';
-        font-style: normal;
-        font-weight: 700;
-        font-display: swap;
-        src: url(https://fonts.gstatic.com/s/montserrat/v26/JTUSjIg1_i6t8kCHKm459Wlhyw.woff2) format('woff2');
-        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-      }
-    </style>
-    
-    <!-- Odgođeno učitavanje dodatnih fontova - poboljšana tehnika "Font Display Pattern" -->
-    <link 
-      rel="preconnect" 
-      href="https://fonts.googleapis.com" 
-      crossorigin
+    <!-- Preload ključnih fontova -->
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      as="style"
     />
-    <link 
-      rel="preconnect" 
-      href="https://fonts.gstatic.com" 
-      crossorigin
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
     />
-    <link 
-      rel="stylesheet" 
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap"
-      media="print" 
-      onload="this.media='all'"
-      fetchpriority="low"
-    />
-    <noscript>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
-      />
-    </noscript>
 
-    <!-- Optimizirano učitavanje slika (inline kao Base64 za kritične slike) -->
-    <style>
-      /* Glavni logo učitan direktno kao data-uri kako bi se eliminirao dodatni HTTP zahtjev */
-      .logo-preload {
-        background-image: url('data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//B8YAAASUVORK5CYII=');
-        width: 1px;
-        height: 1px;
-        position: absolute;
-        top: -9999px;
-      }
-    </style>
-    <div class="logo-preload" aria-hidden="true"></div>
+    <!-- Preload ključnih slika -->
+    <link rel="preload" href="/logo.webp" as="image" fetchpriority="high" type="image/webp" />
+    <link rel="preload" href="/logo.png" as="image" fetchpriority="high" type="image/png" />
     
     <!-- Optimizacija za mobilne uređaje -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    
-    <!-- Optimizacija za brži First Contentful Paint i Largest Contentful Paint -->
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
-    
-    <!-- Strateško preučitavanje kritičnih resursa (JavaScript i stilovi) -->
-    <link rel="preload" href="/src/main.tsx" as="script" fetchpriority="high" />
-    <link rel="modulepreload" href="/src/components/common/Header.tsx" as="script" />
-    <link rel="modulepreload" href="/src/components/home/Hero.tsx" as="script" />
-    
-    <!-- Optimizacija najvećeg elementa (LCP) - hero slike -->
-    <link rel="preload" href="/logo.webp" as="image" fetchpriority="high" />
-    <link rel="preload" href="/src/assets/candle-background.jpg" as="image" fetchpriority="high" />
-    
-    <!-- Preconnect za vanjske resurse - ubrzava domenske konekcije -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Font display optimizacija za tekst -->
-    <link rel="preload" href="/fonts/main-font.woff2" as="font" type="font/woff2" crossorigin />
-    
-    <!-- Postavke za optimiziranje TBT metrike -->
-    <script type="speculationrules">
-    {
-      "prefetch": [
-        {
-          "source": "document",
-          "urls": ["index.html", "/"]
-        }
-      ]
-    }
-    </script>
-    
-    <!-- Sprječavanje blokiranja renderiranja -->
-    <meta http-equiv="Accept-CH" content="DPR, Viewport-Width, Width" />
-    
-    <!-- Lazy Loading i optimizacija slika - dodana podrška za moderne formate -->
-    <script>
-      // Optimizacije za slike i JS
-      document.addEventListener('DOMContentLoaded', function() {
-        // 1. Optimizacija slika s native lazy loading i Intersection Observer
-        if ('IntersectionObserver' in window) {
-          const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                const img = entry.target;
-                
-                // Provjeri postoji li data-srcset za responsive slike
-                if (img.dataset.srcset) {
-                  img.srcset = img.dataset.srcset;
-                  img.removeAttribute('data-srcset');
-                }
-                
-                // Postaviti src iz data-src
-                if (img.dataset.src) {
-                  img.src = img.dataset.src;
-                  img.removeAttribute('data-src');
-                }
-                
-                // Postaviti eksplicitne dimenzije ako nedostaju
-                if (!img.width && !img.height) {
-                  img.width = img.naturalWidth || 300;
-                  img.height = img.naturalHeight || 200;
-                }
-                
-                img.classList.add('loaded');
-                observer.unobserve(img);
-              }
-            });
-          }, {
-            rootMargin: '200px 0px', // Učitaj slike malo prije nego postanu vidljive
-            threshold: 0.01
-          });
-          
-          // Primijeni na sve slike
-          document.querySelectorAll('img[loading="lazy"]').forEach(img => {
-            imageObserver.observe(img);
-          });
-        }
-        
-        // 2. Odgodi učitavanje JS modula koje ne trebamo odmah
-        if (window.requestIdleCallback) {
-          requestIdleCallback(() => {
-            const nonCriticalScripts = document.querySelectorAll('script[data-priority="low"]');
-            nonCriticalScripts.forEach(script => {
-              const newScript = document.createElement('script');
-              [...script.attributes].forEach(attr => {
-                if (attr.name !== 'data-priority') {
-                  newScript.setAttribute(attr.name, attr.value);
-                }
-              });
-              script.parentNode.replaceChild(newScript, script);
-            });
-          }, { timeout: 2000 });
-        }
-      });
-    </script>
     <meta name="format-detection" content="telephone=no" />
     
-    <!-- Kritični CSS za iznad fold-a -->
-    <style>
-      /* Odmah prikažite važne elemente stranice bez čekanja na vanjske CSS datoteke */
-      body {
-        margin: 0;
-        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background-color: #ffffff;
-        color: #333333;
-      }
-      #root {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
-      .heading {
-        line-height: 1.2;
-        margin-top: 0;
-      }
-    </style>
-    <!-- Ključni CSS za trenutno vidljivi sadržaj - eliminirani blokirajući resursi -->
-    <style>
-      /* Kritični stil za što brži prikaz - eliminirani blokirajući resursi */
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: #ffffff;
-        color: #333333;
-        text-rendering: optimizeSpeed;
-        opacity: 1;
-        transition: opacity 0.1s;
-      }
-      img, picture, video, canvas, svg {
-        display: block;
-        max-width: 100%;
-        height: auto;
-        width: auto;
-      }
-      #root {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-      }
-      .hero-section {
-        background-position: center;
-        background-size: cover;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 60vh;
-      }
-      /* Button critical styles */
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-      }
-      /* Menu critical styles */
-      .menu {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      /* Container critical styles */
-      .container {
-        width: 100%;
-        margin-left: auto;
-        margin-right: auto;
-        padding-left: 1rem;
-        padding-right: 1rem;
-      }
-      /* Header critical styles */
-      header {
-        position: sticky;
-        top: 0;
-        z-index: 40;
-        backdrop-filter: blur(8px);
-      }
-      /* Dodano kako bi slike uvijek imale dimenzije (rješava CLS issue) */
-      img:not([width]):not([height]) {
-        aspect-ratio: attr(width) / attr(height);
-      }
-    </style>
-    
-    <!-- Optimizirana skripta za inicijalizaciju teme i jezika -->
+    <!-- Dodatne optimizacije za brže učitavanje -->
+    <link rel="preload" as="font" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" crossorigin="anonymous" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Skripta za inicijalizaciju teme i jezika -->
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        try {
-          // Dohvaćanje teme iz lokalnog spremnika
-          const storedTheme = localStorage.getItem("theme") || "light";
-          const storedLang = localStorage.getItem("language") || "hr";
-  
-          // Postavi jezik
-          document.documentElement.lang = storedLang;
-  
-          // Postavi temu
-          document.documentElement.classList.remove("light", "dark");
-          if (storedTheme === "system") {
-            const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-            document.documentElement.classList.add(systemDark ? "dark" : "light");
-          } else {
-            document.documentElement.classList.add(storedTheme);
-          }
-        } catch (e) {
-          // Fallback ako dođe do greške
-          document.documentElement.classList.add("light");
+      (function () {
+        // Dohvaćanje teme iz lokalnog spremnika
+        const storedTheme = localStorage.getItem("theme");
+        const theme = storedTheme ? storedTheme : "light";
+
+        // Dohvati jezik iz lokalnog spremnika
+        const storedLang = localStorage.getItem("language");
+        const lang = storedLang ? storedLang : "hr";
+
+        // Postavi jezik
+        document.documentElement.lang = lang;
+
+        // Postavi temu
+        document.documentElement.classList.remove("light", "dark");
+        if (theme === "system") {
+          const systemDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          document.documentElement.classList.add(systemDark ? "dark" : "light");
+        } else {
+          document.documentElement.classList.add(theme);
         }
-      });
+      })();
     </script>
   </head>
   <body>
     <div id="root"></div>
-    <!-- Optimizacija za Largest Contentful Paint (LCP) -->
-    <script>
-      // Kritična optimizacija za najvažnije metrike
-      document.addEventListener('DOMContentLoaded', function() {
-        // Prilagodba za Largest Contentful Paint
-        const observer = new PerformanceObserver((entryList) => {
-          for (const entry of entryList.getEntries()) {
-            // Pronađi LCP element i optimiziraj ga (prioritiziraj)
-            if (entry.element) {
-              // Dodaj fetchpriority="high" na LCP element ako je slika
-              if (entry.element.tagName === "IMG") {
-                entry.element.fetchPriority = "high";
-                entry.element.loading = "eager"; // Osiguraj da se odmah učita
-                entry.element.decoding = "async"; // Optimiziraj dekodiranje slike
-              }
-            }
-          }
-        });
-        
-        observer.observe({type: 'largest-contentful-paint', buffered: true});
-        
-        // Postavi loading="lazy" na sve ostale slike
-        const images = document.querySelectorAll('img:not([fetchpriority="high"])');
-        images.forEach(img => {
-          // Dodaj width/height na sve slike da spriječiš Layout Shift (CLS)
-          if (!img.width && !img.height) {
-            img.style.aspectRatio = "16/9"; // Zadani aspect ratio
-          }
-          
-          // Optimiziraj učitavanje nekritičnih slika
-          if (!img.closest('header') && !img.closest('.hero-section')) {
-            img.loading = "lazy";
-            
-            // Napredna optimizacija za nekritične slike
-            if (!img.src.endsWith('.webp')) {
-              const originalSrc = img.src;
-              img.dataset.src = originalSrc;
-              img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
-            }
-          }
-        });
-      });
-    </script>
-    
-    <!-- Optimizirano učitavanje glavne skripte -->
-    <!-- Strategija kritičnog i nekritičnog JS koda -->
-    <!-- Kritični JS za inicijalno učitavanje stranice s optimiziranim atributima -->
-    <script type="module" src="/src/main.tsx" fetchpriority="high" critical></script>
-    
-    <!-- Script za naprednu optimizaciju JavaScripta - rješava problem s 951 KiB potencijalne uštede -->
-    <script>
-      // 1. Napredna optimizacija JavaScript koda za smanjenje ukupne veličine (951 KiB uštede)
-      (function() {
-        // Omogućiti code splitting i lazy loading modula
-        function optimizeJavaScript() {
-          // Pronalazi skripte koje se mogu odgoditi
-          const scripts = document.querySelectorAll('script:not([critical])');
-          scripts.forEach(script => {
-            // Odgodi učitavanje nekritičnih skripta
-            if (!script.src.includes('main.tsx') && !script.hasAttribute('critical')) {
-              script.setAttribute('defer', 'true');
-              if (script.src.includes('analytics') || script.src.includes('banner') || script.src.includes('tracking')) {
-                script.setAttribute('async', 'true');
-              }
-            }
-            
-            // Primijeni cache-buster za izbjegavanje cache problema
-            if (script.src && !script.src.includes('?v=')) {
-              script.src = script.src + '?v=' + (new Date().getTime().toString().slice(0, 8));
-            }
-          });
-          
-          // Optimizacija velikih JavaScript datoteka (rješava problem s 951 KiB potencijalne uštede)
-          window.addEventListener('load', () => {
-            // Agresivna optimizacija prema PageSpeed Insights izvještaju
-            const bigJsFiles = [
-              'hooks/use-language.tsx', // 180.2 KiB / ušteda 125.7 KiB
-              'deps/chunk-RPCDYKBN.js', // 141.9 KiB / ušteda 51.9 KiB 
-              'deps/recharts.js',       // 200.1 KiB / ušteda 48.8 KiB
-              'deps/jspdf.js',          // 138.2 KiB / ušteda 35.2 KiB
-              'admin/admin-invoices.tsx',// 44.9 KiB / ušteda 31.3 KiB
-              'deps/lucide-react.js',   // 151.7 KiB / ušteda 27.7 KiB
-              'admin/admin-orders.tsx', // 29.7 KiB / ušteda 18.2 KiB
-              'deps/drizzle-orm_pg-core.js', // 25.3 KiB / ušteda 12.2 KiB
-              'admin/new-invoice-generator.ts' // 14.6 KiB / ušteda 11.5 KiB
-            ];
-            
-            // Optimizacija velikih JavaScript datoteka - primijeni dynamic import
-            if (window.location.pathname !== '/admin') {
-              // Ne učitavaj admin skripte na frontend stranicama
-              bigJsFiles.forEach(file => {
-                if (file.includes('admin/')) {
-                  const scriptTags = document.querySelectorAll(`script[src*="${file}"]`);
-                  scriptTags.forEach(script => {
-                    // Označi skriptu za dinamičko učitavanje kasnije samo kad je potrebno
-                    if (script.src) {
-                      script.setAttribute('data-src', script.src);
-                      script.removeAttribute('src');
-                      script.setAttribute('data-priority', 'low');
-                    }
-                  });
-                }
-              });
-            }
-            
-            // Implementacija route-based code splittinga
-            const currentPath = window.location.pathname;
-            // Ako smo na nekoj specifičnoj stranici, prioritiziraj skripte za tu stranicu
-            if (currentPath.includes('/products')) {
-              // Prioritiziraj product-related skripte
-              const productScripts = document.querySelectorAll('script[src*="product"]');
-              productScripts.forEach(script => script.setAttribute('fetchpriority', 'high'));
-            } else if (currentPath.includes('/cart') || currentPath.includes('/checkout')) {
-              // Prioritiziraj checkout-related skripte
-              const checkoutScripts = document.querySelectorAll('script[src*="cart"], script[src*="checkout"]');
-              checkoutScripts.forEach(script => script.setAttribute('fetchpriority', 'high'));
-            }
-            
-            // Implementacija dinamičkog učitavanja modula kod scrollanja - ušteda 374 KiB nekorištenog JS-a
-            const observerOptions = { 
-              rootMargin: '200px 0px', 
-              threshold: 0.01 
-            };
-            
-            if ('IntersectionObserver' in window) {
-              // Označi sve skripte s niskim prioritetom za odgođeno učitavanje
-              const lowPriorityScripts = document.querySelectorAll('script[data-priority="low"]');
-              
-              // Stvori observer koji će učitati skripte tek kad dođu blizu viewport-a
-              const lazyLoadObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                  if (entry.isIntersecting) {
-                    const script = entry.target;
-                    const src = script.getAttribute('data-src');
-                    if (src) {
-                      // Dynamic import za skriptu
-                      if (src.endsWith('.js') || src.includes('.js?')) {
-                        // Koristi import() za moderne module
-                        import(/* @vite-ignore */ src).catch(e => console.error('Failed to load module:', e));
-                      } else {
-                        // Za legacy skripte, koristi standardni pristup
-                        script.setAttribute('src', src);
-                      }
-                      script.removeAttribute('data-src');
-                      lazyLoadObserver.unobserve(script);
-                    }
-                  }
-                });
-              }, observerOptions);
-              
-              // Promatraj sve skripte s niskim prioritetom
-              lowPriorityScripts.forEach(script => {
-                lazyLoadObserver.observe(script);
-              });
-            }
-            
-            // Optimizacija memorije uklanjanjem nekorištenih event listenera
-            const unusedEvents = [
-              'mouseover', 'mouseenter', 'mouseleave', 'auxclick',
-              'dblclick', 'pointerenter', 'pointerleave', 'dragstart',
-              'dragend', 'dragover', 'dragenter', 'dragleave'
-            ];
-            
-            unusedEvents.forEach(eventType => {
-              document.body.querySelectorAll('*').forEach(el => {
-                el.removeEventListener(eventType, () => {});
-              });
-            });
-            
-            // Agresivna optimizacija za nekorišteni JavaScript (374 KiB ušteda)
-            setTimeout(() => {
-              // Pronađi i ukloni nekorištene module i komponente
-              document.querySelectorAll('script:not([data-used])').forEach(script => {
-                // Provjeri je li skripta zapravo korištena prema DOM interakciji
-                const src = script.src || '';
-                if (src && (
-                    // Speci
-                    src.includes('react-helmet') && !document.querySelector('head > [data-react-helmet]') ||
-                    src.includes('jspdf') && currentPath !== '/admin' ||
-                    src.includes('drizzle') && currentPath !== '/admin' ||
-                    src.includes('recharts') && !document.querySelector('.recharts-wrapper')
-                )) {
-                  // Označi da je ova skripta nepotrebna i može biti odgođena
-                  script.setAttribute('data-unused', 'true');
-                  // Ne uklanjaj je odmah, već je označi za kasnije uklanjanje
-                  if (script.parentNode && !script.hasAttribute('critical')) {
-                    script.setAttribute('data-src', script.src);
-                    script.removeAttribute('src');
-                  }
-                }
-              });
-              
-              // Očisti globalnu memoriju (za browsere koji to podržavaju)
-              if (window.gc) {
-                try {
-                  window.gc();
-                } catch (e) {}
-              }
-              
-              // Ukloni nepotrebne DOM elemente
-              document.querySelectorAll('[data-debug], [data-temp], .temp-element, .debug-element').forEach(el => el.remove());
-            }, 2000);
-          });
-        }
-        
-        // Odgodi učitavanje nekritičnih resursa
-        function loadResourcesWhenIdle() {
-          // Lista za odgođeno učitavanje
-          const deferredResources = [
-            { type: 'script', url: 'https://replit.com/public/js/replit-dev-banner.js', attributes: { async: true, defer: true } }
-          ];
-          
-          const loadResource = (resource) => {
-            if (window.location.hostname === "kerzenweltbydani.com" && resource.url.includes('replit.com')) {
-              return; // ne učitavaj replit banner u produkciji
-            }
-            
-            if (resource.type === 'script') {
-              const script = document.createElement('script');
-              script.src = resource.url;
-              
-              // Primijeni atribute
-              if (resource.attributes) {
-                Object.entries(resource.attributes).forEach(([key, value]) => {
-                  script[key] = value;
-                });
-              }
-              
-              document.body.appendChild(script);
-            }
-          };
-          
-          // Koristi web performance API za pronalaženje nekorištenih JS modula
-          if ('performance' in window && 'getEntriesByType' in performance) {
-            requestIdleCallback(() => {
-              optimizeJavaScript(); // Primijeni JavaScript optimizacije
-              deferredResources.forEach(loadResource);
-            }, { timeout: 5000 });
-          } else {
-            // Fallback za starije preglednike
-            window.addEventListener('load', () => {
-              setTimeout(() => {
-                optimizeJavaScript(); // Primijeni JavaScript optimizacije
-                deferredResources.forEach(loadResource);
-              }, 3000);
-            });
-          }
-        }
-        
-        // 2. Dinamičko učitavanje komponenti bazirano na vidljivosti
-        if ('IntersectionObserver' in window) {
-          // Dodatna optimizacija - učitaj komponente samo kad su vidljive u viewportu
-          const componentObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                const target = entry.target;
-                if (target.dataset.src) {
-                  if (target.tagName === 'IMG') {
-                    target.src = target.dataset.src;
-                    if (target.dataset.srcset) {
-                      target.srcset = target.dataset.srcset;
-                    }
-                  }
-                }
-                componentObserver.unobserve(target);
-              }
-            });
-          }, { rootMargin: '100px' });
-          
-          // Primijeni na komponente s data-observe atributom
-          document.querySelectorAll('[data-observe]').forEach(el => {
-            componentObserver.observe(el);
-          });
-        }
-        
-        // Pokreni strategiju učitavanja
-        if (document.readyState !== 'loading') {
-          loadResourcesWhenIdle();
-        } else {
-          document.addEventListener('DOMContentLoaded', loadResourcesWhenIdle);
-        }
-      })();
-    </script>
+    <script type="module" src="/src/main.tsx" defer></script>
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script
+      type="text/javascript"
+      src="https://replit.com/public/js/replit-dev-banner.js"
+    ></script>
   </body>
 </html>

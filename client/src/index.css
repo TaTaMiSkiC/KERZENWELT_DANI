@@ -1,34 +1,6 @@
-/* Kritični CSS stilovi koji se učitavaju prvi - optimizirano */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Purge Tailwind CSS za nekorištene komponente */
-/* Ovo pomaže ukloniti neiskorištene utility klase za smanjenje ukupne veličine */
-
-/* Optimizacije za Lighthouse 100% rezultat */
-img, video {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Font display swap za brže vidljivost teksta */
-html {
-  font-display: swap;
-}
-
-/* Poboljšana animacija za loading */
-@keyframes pulse {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
-}
 
 :root {
   --background: 0 0% 100%;
