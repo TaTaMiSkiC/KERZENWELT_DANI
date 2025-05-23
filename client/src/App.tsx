@@ -160,19 +160,19 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <CartProvider>
-              <TooltipProvider>
-                <Toaster />
+      <TooltipProvider>
+        <Toaster />
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <CartProvider>
                 <Router />
                 <CookieConsent />
-              </TooltipProvider>
-            </CartProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </ThemeProvider>
+              </CartProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
