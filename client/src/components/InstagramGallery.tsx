@@ -102,11 +102,13 @@ export default function InstagramGallery({ accessToken, limit = 8 }: InstagramGa
     return (
       <div className="text-center py-8">
         <p className="text-red-500 mb-4">Došlo je do greške pri dohvaćanju Instagram sadržaja.</p>
-        <Button variant="outline">
-          <a href="https://www.instagram.com/kerzenwelt_by_dani/" target="_blank" rel="noopener noreferrer" className="flex items-center">
-            <Instagram className="mr-2 h-4 w-4" />
-            Posjetite naš Instagram
-          </a>
+        <Button 
+          variant="outline"
+          className="flex items-center"
+          onClick={() => window.open("https://www.instagram.com/kerzenwelt_by_dani/", "_blank")}
+        >
+          <Instagram className="mr-2 h-4 w-4" />
+          Posjetite naš Instagram
         </Button>
       </div>
     );
@@ -116,11 +118,13 @@ export default function InstagramGallery({ accessToken, limit = 8 }: InstagramGa
     return (
       <div className="text-center py-8">
         <p className="mb-4">Trenutno nema dostupnih slika iz Instagrama.</p>
-        <Button variant="outline">
-          <a href="https://www.instagram.com/kerzenwelt_by_dani/" target="_blank" rel="noopener noreferrer" className="flex items-center">
-            <Instagram className="mr-2 h-4 w-4" />
-            Posjetite naš Instagram
-          </a>
+        <Button 
+          variant="outline"
+          className="flex items-center"
+          onClick={() => window.open("https://www.instagram.com/kerzenwelt_by_dani/", "_blank")}
+        >
+          <Instagram className="mr-2 h-4 w-4" />
+          Posjetite naš Instagram
         </Button>
       </div>
     );

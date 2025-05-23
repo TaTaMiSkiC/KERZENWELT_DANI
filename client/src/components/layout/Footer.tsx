@@ -68,24 +68,18 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/products">
-                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
-                    {t("nav.products")}
-                  </div>
+                <Link href="/products" className="text-gray-400 hover:text-white transition cursor-pointer">
+                  {t("nav.products")}
                 </Link>
               </li>
               <li>
-                <Link href="/about">
-                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
-                    {t("nav.about")}
-                  </div>
+                <Link href="/about" className="text-gray-400 hover:text-white transition cursor-pointer">
+                  {t("nav.about")}
                 </Link>
               </li>
               <li>
-                <Link href="/blog">
-                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
-                    {t("nav.pictures")}
-                  </div>
+                <Link href="/blog" className="text-gray-400 hover:text-white transition cursor-pointer">
+                  {t("nav.pictures")}
                 </Link>
               </li>
 
