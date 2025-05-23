@@ -63,7 +63,7 @@ export default function ProductsPage() {
     
     // Filter by category
     if (filters.category !== "all" && product.categoryId !== parseInt(filters.category)) {
-      console.log(`Proizvod ${product.name} ima categoryId ${product.categoryId}, filter kategorija je ${filters.category}`);
+      // Check if product has a categoryId that matches the filter
       return false;
     }
     
