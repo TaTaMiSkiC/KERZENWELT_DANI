@@ -69,6 +69,38 @@
     @apply transition-all duration-300;
   }
   
+  /* Font family classes for hero section */
+  .font-default {
+    font-family: var(--font-sans);
+  }
+  .font-serif {
+    font-family: Georgia, Times, "Times New Roman", serif;
+  }
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+  .font-cursive {
+    font-family: "Brush Script MT", cursive;
+  }
+  .font-montserrat {
+    font-family: "Montserrat", sans-serif;
+  }
+  .font-playfair {
+    font-family: "Playfair Display", serif;
+  }
+  .font-roboto {
+    font-family: "Roboto", sans-serif;
+  }
+  .font-open-sans {
+    font-family: "Open Sans", sans-serif;
+  }
+  .font-lato {
+    font-family: "Lato", sans-serif;
+  }
+  .font-dancing-script {
+    font-family: "Dancing Script", cursive;
+  }
+  
   .product-card:hover {
     @apply shadow-lg transform -translate-y-1;
   }

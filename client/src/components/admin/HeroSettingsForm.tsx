@@ -72,7 +72,7 @@ const fontWeights = [
 
 // Font family options
 const fontFamilies = [
-  { value: "", label: "Standard (System)" },
+  { value: "font-default", label: "Standard (System)" },
   { value: "font-serif", label: "Serif" },
   { value: "font-mono", label: "Monospace" },
   { value: "font-cursive", label: "Cursive" },
@@ -432,7 +432,7 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
                       <FormItem>
                         <FormLabel>Schriftart</FormLabel>
                         <Select
-                          value={field.value || ""}
+                          value={field.value || "font-default"}
                           onValueChange={field.onChange}
                         >
                           <FormControl>
