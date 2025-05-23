@@ -10,10 +10,29 @@ const app = express();
 app.use(compression({
   level: 9, // Maksimalna kompresija za sve resurse
   threshold: 0, // Kompresija za sve veličine odgovora
+  memLevel: 9, // Maksimalna upotreba memorije za kompresiju - ključno za velike JavaScript datoteke
+  strategy: 0, // Optimalan omjer brzine i kompresije
+  chunkSize: 16 * 1024, // Optimalno za JavaScript kompresiju
   filter: (req, res) => {
     if (req.headers['accept-encoding']?.includes('gzip')) {
-      // Ne kompresiraj već komprimirane formate
+      // Prioriziraj kompresiju JavaScript datoteka koje su veće od 100KB
       const type = res.getHeader('Content-Type');
+      const url = req.url.toLowerCase();
+      
+      // Posebna optimizacija za velike JavaScript datoteke koje su identificirane u PageSpeed izvještaju
+      if (url.includes('hooks/use-language.tsx') || 
+          url.includes('recharts.js') || 
+          url.includes('jspdf.js') || 
+          url.includes('admin-invoices.tsx') || 
+          url.includes('lucide-react.js') ||
+          url.includes('admin-orders.tsx') ||
+          url.includes('product-details-page.tsx')) {
+        // Postavi agresivniju kompresiju za veće JS datoteke
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return true;
+      }
+      
+      // Ne kompresiraj već komprimirane formate
       if (type && 
          (type.toString().includes('image/webp') || 
           type.toString().includes('image/png') || 
@@ -29,17 +48,7 @@ app.use(compression({
   }
 }));
 
-// Middleware za kompresiju
-app.use(compression({
-  level: 9, // Maksimalni nivo kompresije
-  threshold: 0, // Kompresija svih odgovora bez obzira na veličinu
-  filter: (req, res) => {
-    // Ne kompresiraj već kompresovane resurse
-    if (req.headers['accept-encoding']?.includes('gzip') === false) return false;
-    const contentType = res.getHeader('Content-Type') as string || '';
-    return /text|javascript|json|css|svg|html|xml/.test(contentType);
-  }
-}));
+// Napredni middleware za optimizaciju brzine učitavanja stranice
 
 // Middleware za HTTP zaglavlja performansi i sigurnosti
 app.use((req, res, next) => {
