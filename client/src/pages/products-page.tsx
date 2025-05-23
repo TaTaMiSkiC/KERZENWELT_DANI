@@ -43,8 +43,13 @@ export default function ProductsPage() {
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
+  // Refetch when filters.category changes
+  useEffect(() => {
+    console.log("Current category filter:", filters.category);
+  }, [filters.category]);
+  
   // Fetch products with category filtering
-  const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
+  const { data: products, isLoading: productsLoading, refetch } = useQuery<Product[]>({
     queryKey: ["/api/products", filters.category !== "all" ? filters.category : null],
     queryFn: async ({ queryKey }) => {
       const categoryId = queryKey[1];
@@ -126,12 +131,16 @@ export default function ProductsPage() {
   // Find the max price for slider
   const maxPrice = products ? Math.max(...products.map((p) => parseFloat(p.price))) : 100;
   
+  // Update filters and trigger refetch when URL category parameter changes
   useEffect(() => {
     if (categoryParam) {
-      console.log("Kategorija iz URL-a:", categoryParam);
+      console.log("Category from URL:", categoryParam);
       setFilters(prev => ({ ...prev, category: categoryParam }));
+      
+      // Force a refetch when the category changes
+      refetch();
     }
-  }, [categoryParam]);
+  }, [categoryParam, refetch]);
   
   // Log for debugging purposes
   useEffect(() => {
