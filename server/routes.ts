@@ -2635,22 +2635,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }*/
 
-      const { invoice, items } = req.body;
-
-      console.log("Request body:", req.body);
-
-      if (!invoice || !items) {
-        console.error("Nedostaje invoice ili items u zahtjevu");
+      // Handle both nested and flat formats
+      let invoice, items;
+      
+      if (req.body.invoice && req.body.items) {
+        // Nested format (original)
+        invoice = req.body.invoice;
+        items = req.body.items;
+      } else if (req.body.items) {
+        // Direct format from admin page
+        const { items: itemsData, ...invoiceData } = req.body;
+        invoice = invoiceData;
+        items = itemsData;
+      } else {
+        console.error("Nedostaje items u zahtjevu");
         return res.status(400).json({
-          message: "Invalid request format - missing invoice or items",
+          message: "Invalid request format - missing items data",
         });
       }
+
+      console.log("Processed request data:", { invoice, items });
 
       // Dodaj userId hardkodirano za admina (id=1) ako nemamo korisnika u sesiji
       if (req.user) {
         invoice.userId = req.user.id;
       } else {
-        invoice.userId = 1; // Admin ID
+        invoice.userId = invoice.userId || 1; // Admin ID
       }
 
       console.log("Creating invoice with data:", { invoice, items });
