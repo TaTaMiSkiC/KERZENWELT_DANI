@@ -57,6 +57,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Dodatne optimizacije za brže učitavanje -->
+    <link rel="preload" as="font" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" crossorigin="anonymous" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <!-- Skripta za inicijalizaciju teme i jezika -->
     <script>
       (function () {
@@ -86,7 +90,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx" defer></script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script
       type="text/javascript"
