@@ -43,15 +43,6 @@ export default function ProductsPage() {
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
-  // Set initial category from URL and refetch when category changes
-  useEffect(() => {
-    // If there's a category parameter in the URL, set it in our filter state
-    if (categoryParam) {
-      console.log("Setting category filter from URL parameter:", categoryParam);
-      setFilters(prev => ({ ...prev, category: categoryParam }));
-    }
-  }, [categoryParam]);
-  
   // Fetch products with category filtering
   const { data: products, isLoading: productsLoading, refetch } = useQuery<Product[]>({
     queryKey: ["/api/products", filters.category !== "all" ? filters.category : null],
@@ -77,13 +68,33 @@ export default function ProductsPage() {
     queryKey: ["/api/categories"],
   });
   
-  // Filter products based on filters
-  // Log initial products data for debugging
+  // Set initial category from URL and trigger refetch when URL parameter changes
+  useEffect(() => {
+    if (categoryParam) {
+      console.log("Setting category filter from URL parameter:", categoryParam);
+      
+      // Update the filter state with the category ID from the URL
+      setFilters(prev => {
+        console.log("Current category:", prev.category, "New category:", categoryParam);
+        return { ...prev, category: categoryParam };
+      });
+    }
+  }, [categoryParam]);
+  
+  // Log product data for debugging
   useEffect(() => {
     if (products && products.length > 0) {
-      console.log("All products:", products.map(p => ({id: p.id, name: p.name, category: (p as any).category_id})));
+      console.log("All products:", products.length);
+      console.log("Filter category:", filters.category);
+      
+      if (filters.category !== "all") {
+        const matchingProducts = products.filter(p => 
+          p.categoryId === parseInt(filters.category)
+        );
+        console.log(`Products matching category ${filters.category}:`, matchingProducts.length);
+      }
     }
-  }, [products]);
+  }, [products, filters.category]);
 
   const filteredProducts = products?.filter((product) => {
     // Filter inactive products
@@ -91,8 +102,7 @@ export default function ProductsPage() {
       return false;
     }
     
-    // We don't need to filter by category here since we're doing it at the API level
-    // with our queryFn in the useQuery hook
+    // Category filtering is now handled by the server via the query parameter
     
     // Filter by search term
     if (filters.search && !product.name.toLowerCase().includes(filters.search.toLowerCase())) {
@@ -134,38 +144,6 @@ export default function ProductsPage() {
   
   // Find the max price for slider
   const maxPrice = products ? Math.max(...products.map((p) => parseFloat(p.price))) : 100;
-  
-  // Update filters and trigger refetch when URL category parameter changes
-  useEffect(() => {
-    if (categoryParam) {
-      console.log("Category from URL:", categoryParam);
-      setFilters(prev => ({ ...prev, category: categoryParam }));
-      
-      // Force a refetch when the category changes
-      refetch();
-    }
-  }, [categoryParam, refetch]);
-  
-  // Log for debugging purposes
-  useEffect(() => {
-    if (products && products.length > 0) {
-      console.log("Detailed product info for debugging:");
-      console.log("Filter category:", filters.category);
-      console.log("First product complete object:", products[0]);
-      // Print out all product keys to see exact structure
-      const sampleKeys = Object.keys(products[0]);
-      console.log("Product keys:", sampleKeys);
-      
-      // Check if any products pass the filter criteria
-      if (filters.category !== "all") {
-        const matchingProducts = products.filter(p => {
-          const rawProduct = p as any;
-          return rawProduct.category_id === parseInt(filters.category);
-        });
-        console.log("Products matching category " + filters.category + ":", matchingProducts.length);
-      }
-    }
-  }, [products, filters.category]);
   
   // Get category name for title
   const getCategoryName = () => {
@@ -404,8 +382,16 @@ export default function ProductsPage() {
               ) : sortedProducts.length === 0 ? (
                 <div className="bg-card rounded-lg p-8 text-center">
                   <h3 className="heading text-xl font-semibold mb-2">{t('products.noProducts')}</h3>
-                  <p className="text-muted-foreground mb-4">{t('products.tryDifferent')}</p>
-                  <Button onClick={clearFilters}>{t('products.showAll')}</Button>
+                  <p className="text-muted-foreground">
+                    {t('products.tryDifferentFilters')}
+                  </p>
+                  <Button 
+                    onClick={clearFilters}
+                    variant="outline" 
+                    className="mt-4"
+                  >
+                    {t('products.clearAllFilters')}
+                  </Button>
                 </div>
               ) : (
                 <ProductGrid products={sortedProducts} />
