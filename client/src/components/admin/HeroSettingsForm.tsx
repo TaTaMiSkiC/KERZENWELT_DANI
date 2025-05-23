@@ -12,12 +12,18 @@ import { queryClient } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Language } from "@/hooks/use-language";
 
+// Define title item structure that matches schema.ts
+type TitleItem = {
+  text: string;
+  fontSize: string;
+  fontWeight: string;
+  color: string;
+};
+
+// Define hero settings structure that matches schema.ts
 type HeroSettings = {
-  titleText: Record<string, string[]>;
+  titleText: Record<string, TitleItem[]>;
   subtitleText: Record<string, string>;
-  titleFontSize: string;
-  titleFontWeight: string;
-  titleColor: string;
   subtitleFontSize: string;
   subtitleFontWeight: string;
   subtitleColor: string;
@@ -63,11 +69,31 @@ const fontWeights = [
 
 const defaultHeroSettings: HeroSettings = {
   titleText: {
-    de: ["Willkommen", "Kerzenwelt by Dani", "Wo Kerzen Wärme und Stil vereinen"],
-    hr: ["Dobrodošli", "Svijet svijeća by Dani", "Gdje se toplina i stil spajaju"],
-    en: ["Welcome", "The Candle World by Dani", "Where warmth and style unite"],
-    it: ["Benvenuti", "Il mondo delle candele di Dani", "Dove calore e stile si incontrano"],
-    sl: ["Dobrodošli", "Svet sveč by Dani", "Kjer se toplina in stil združita"]
+    de: [
+      { text: "Willkommen", fontSize: "2xl", fontWeight: "medium", color: "white" },
+      { text: "Kerzenwelt by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+      { text: "Wo Kerzen Wärme und Stil vereinen", fontSize: "xl", fontWeight: "medium", color: "white" },
+    ],
+    hr: [
+      { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
+      { text: "Svijet svijeća by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+      { text: "Gdje se toplina i stil spajaju", fontSize: "xl", fontWeight: "medium", color: "white" },
+    ],
+    en: [
+      { text: "Welcome", fontSize: "2xl", fontWeight: "medium", color: "white" },
+      { text: "The Candle World by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+      { text: "Where warmth and style unite", fontSize: "xl", fontWeight: "medium", color: "white" },
+    ],
+    it: [
+      { text: "Benvenuti", fontSize: "2xl", fontWeight: "medium", color: "white" },
+      { text: "Il mondo delle candele di Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+      { text: "Dove calore e stile si incontrano", fontSize: "xl", fontWeight: "medium", color: "white" },
+    ],
+    sl: [
+      { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
+      { text: "Svet sveč by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+      { text: "Kjer se toplina in stil združita", fontSize: "xl", fontWeight: "medium", color: "white" },
+    ]
   },
   subtitleText: {
     de: "Entdecken Sie unsere einzigartige Sammlung handgefertigter Kerzen, perfekt für jede Gelegenheit.",

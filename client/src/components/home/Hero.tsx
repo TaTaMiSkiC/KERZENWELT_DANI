@@ -25,15 +25,15 @@ export default function Hero() {
   });
   
   // Get title array for the current language, or fallback to translation
-  const getTitleTextArray = () => {
+  const getTitleItemsArray = () => {
     if (heroSettings?.titleText && heroSettings.titleText[language]) {
       return heroSettings.titleText[language];
     }
-    // Fallback to default array of titles if not found
+    // Fallback to default array of title items if not found
     return [
-      t('home.heroTitle1'), 
-      t('home.heroTitle2'), 
-      t('home.heroTitle3')
+      { text: t('home.heroTitle1'), fontSize: "2xl", fontWeight: "medium", color: "white" },
+      { text: t('home.heroTitle2'), fontSize: "4xl", fontWeight: "bold", color: "white" },
+      { text: t('home.heroTitle3'), fontSize: "xl", fontWeight: "medium", color: "white" }
     ];
   };
   
@@ -46,14 +46,7 @@ export default function Hero() {
   
   // Use inline styles for custom font properties
   const getTitleClasses = () => {
-    const classes = ["heading"];
-    
-    // Use default tailwind classes if settings not available
-    if (!heroSettings) {
-      classes.push("text-4xl md:text-5xl lg:text-6xl font-bold");
-    }
-    
-    return classes.join(" ");
+    return "heading";
   };
   
   const getSubtitleClasses = () => {
@@ -65,16 +58,6 @@ export default function Hero() {
     }
     
     return classes.join(" ");
-  };
-  
-  // Get CSS properties for title styling
-  const getTitleStyle = () => {
-    if (!heroSettings) return { color: "white" };
-    
-    return {
-      color: heroSettings.titleColor || "white",
-      fontWeight: getFontWeightValue(heroSettings.titleFontWeight)
-    };
   };
   
   // Get CSS properties for subtitle styling
@@ -136,17 +119,17 @@ export default function Hero() {
       <div className="container mx-auto px-4 h-full flex items-center relative z-10">
         <div className="max-w-xl">
           <div className="mb-4">
-            {getTitleTextArray().map((titlePart, index) => (
+            {getTitleItemsArray().map((titleItem, index) => (
               <h1 
                 key={index}
                 className={getTitleClasses() + (index > 0 ? " mt-1" : "")}
                 style={{
-                  ...getTitleStyle(),
-                  fontSize: index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem",
-                  fontWeight: index === 1 ? "700" : "500"
+                  color: titleItem.color || "white",
+                  fontSize: getFontSizeValue(titleItem.fontSize) || (index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem"),
+                  fontWeight: getFontWeightValue(titleItem.fontWeight) || (index === 1 ? "700" : "500")
                 }}
               >
-                {titlePart}
+                {titleItem.text}
               </h1>
             ))}
           </div>

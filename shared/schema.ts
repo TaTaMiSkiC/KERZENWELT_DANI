@@ -405,13 +405,18 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
   updatedAt: true,
 });
 
+// Schema for individual title settings
+const titleItemSchema = z.object({
+  text: z.string(),
+  fontSize: z.string().default("4xl"),
+  fontWeight: z.string().default("bold"),
+  color: z.string().default("white"),
+});
+
 // Schema for hero section settings
 export const heroSettingsSchema = z.object({
-  titleText: z.record(z.string(), z.array(z.string())), // Multi-language title text as array of strings
+  titleText: z.record(z.string(), z.array(titleItemSchema)), // Multi-language title text as array of objects with text and style
   subtitleText: z.record(z.string(), z.string()), // Multi-language subtitle text
-  titleFontSize: z.string().default("4xl md:text-5xl lg:text-6xl"),
-  titleFontWeight: z.string().default("bold"),
-  titleColor: z.string().default("white"),
   subtitleFontSize: z.string().default("lg md:text-xl"),
   subtitleFontWeight: z.string().default("normal"),
   subtitleColor: z.string().default("white opacity-90"),
