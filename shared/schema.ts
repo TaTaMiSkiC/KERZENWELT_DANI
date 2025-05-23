@@ -390,6 +390,7 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
 }));
 
 // Extended CartItem type that includes product information
+
 // Definiranje tablice za postavke
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
@@ -662,18 +663,26 @@ export type PageVisit = typeof pageVisits.$inferSelect;
 export type InsertPageVisit = z.infer<typeof insertPageVisitSchema>;
 
 // Newsletter subscribers
-export const subscribers = pgTable("subscriber", {
+export const subscribers = pgTable("subscribers", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
-  discountCode: text("discount_code").notNull(),
-  discountUsed: boolean("discount_used").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  isActive: boolean("is_active").default(true).notNull(),
+  subscriptionDate: timestamp("subscription_date").defaultNow().notNull(),
+  unsubscribeToken: text("unsubscribe_token").notNull().unique(),
+  discountCode: text("discount_code").unique(),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("10"),
+  discountUsed: boolean("discount_used").default(false).notNull(),
+  ipAddress: text("ip_address"),
   language: text("language").notNull().default("de"),
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
 });
 
 export const insertSubscriberSchema = createInsertSchema(subscribers).omit({
   id: true,
-  createdAt: true,
+  subscriptionDate: true,
+  lastUpdated: true,
   discountUsed: true,
 });
 

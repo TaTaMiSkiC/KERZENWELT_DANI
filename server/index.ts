@@ -19,6 +19,15 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
+  // Optimizacija za preuzimanje kritičnih resursa
+  if (req.url === '/' || req.url === '/index.html') {
+    // Dodajemo preload za kritične resurse na glavnoj stranici
+    res.setHeader('Link', '<logo.webp>; rel=preload; as=image; fetchpriority=high, </src/main.tsx>; rel=preload; as=script');
+    
+    // Preconnect s ključnim vanjskim domenama
+    res.setHeader('Link', '<https://fonts.googleapis.com>; rel=preconnect; crossorigin, <https://fonts.gstatic.com>; rel=preconnect; crossorigin');
+  }
+  
   // Za statičke resurse postavljamo optimizirano keširanje
   if (req.url.match(/\.(css|js)$/)) {
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 godina za CSS i JS

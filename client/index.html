@@ -109,6 +109,11 @@
     <!-- Optimizacija za mobilne uređaje -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- Optimizacija za Core Web Vitals -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+    <link rel="preload" href="/src/main.tsx" as="script" fetchpriority="high" />
     <meta name="format-detection" content="telephone=no" />
     
     <!-- Kritični CSS za iznad fold-a -->
@@ -225,12 +230,11 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx" async></script>
     
-    <!-- Učitavanje replit skripte na zahtjev samo kada je stranica potpuno učitana -->
+    <!-- Učitavanje replit skripte samo nakon što je stranica potpuno učitana i svi kritični resursi obrađeni -->
     <script>
-      // Učitaj replit banner skriptu samo nakon što je stranica učitana
-      window.addEventListener('load', function() {
-        // Odgodi učitavanje replit-dev skripte za još 2 sekunde nakon učitavanja
-        setTimeout(function() {
+      if ('requestIdleCallback' in window) {
+        // Koristi requestIdleCallback za odgodu učitavanja nebitnih resursa
+        window.requestIdleCallback(function() {
           if (window.location.hostname !== "kerzenweltbydani.com") {
             const script = document.createElement('script');
             script.src = "https://replit.com/public/js/replit-dev-banner.js";
@@ -238,8 +242,21 @@
             script.defer = true;
             document.body.appendChild(script);
           }
-        }, 2000);
-      });
+        }, { timeout: 5000 });
+      } else {
+        // Fallback za preglednike koji ne podržavaju requestIdleCallback
+        window.addEventListener('load', function() {
+          setTimeout(function() {
+            if (window.location.hostname !== "kerzenweltbydani.com") {
+              const script = document.createElement('script');
+              script.src = "https://replit.com/public/js/replit-dev-banner.js";
+              script.async = true;
+              script.defer = true;
+              document.body.appendChild(script);
+            }
+          }, 3000);
+        });
+      }
     </script>
   </body>
 </html>
