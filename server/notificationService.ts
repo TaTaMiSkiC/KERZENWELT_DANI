@@ -1,19 +1,21 @@
-import sgMail from '@sendgrid/mail';
-import { db } from './db';
-import { Order } from '@shared/schema';
+import sgMail from "@sendgrid/mail";
+import { db } from "./db";
+import { Order } from "@shared/schema";
 
 // Inicijalizacija SendGrid API-a
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } else {
-  console.warn('SENDGRID_API_KEY nije postavljen. E-mail obavijesti neće raditi.');
+  console.warn(
+    "SENDGRID_API_KEY nije postavljen. E-mail obavijesti neće raditi.",
+  );
 }
 
 // Konfiguracijske konstante
-const ADMIN_EMAIL = 'daniela.svoboda2@gmail.com';
-const ADMIN_PHONE = '+436603878221';
-const STORE_NAME = 'Kerzenwelt by Dani';
-const FROM_EMAIL = 'noreply@kerzenwelt.com';
+const ADMIN_EMAIL = "info@kerzenweltbydani.com";
+const ADMIN_PHONE = "+436603878221";
+const STORE_NAME = "Kerzenwelt by Dani";
+const FROM_EMAIL = "info@kerzenweltbydani.com";
 
 interface NotificationOptions {
   emailEnabled?: boolean;
@@ -24,17 +26,19 @@ interface NotificationOptions {
 export async function sendEmailNotification(
   subject: string,
   htmlContent: string,
-  to: string = ADMIN_EMAIL
+  to: string = ADMIN_EMAIL,
 ): Promise<boolean> {
   try {
     if (!process.env.SENDGRID_API_KEY) {
-      console.warn('E-mail obavijest nije poslana: SENDGRID_API_KEY nije postavljen.');
+      console.warn(
+        "E-mail obavijest nije poslana: SENDGRID_API_KEY nije postavljen.",
+      );
       return false;
     }
 
     const msg = {
       to,
-      from: FROM_EMAIL, 
+      from: FROM_EMAIL,
       subject,
       html: htmlContent,
     };
@@ -43,7 +47,7 @@ export async function sendEmailNotification(
     console.log(`E-mail obavijest uspješno poslana na: ${to}`);
     return true;
   } catch (error) {
-    console.error('Greška prilikom slanja e-mail obavijesti:', error);
+    console.error("Greška prilikom slanja e-mail obavijesti:", error);
     return false;
   }
 }
@@ -51,7 +55,7 @@ export async function sendEmailNotification(
 // Funkcija za slanje SMS obavijesti (implementacija će ovisiti o SMS servisu)
 export async function sendSmsNotification(
   message: string,
-  to: string = ADMIN_PHONE
+  to: string = ADMIN_PHONE,
 ): Promise<boolean> {
   // Ovo je simulacija, za pravu implementaciju potreban je API ključ za SMS servis
   // kao što je Twilio ili sličan servis
@@ -60,13 +64,16 @@ export async function sendSmsNotification(
 }
 
 // Funkcija za slanje obavijesti o novoj narudžbi
-export async function sendNewOrderNotification(order: Order, options: NotificationOptions = {}): Promise<void> {
+export async function sendNewOrderNotification(
+  order: Order,
+  options: NotificationOptions = {},
+): Promise<void> {
   const { emailEnabled = true, smsEnabled = true } = options;
-  
+
   // Format cijene i datum
   const formattedPrice = order.total;
-  const orderDate = new Date(order.createdAt).toLocaleDateString('de-AT');
-  
+  const orderDate = new Date(order.createdAt).toLocaleDateString("de-AT");
+
   if (emailEnabled) {
     // Generiraj HTML sadržaj e-maila
     const emailSubject = `Nova narudžba #${order.id} - ${STORE_NAME}`;
@@ -88,10 +95,10 @@ export async function sendNewOrderNotification(order: Order, options: Notificati
         <p style="margin-top: 30px; color: #888; font-size: 12px;">Ova e-mail poruka je automatski generirana. Molimo vas ne odgovarajte na ovu poruku.</p>
       </div>
     `;
-    
+
     sendEmailNotification(emailSubject, emailContent);
   }
-  
+
   if (smsEnabled) {
     // Generiraj SMS poruku (kratak sadržaj)
     const smsMessage = `Nova narudžba #${order.id} na ${STORE_NAME} - Ukupno: ${formattedPrice} EUR`;
@@ -100,9 +107,13 @@ export async function sendNewOrderNotification(order: Order, options: Notificati
 }
 
 // Funkcija za obavijest o generiranom računu
-export async function sendInvoiceGeneratedNotification(orderId: number, invoiceId: number, options: NotificationOptions = {}): Promise<void> {
+export async function sendInvoiceGeneratedNotification(
+  orderId: number,
+  invoiceId: number,
+  options: NotificationOptions = {},
+): Promise<void> {
   const { emailEnabled = true, smsEnabled = true } = options;
-  
+
   if (emailEnabled) {
     const emailSubject = `Novi račun kreiran - ${STORE_NAME}`;
     const emailContent = `
@@ -117,10 +128,10 @@ export async function sendInvoiceGeneratedNotification(orderId: number, invoiceI
         <p style="margin-top: 30px; color: #888; font-size: 12px;">Ova e-mail poruka je automatski generirana. Molimo vas ne odgovarajte na ovu poruku.</p>
       </div>
     `;
-    
+
     sendEmailNotification(emailSubject, emailContent);
   }
-  
+
   if (smsEnabled) {
     const smsMessage = `Novi račun kreiran za narudžbu #${orderId} na ${STORE_NAME}`;
     sendSmsNotification(smsMessage);

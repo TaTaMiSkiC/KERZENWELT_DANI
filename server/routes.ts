@@ -2789,7 +2789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await sendEmail({
         to: email,
-        from: "noreply@kerzenwelt.com",
+        from: "info@kerzenweltbydani.com", // Koristimo verificiranu email adresu
         subject,
         text,
         html
