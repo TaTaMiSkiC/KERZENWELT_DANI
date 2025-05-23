@@ -90,18 +90,12 @@ export function SearchDialog({ trigger }: SearchDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-text-dark hover:text-primary hover:bg-transparent" 
-            aria-label={t('search.title')}
-          >
+          <Button variant="ghost" size="icon" className="text-text-dark hover:text-primary hover:bg-transparent">
             <Search size={20} />
-            <span className="sr-only">{t('search.title')}</span>
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md" aria-describedby="search-description">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {t('search.title') ? t('search.title') : "Pretraži proizvode"}
@@ -130,7 +124,7 @@ export function SearchDialog({ trigger }: SearchDialogProps) {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : !debouncedSearchQuery ? (
-            <p className="text-center text-sm text-muted-foreground py-4" id="search-description">
+            <p className="text-center text-sm text-muted-foreground py-4">
               {t('search.enterTerm') ? t('search.enterTerm') : "Unesite pojam za pretraživanje..."}
             </p>
           ) : filteredProducts && filteredProducts.length > 0 ? (

@@ -41,13 +41,9 @@ import { ThemeProvider } from "./hooks/use-theme";
 import { LanguageProvider } from "./hooks/use-language";
 import CookieConsent from "./components/CookieConsent";
 
-/**
- * Router komponenta koja definira sve rute u aplikaciji
- */
 function Router() {
   return (
     <Switch>
-      {/* Glavne stranice - direktno dostupne */}
       <Route path="/">
         <HomePage />
       </Route>
@@ -78,8 +74,6 @@ function Router() {
       <Route path="/newsletter">
         <NewsletterPage />
       </Route>
-      
-      {/* Zaštićene rute - potrebna prijava */}
       <Route path="/profile">
         <ProtectedRoute path="/profile" component={ProfilePage} />
       </Route>
@@ -95,8 +89,6 @@ function Router() {
       <Route path="/order-success">
         <ProtectedRoute path="/order-success" component={OrderSuccessPage} />
       </Route>
-        
-      {/* Admin rute - zahtijevaju administratorske privilegije */}
       <Route path="/admin">
         <ProtectedRoute path="/admin" component={AdminDashboard} />
       </Route>
@@ -113,7 +105,10 @@ function Router() {
         <ProtectedRoute path="/admin/colors" component={AdminColors} />
       </Route>
       <Route path="/admin/collections">
-        <ProtectedRoute path="/admin/collections" component={AdminCollections} />
+        <ProtectedRoute
+          path="/admin/collections"
+          component={AdminCollections}
+        />
       </Route>
       <Route path="/admin/orders">
         <ProtectedRoute path="/admin/orders" component={AdminOrders} />
@@ -125,28 +120,39 @@ function Router() {
         <ProtectedRoute path="/admin/users" component={AdminUsers} />
       </Route>
       <Route path="/admin/delivery-settings">
-        <ProtectedRoute path="/admin/delivery-settings" component={DeliverySettingsPage} />
+        <ProtectedRoute
+          path="/admin/delivery-settings"
+          component={DeliverySettingsPage}
+        />
       </Route>
       <Route path="/admin/settings">
         <ProtectedRoute path="/admin/settings" component={AdminSettings} />
       </Route>
       <Route path="/admin/page-settings">
-        <ProtectedRoute path="/admin/page-settings" component={PageSettingsPage} />
+        <ProtectedRoute
+          path="/admin/page-settings"
+          component={PageSettingsPage}
+        />
       </Route>
       <Route path="/admin/contact-settings">
-        <ProtectedRoute path="/admin/contact-settings" component={ContactSettingsPage} />
+        <ProtectedRoute
+          path="/admin/contact-settings"
+          component={ContactSettingsPage}
+        />
       </Route>
       <Route path="/admin/subscribers">
-        <ProtectedRoute path="/admin/subscribers" component={AdminSubscribers} />
+        <ProtectedRoute
+          path="/admin/subscribers"
+          component={AdminSubscribers}
+        />
       </Route>
       <Route path="/admin/documents">
-        <ProtectedRoute path="/admin/documents" component={DocumentManagementPage} />
+        <ProtectedRoute
+          path="/admin/documents"
+          component={DocumentManagementPage}
+        />
       </Route>
-      
-      {/* Stranica za slučaj da ruta nije pronađena */}
-      <Route>
-        <NotFound />
-      </Route>
+      <Route component={NotFound} />
     </Switch>
   );
 }

@@ -159,19 +159,19 @@ export default function Hero() {
             {getSubtitleText()}
           </p>
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-            <Link href="/products" aria-label={t('home.exploreCollection')}>
+            <Link href="/products">
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto text-slate-900 bg-[#f5d76e] hover:bg-[#f3ca50]"
+                className="w-full sm:w-auto"
               >
                 {t('home.exploreCollection')}
               </Button>
             </Link>
-            <Link href="/about" aria-label={t('home.aboutUs')}>
+            <Link href="/about">
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="bg-transparent border-2 border-white text-white hover:bg-[#f5d76e] hover:text-slate-900 w-full sm:w-auto"
+                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary w-full sm:w-auto"
               >
                 {t('home.aboutUs')}
               </Button>

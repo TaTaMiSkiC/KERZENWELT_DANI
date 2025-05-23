@@ -20,10 +20,9 @@ import {
   type InvoiceItem, type InsertInvoiceItem,
   type PageVisit, type InsertPageVisit,
   type VerificationToken, type InsertVerificationToken,
-  type Subscriber, type InsertSubscriber,
   users, products, categories, orders, orderItems, cartItems, reviews, settings, pages,
   scents, colors, productScents, productColors, collections, productCollections, 
-  invoices, invoiceItems, pageVisits, verificationTokens, subscribers
+  invoices, invoiceItems, pageVisits, verificationTokens
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -56,13 +55,6 @@ export interface IStorage {
   incrementPageVisit(path: string): Promise<any>;
   getPageVisit(path: string): Promise<any | undefined>;
   getAllPageVisits(): Promise<any[]>;
-  
-  // Newsletter subscribers methods
-  getAllSubscribers(): Promise<Subscriber[]>;
-  getSubscriberByEmail(email: string): Promise<Subscriber | undefined>;
-  getSubscriberByDiscountCode(discountCode: string): Promise<Subscriber | undefined>;
-  createSubscriber(data: InsertSubscriber): Promise<Subscriber>;
-  markDiscountAsUsed(email: string): Promise<boolean>;
   
   // Product methods
   getProduct(id: number): Promise<Product | undefined>;
