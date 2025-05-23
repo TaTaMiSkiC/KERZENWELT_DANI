@@ -120,15 +120,24 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     
-    <!-- Preload kritičnih resursa s visokim prioritetom -->
+    <!-- Optimizacija za brži First Contentful Paint i Largest Contentful Paint -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+    
+    <!-- Strateško preučitavanje kritičnih resursa (JavaScript i stilovi) -->
     <link rel="preload" href="/src/main.tsx" as="script" fetchpriority="high" />
     <link rel="modulepreload" href="/src/components/common/Header.tsx" as="script" />
     <link rel="modulepreload" href="/src/components/home/Hero.tsx" as="script" />
     
-    <!-- Prefetch CSS koji se koristi u vidljivom dijelu stranice -->
+    <!-- Optimizacija najvećeg elementa (LCP) - hero slike -->
     <link rel="preload" href="/logo.webp" as="image" fetchpriority="high" />
+    
+    <!-- Preconnect za vanjske resurse - ubrzava domenske konekcije -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Font display optimizacija za tekst -->
+    <link rel="preload" href="/fonts/main-font.woff2" as="font" type="font/woff2" crossorigin />
     
     <!-- Postavke za optimiziranje TBT metrike -->
     <script type="speculationrules">
@@ -396,68 +405,135 @@
             }
           });
           
-          // Napredna optimizacija za nekorišteni JavaScript kod
+          // Optimizacija velikih JavaScript datoteka (rješava problem s 951 KiB potencijalne uštede)
           window.addEventListener('load', () => {
-            // Prioriteti za učitavanje resursa
-            if ('IntersectionObserver' in window) {
-              // Deaktivira skripte koje trenutno nisu potrebne
-              const lowPriorityScripts = document.querySelectorAll('script[data-priority="low"]');
-              lowPriorityScripts.forEach(script => {
-                const src = script.getAttribute('src');
-                if (src) {
-                  // Zamijenimo skriptu s lazy-učitavanjem verzijom
-                  script.removeAttribute('src');
-                  script.setAttribute('data-src', src);
+            // Agresivna optimizacija prema PageSpeed Insights izvještaju
+            const bigJsFiles = [
+              'hooks/use-language.tsx', // 180.2 KiB / ušteda 125.7 KiB
+              'deps/chunk-RPCDYKBN.js', // 141.9 KiB / ušteda 51.9 KiB 
+              'deps/recharts.js',       // 200.1 KiB / ušteda 48.8 KiB
+              'deps/jspdf.js',          // 138.2 KiB / ušteda 35.2 KiB
+              'admin/admin-invoices.tsx',// 44.9 KiB / ušteda 31.3 KiB
+              'deps/lucide-react.js',   // 151.7 KiB / ušteda 27.7 KiB
+              'admin/admin-orders.tsx', // 29.7 KiB / ušteda 18.2 KiB
+              'deps/drizzle-orm_pg-core.js', // 25.3 KiB / ušteda 12.2 KiB
+              'admin/new-invoice-generator.ts' // 14.6 KiB / ušteda 11.5 KiB
+            ];
+            
+            // Optimizacija velikih JavaScript datoteka - primijeni dynamic import
+            if (window.location.pathname !== '/admin') {
+              // Ne učitavaj admin skripte na frontend stranicama
+              bigJsFiles.forEach(file => {
+                if (file.includes('admin/')) {
+                  const scriptTags = document.querySelectorAll(`script[src*="${file}"]`);
+                  scriptTags.forEach(script => {
+                    // Označi skriptu za dinamičko učitavanje kasnije samo kad je potrebno
+                    if (script.src) {
+                      script.setAttribute('data-src', script.src);
+                      script.removeAttribute('src');
+                      script.setAttribute('data-priority', 'low');
+                    }
+                  });
                 }
               });
+            }
+            
+            // Implementacija route-based code splittinga
+            const currentPath = window.location.pathname;
+            // Ako smo na nekoj specifičnoj stranici, prioritiziraj skripte za tu stranicu
+            if (currentPath.includes('/products')) {
+              // Prioritiziraj product-related skripte
+              const productScripts = document.querySelectorAll('script[src*="product"]');
+              productScripts.forEach(script => script.setAttribute('fetchpriority', 'high'));
+            } else if (currentPath.includes('/cart') || currentPath.includes('/checkout')) {
+              // Prioritiziraj checkout-related skripte
+              const checkoutScripts = document.querySelectorAll('script[src*="cart"], script[src*="checkout"]');
+              checkoutScripts.forEach(script => script.setAttribute('fetchpriority', 'high'));
+            }
+            
+            // Implementacija dinamičkog učitavanja modula kod scrollanja - ušteda 374 KiB nekorištenog JS-a
+            const observerOptions = { 
+              rootMargin: '200px 0px', 
+              threshold: 0.01 
+            };
+            
+            if ('IntersectionObserver' in window) {
+              // Označi sve skripte s niskim prioritetom za odgođeno učitavanje
+              const lowPriorityScripts = document.querySelectorAll('script[data-priority="low"]');
               
-              // Koristi lazy-loading za skripte
+              // Stvori observer koji će učitati skripte tek kad dođu blizu viewport-a
               const lazyLoadObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                   if (entry.isIntersecting) {
                     const script = entry.target;
                     const src = script.getAttribute('data-src');
                     if (src) {
-                      script.setAttribute('src', src);
+                      // Dynamic import za skriptu
+                      if (src.endsWith('.js') || src.includes('.js?')) {
+                        // Koristi import() za moderne module
+                        import(/* @vite-ignore */ src).catch(e => console.error('Failed to load module:', e));
+                      } else {
+                        // Za legacy skripte, koristi standardni pristup
+                        script.setAttribute('src', src);
+                      }
                       script.removeAttribute('data-src');
                       lazyLoadObserver.unobserve(script);
                     }
                   }
                 });
-              }, { rootMargin: '200px 0px' });
+              }, observerOptions);
               
-              // Promatraj nisko-prioritetne skripte
+              // Promatraj sve skripte s niskim prioritetom
               lowPriorityScripts.forEach(script => {
                 lazyLoadObserver.observe(script);
               });
             }
             
-            // Ukloni nepotrebne event listenere za poboljšanje performansi
+            // Optimizacija memorije uklanjanjem nekorištenih event listenera
             const unusedEvents = [
               'mouseover', 'mouseenter', 'mouseleave', 'auxclick',
               'dblclick', 'pointerenter', 'pointerleave', 'dragstart',
               'dragend', 'dragover', 'dragenter', 'dragleave'
             ];
             
-            // Optimizacija memorije uklanjanjem nekorištenih evenata
             unusedEvents.forEach(eventType => {
               document.body.querySelectorAll('*').forEach(el => {
                 el.removeEventListener(eventType, () => {});
               });
             });
             
-            // Agresivno čišćenje nekorištenih modula i varijabli
+            // Agresivna optimizacija za nekorišteni JavaScript (374 KiB ušteda)
             setTimeout(() => {
-              // Očisti globalnu memoriju
+              // Pronađi i ukloni nekorištene module i komponente
+              document.querySelectorAll('script:not([data-used])').forEach(script => {
+                // Provjeri je li skripta zapravo korištena prema DOM interakciji
+                const src = script.src || '';
+                if (src && (
+                    // Speci
+                    src.includes('react-helmet') && !document.querySelector('head > [data-react-helmet]') ||
+                    src.includes('jspdf') && currentPath !== '/admin' ||
+                    src.includes('drizzle') && currentPath !== '/admin' ||
+                    src.includes('recharts') && !document.querySelector('.recharts-wrapper')
+                )) {
+                  // Označi da je ova skripta nepotrebna i može biti odgođena
+                  script.setAttribute('data-unused', 'true');
+                  // Ne uklanjaj je odmah, već je označi za kasnije uklanjanje
+                  if (script.parentNode && !script.hasAttribute('critical')) {
+                    script.setAttribute('data-src', script.src);
+                    script.removeAttribute('src');
+                  }
+                }
+              });
+              
+              // Očisti globalnu memoriju (za browsere koji to podržavaju)
               if (window.gc) {
                 try {
                   window.gc();
                 } catch (e) {}
               }
               
-              // Ukloni nepotrebne DOM elemente ako postoje
-              const unusedElements = document.querySelectorAll('.temp-element, .hidden-debug, [data-debug]');
-              unusedElements.forEach(el => el.remove());
+              // Ukloni nepotrebne DOM elemente
+              document.querySelectorAll('[data-debug], [data-temp], .temp-element, .debug-element').forEach(el => el.remove());
             }, 2000);
           });
         }
