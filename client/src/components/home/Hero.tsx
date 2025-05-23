@@ -139,63 +139,18 @@ export default function Hero() {
   const imgRef = useRef<HTMLImageElement>(null);
   const [isImageLoaded, setIsImageLoaded] = useState(true);
 
-  // Agresivna optimizacija za smanjenje Rendering-Verzögerung (11.05s u LCP-u)
+  // Jednostavnija, sigurnija verzija optimizacije za Rendering-Verzögerung
   useEffect(() => {
-    // Prethodno učitavanje i priprema slike (preload)
+    // Osnovne optimizacije za sliku
     if (imgRef.current) {
-      // Koristimo requestAnimationFrame za optimalan timing
-      requestAnimationFrame(() => {
-        if (imgRef.current) {
-          // Direktno optimiziramo performanse renderiranja slike
-          imgRef.current.style.transform = 'translateZ(0)'; // Hardware acceleration
-          imgRef.current.style.backfaceVisibility = 'hidden'; // Sprječava repainting
-          
-          // Dodatno smanjujemo kompleksnost renderiranja
-          imgRef.current.style.imageRendering = 'auto';
-          
-          // Sprječavamo layout shift vezan uz sliku
-          imgRef.current.width = imgRef.current.naturalWidth || 1920;
-          imgRef.current.height = imgRef.current.naturalHeight || 1080;
-          
-          // Označi kao direktno renderiran element (hint za browser)
-          imgRef.current.setAttribute('importance', 'high');
-        }
-      });
-    }
-    
-    // Optimize the critical rendering path
-    if ('requestIdleCallback' in window) {
-      // @ts-ignore - Moderni browseri podržavaju
-      window.requestIdleCallback(() => {
-        // Optimizacija naslova - ovo je glavni tekst
-        if (headingRef.current) {
-          headingRef.current.style.visibility = 'visible';
-          headingRef.current.style.opacity = '1';
-          
-          // Bolje renderiranje teksta - ispravak za TS kompatibilnost
-          // Korištenje odgovarajućih CSS svojstava za optimizaciju teksta
-          headingRef.current.style.textRendering = 'optimizeLegibility';
-        }
-      }, { timeout: 500 });
-    } else {
-      // Fallback za starije preglednike
-      setTimeout(() => {
-        if (headingRef.current) {
-          headingRef.current.style.visibility = 'visible';
-          headingRef.current.style.opacity = '1';
-        }
-      }, 100);
-    }
-    
-    // Ubrzaj LCP metriku prema novim optimizacijama Chromea
-    if ('navigation' in window && 'addEventListener' in window) {
-      // @ts-ignore - Moderni browseri podržavaju
-      window.navigation?.addEventListener('navigate', () => {
-        if (imgRef.current) {
-          // Hint browseru da odmah preuzme sliku
-          imgRef.current.fetchPriority = 'high';
-        }
-      });
+      // Osnovna hardware akceleracija
+      imgRef.current.style.transform = 'translateZ(0)';
+      
+      // Postavi odmah vidljivost
+      if (headingRef.current) {
+        headingRef.current.style.visibility = 'visible';
+        headingRef.current.style.opacity = '1';
+      }
     }
   }, []);
   
