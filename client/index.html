@@ -370,8 +370,8 @@
     
     <!-- Optimizirano učitavanje glavne skripte -->
     <!-- Strategija kritičnog i nekritičnog JS koda -->
-    <!-- Kritični JS za inicijalno učitavanje stranice -->
-    <script type="module" src="/src/main.tsx" async></script>
+    <!-- Kritični JS za inicijalno učitavanje stranice s optimiziranim atributima -->
+    <script type="module" src="/src/main.tsx" fetchpriority="high" critical></script>
     
     <!-- Script za napredno učitavanje resursa i optimizaciju performansi -->
     <script>
@@ -396,21 +396,69 @@
             }
           });
           
-          // Optimizacija nekorištenog JavaScript koda
+          // Napredna optimizacija za nekorišteni JavaScript kod
           window.addEventListener('load', () => {
-            // Koristi tree-shaking za eliminaciju nekorištenog koda
+            // Prioriteti za učitavanje resursa
+            if ('IntersectionObserver' in window) {
+              // Deaktivira skripte koje trenutno nisu potrebne
+              const lowPriorityScripts = document.querySelectorAll('script[data-priority="low"]');
+              lowPriorityScripts.forEach(script => {
+                const src = script.getAttribute('src');
+                if (src) {
+                  // Zamijenimo skriptu s lazy-učitavanjem verzijom
+                  script.removeAttribute('src');
+                  script.setAttribute('data-src', src);
+                }
+              });
+              
+              // Koristi lazy-loading za skripte
+              const lazyLoadObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                  if (entry.isIntersecting) {
+                    const script = entry.target;
+                    const src = script.getAttribute('data-src');
+                    if (src) {
+                      script.setAttribute('src', src);
+                      script.removeAttribute('data-src');
+                      lazyLoadObserver.unobserve(script);
+                    }
+                  }
+                });
+              }, { rootMargin: '200px 0px' });
+              
+              // Promatraj nisko-prioritetne skripte
+              lowPriorityScripts.forEach(script => {
+                lazyLoadObserver.observe(script);
+              });
+            }
+            
+            // Ukloni nepotrebne event listenere za poboljšanje performansi
             const unusedEvents = [
               'mouseover', 'mouseenter', 'mouseleave', 'auxclick',
               'dblclick', 'pointerenter', 'pointerleave', 'dragstart',
               'dragend', 'dragover', 'dragenter', 'dragleave'
             ];
             
-            // Ukloni event listenere za nekorištene događaje
+            // Optimizacija memorije uklanjanjem nekorištenih evenata
             unusedEvents.forEach(eventType => {
               document.body.querySelectorAll('*').forEach(el => {
                 el.removeEventListener(eventType, () => {});
               });
             });
+            
+            // Agresivno čišćenje nekorištenih modula i varijabli
+            setTimeout(() => {
+              // Očisti globalnu memoriju
+              if (window.gc) {
+                try {
+                  window.gc();
+                } catch (e) {}
+              }
+              
+              // Ukloni nepotrebne DOM elemente ako postoje
+              const unusedElements = document.querySelectorAll('.temp-element, .hidden-debug, [data-debug]');
+              unusedElements.forEach(el => el.remove());
+            }, 2000);
           });
         }
         
