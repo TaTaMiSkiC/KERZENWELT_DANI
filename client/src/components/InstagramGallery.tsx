@@ -166,13 +166,22 @@ export default function InstagramGallery({
             <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 <picture>
-                  <source 
-                    srcSet={post.media_url ? post.media_url.replace(/\.(jpg|jpeg|png)$/i, '.webp') : (post.thumbnail_url ? post.thumbnail_url.replace(/\.(jpg|jpeg|png)$/i, '.webp') : '')} 
-                    type="image/webp" 
+                  <source
+                    srcSet={
+                      post.media_url
+                        ? post.media_url.replace(/\.(jpg|jpeg|png)$/i, ".webp")
+                        : post.thumbnail_url
+                          ? post.thumbnail_url.replace(
+                              /\.(jpg|jpeg|png)$/i,
+                              ".webp",
+                            )
+                          : ""
+                    }
+                    type="image/webp"
                   />
                   <img
                     src={post.media_url || post.thumbnail_url}
-                    alt={post.caption || "Instagram slika"}
+                    alt={post.caption || "Instagram Bilder"}
                     className="w-full aspect-square object-cover"
                     loading="lazy"
                     width="300"

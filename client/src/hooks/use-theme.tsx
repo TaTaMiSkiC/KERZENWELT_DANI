@@ -1,16 +1,27 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
+// Definiramo moguće teme
 type Theme = "light" | "dark" | "system";
 
+// Definirano što kontekst treba sadržavati
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+// Postavljamo defaultnu vrijednost konteksta
+const defaultTheme: ThemeContextType = {
+  theme: "light",
+  setTheme: () => {}, // Prazna funkcija kao početna vrijednost
+};
+
+// Kreiramo kontekst s defaultnom vrijednošću
+const ThemeContext = createContext<ThemeContextType>(defaultTheme);
 
 // Funkcija za primjenu teme na HTML element
 function applyTheme(theme: Theme) {
+  if (typeof window === "undefined") return;
+  
   const root = window.document.documentElement;
   
   // Ukloni sve klase tema
@@ -27,40 +38,41 @@ function applyTheme(theme: Theme) {
   }
 }
 
-// Dohvati početnu temu iz localStorage
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  
-  const savedTheme = localStorage.getItem("theme") as Theme;
-  return (savedTheme && ["light", "dark", "system"].includes(savedTheme))
-    ? savedTheme
-    : "light";
-}
-
+// Običan React Provider koji koristi hooks kako treba
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  // Dohvati početnu temu iz localStorage
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "light";
+    
+    const savedTheme = localStorage.getItem("theme") as Theme;
+    return (savedTheme && ["light", "dark", "system"].includes(savedTheme))
+      ? savedTheme
+      : "light";
+  });
   
   const setTheme = (newTheme: Theme) => {
-    localStorage.setItem("theme", newTheme);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("theme", newTheme);
+    }
     setThemeState(newTheme);
     applyTheme(newTheme);
   };
   
-  // Inicijalno postavi temu i dodaj listener za promjene medija (system tema)
+  // Primijeni temu i slušaj promjene sistemske teme
   useEffect(() => {
-    // Inicijalno postavi temu
     applyTheme(theme);
     
-    // Dodaj listener za promjene sistemske teme
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => {
-      if (theme === "system") {
-        applyTheme("system");
-      }
-    };
-    
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    if (typeof window !== "undefined") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handleChange = () => {
+        if (theme === "system") {
+          applyTheme("system");
+        }
+      };
+      
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
   }, [theme]);
   
   return (
@@ -70,10 +82,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Hook za korištenje teme u komponentama
 export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  return useContext(ThemeContext);
 }
