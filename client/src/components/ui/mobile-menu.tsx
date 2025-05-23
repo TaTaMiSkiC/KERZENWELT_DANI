@@ -38,7 +38,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
+      <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0" aria-describedby="menu-description">
         <SheetHeader className="p-6 text-left border-b">
           <div className="flex items-center gap-3">
             <img 
@@ -47,9 +47,11 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               className="h-10 w-auto" 
             />
             <div className="flex items-baseline">
-              <SheetTitle className="heading text-xl font-bold text-primary">Kerzenwelt</SheetTitle>
-              <span className="text-foreground text-sm ml-1 font-bold">by Dani</span>
+              <SheetTitle className="heading text-xl font-bold text-primary">Kerzenwelt by Dani</SheetTitle>
             </div>
+          </div>
+          <div className="sr-only" id="menu-description">
+            Navigationsmenü für mobile Geräte
           </div>
         </SheetHeader>
         
