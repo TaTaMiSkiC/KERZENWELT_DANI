@@ -33,7 +33,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export default function ContactSettingsForm() {
   const { toast } = useToast();
-  
+
   // Dohvaćanje trenutnih postavki
   const { data: contactData, isLoading } = useQuery({
     queryKey: ["/api/settings/contact"],
@@ -45,7 +45,7 @@ export default function ContactSettingsForm() {
       return await res.json();
     },
   });
-  
+
   // Definicija forme
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -58,7 +58,7 @@ export default function ContactSettingsForm() {
       workingHours: "",
     },
   });
-  
+
   // Ažuriranje podataka forme kada se dohvate podaci
   React.useEffect(() => {
     if (contactData) {
@@ -72,15 +72,11 @@ export default function ContactSettingsForm() {
       });
     }
   }, [contactData, form]);
-  
+
   // Mutacija za ažuriranje postavki
   const updateMutation = useMutation({
     mutationFn: async (data: ContactFormValues) => {
-      const response = await apiRequest(
-        "POST",
-        "/api/settings/contact",
-        data
-      );
+      const response = await apiRequest("POST", "/api/settings/contact", data);
       if (!response.ok) {
         throw new Error("Neuspješno ažuriranje kontakt podataka");
       }
@@ -101,12 +97,12 @@ export default function ContactSettingsForm() {
       });
     },
   });
-  
+
   // Submit handler
   const onSubmit = (data: ContactFormValues) => {
     updateMutation.mutate(data);
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex justify-center p-8">
@@ -114,14 +110,14 @@ export default function ContactSettingsForm() {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-2xl mx-auto">
       <h2 className="text-lg font-semibold mb-4">Kontakt podaci</h2>
       <p className="text-muted-foreground mb-6">
         Ovi podaci će se prikazivati u podnožju stranice i na kontakt stranici.
       </p>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -132,13 +128,13 @@ export default function ContactSettingsForm() {
                 <FormItem>
                   <FormLabel>Adresa</FormLabel>
                   <FormControl>
-                    <Input placeholder="npr. Ulica grada Vukovara 224" {...field} />
+                    <Input placeholder="Österreich" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="city"
@@ -146,13 +142,13 @@ export default function ContactSettingsForm() {
                 <FormItem>
                   <FormLabel>Grad</FormLabel>
                   <FormControl>
-                    <Input placeholder="npr. Zagreb" {...field} />
+                    <Input placeholder="Villach" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="postalCode"
@@ -160,13 +156,13 @@ export default function ContactSettingsForm() {
                 <FormItem>
                   <FormLabel>Poštanski broj</FormLabel>
                   <FormControl>
-                    <Input placeholder="npr. 10000" {...field} />
+                    <Input placeholder="9500" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="phone"
@@ -174,13 +170,13 @@ export default function ContactSettingsForm() {
                 <FormItem>
                   <FormLabel>Telefon</FormLabel>
                   <FormControl>
-                    <Input placeholder="npr. +385 1 234 5678" {...field} />
+                    <Input placeholder="00436603878221" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="email"
@@ -188,13 +184,13 @@ export default function ContactSettingsForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="npr. info@kerzenwelt.hr" {...field} />
+                    <Input placeholder="info@kerzenweltbydani.vom" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="workingHours"
@@ -202,16 +198,16 @@ export default function ContactSettingsForm() {
                 <FormItem>
                   <FormLabel>Radno vrijeme</FormLabel>
                   <FormControl>
-                    <Input placeholder="npr. Pon - Pet: 9:00 - 17:00" {...field} />
+                    <Input placeholder="Mo -Fr: 13:00 - 20:00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             disabled={updateMutation.isPending}
             className="w-full md:w-auto"
           >

@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Language } from "@/hooks/use-language";
 
 type HeroSettings = {
-  titleText: Record<string, string>;
+  titleText: Record<string, string[]>;
   subtitleText: Record<string, string>;
   titleFontSize: string;
   titleFontWeight: string;
@@ -63,11 +63,11 @@ const fontWeights = [
 
 const defaultHeroSettings: HeroSettings = {
   titleText: {
-    de: "Handgefertigte Kerzen für besondere Momente",
-    hr: "Ručno izrađene svijeće za posebne trenutke",
-    en: "Handmade Candles for Special Moments",
-    it: "Candele artigianali per momenti speciali",
-    sl: "Ročno izdelane sveče za posebne trenutke"
+    de: ["Willkommen", "Kerzenwelt by Dani", "Wo Kerzen Wärme und Stil vereinen"],
+    hr: ["Dobrodošli", "Svijet svijeća by Dani", "Gdje se toplina i stil spajaju"],
+    en: ["Welcome", "The Candle World by Dani", "Where warmth and style unite"],
+    it: ["Benvenuti", "Il mondo delle candele di Dani", "Dove calore e stile si incontrano"],
+    sl: ["Dobrodošli", "Svet sveč by Dani", "Kjer se toplina in stil združita"]
   },
   subtitleText: {
     de: "Entdecken Sie unsere einzigartige Sammlung handgefertigter Kerzen, perfekt für jede Gelegenheit.",
@@ -216,19 +216,35 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
 
             {supportedLanguages.map((lang) => (
               <TabsContent key={lang.value} value={lang.value} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name={`titleText.${lang.value}`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Titel ({lang.label})</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Titel eingeben" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="border p-4 rounded-md mb-4">
+                  <h3 className="font-medium mb-3">Titel Einstellungen ({lang.label})</h3>
+                  {[0, 1, 2].map((index) => (
+                    <FormField
+                      key={index}
+                      control={form.control}
+                      name={`titleText.${lang.value}`}
+                      render={({ field }) => (
+                        <FormItem className="mb-3">
+                          <FormLabel>Titel {index + 1}</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder={`Titel Zeile ${index + 1}`} 
+                              value={Array.isArray(field.value) ? (field.value[index] || '') : ''}
+                              onChange={(e) => {
+                                // Ensure field.value is an array
+                                const currentValue = Array.isArray(field.value) ? field.value : [];
+                                const newValue = [...currentValue];
+                                newValue[index] = e.target.value;
+                                field.onChange(newValue);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
 
                 <FormField
                   control={form.control}

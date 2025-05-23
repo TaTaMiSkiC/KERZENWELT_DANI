@@ -33,7 +33,7 @@ export default function Footer() {
   // Sastavljanje pune adrese ako su podaci dostupni
   const fullAddress = contactData
     ? `${contactData.address}, ${contactData.postalCode} ${contactData.city}`
-    : "Ulica grada Vukovara 224, 10000 Zagreb";
+    : "Villach 9500, Österreich";
 
   return (
     <footer className="bg-text-dark text-white pt-16 pb-8">

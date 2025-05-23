@@ -24,12 +24,17 @@ export default function Hero() {
     }
   });
   
-  // Get title and subtitle text for current language, falling back to translations if not found
-  const getTitleText = () => {
+  // Get title array for the current language, or fallback to translation
+  const getTitleTextArray = () => {
     if (heroSettings?.titleText && heroSettings.titleText[language]) {
       return heroSettings.titleText[language];
     }
-    return t('home.heroTitle');
+    // Fallback to default array of titles if not found
+    return [
+      t('home.heroTitle1'), 
+      t('home.heroTitle2'), 
+      t('home.heroTitle3')
+    ];
   };
   
   const getSubtitleText = () => {
@@ -41,7 +46,7 @@ export default function Hero() {
   
   // Use inline styles for custom font properties
   const getTitleClasses = () => {
-    const classes = ["heading", "mb-4"];
+    const classes = ["heading"];
     
     // Use default tailwind classes if settings not available
     if (!heroSettings) {
@@ -68,7 +73,6 @@ export default function Hero() {
     
     return {
       color: heroSettings.titleColor || "white",
-      fontSize: getFontSizeValue(heroSettings.titleFontSize),
       fontWeight: getFontWeightValue(heroSettings.titleFontWeight)
     };
   };
@@ -131,12 +135,21 @@ export default function Hero() {
       <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       <div className="container mx-auto px-4 h-full flex items-center relative z-10">
         <div className="max-w-xl">
-          <h1 
-            className={getTitleClasses()}
-            style={getTitleStyle()}
-          >
-            {getTitleText()}
-          </h1>
+          <div className="mb-4">
+            {getTitleTextArray().map((titlePart, index) => (
+              <h1 
+                key={index}
+                className={getTitleClasses() + (index > 0 ? " mt-1" : "")}
+                style={{
+                  ...getTitleStyle(),
+                  fontSize: index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem",
+                  fontWeight: index === 1 ? "700" : "500"
+                }}
+              >
+                {titlePart}
+              </h1>
+            ))}
+          </div>
           <p 
             className={getSubtitleClasses()}
             style={getSubtitleStyle()}

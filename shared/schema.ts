@@ -407,7 +407,7 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
 
 // Schema for hero section settings
 export const heroSettingsSchema = z.object({
-  titleText: z.record(z.string(), z.string()), // Multi-language title text
+  titleText: z.record(z.string(), z.array(z.string())), // Multi-language title text as array of strings
   subtitleText: z.record(z.string(), z.string()), // Multi-language subtitle text
   titleFontSize: z.string().default("4xl md:text-5xl lg:text-6xl"),
   titleFontWeight: z.string().default("bold"),
