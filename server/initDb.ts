@@ -252,7 +252,7 @@ async function createDefaultContactSettings() {
     },
     {
       key: "contact_email",
-      value: "info@kerzenwelt.hr",
+      value: "info@kerzenweltbydani.com",
     },
     {
       key: "contact_working_hours",
@@ -283,7 +283,7 @@ async function createDefaultGeneralSettings() {
     },
     {
       key: "store_email",
-      value: "info@kerzenwelt.hr",
+      value: "info@kerzenweltbydani.com",
     },
     {
       key: "store_phone",

@@ -16,6 +16,7 @@ const ADMIN_EMAIL = "info@kerzenweltbydani.com";
 const ADMIN_PHONE = "+436603878221";
 const STORE_NAME = "Kerzenwelt by Dani";
 const FROM_EMAIL = "info@kerzenweltbydani.com";
+const STORE_DOMAIN = "https://kerzenweltbydani.com";;
 
 interface NotificationOptions {
   emailEnabled?: boolean;
@@ -90,7 +91,7 @@ export async function sendNewOrderNotification(
         <p><strong>Status:</strong> ${order.status}</p>
         
         <p style="margin-top: 30px;">Kliknite na poveznicu ispod za pregled detalja narudžbe:</p>
-        <p><a href="https://kerzenworld.com/admin/orders/${order.id}" style="display: inline-block; background-color: #D4AF37; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pregledaj narudžbu</a></p>
+        <p><a href="${STORE_DOMAIN}/admin/orders/${order.id}" style="display: inline-block; background-color: #D4AF37; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Pregledaj narudžbu</a></p>
         
         <p style="margin-top: 30px; color: #888; font-size: 12px;">Ova e-mail poruka je automatski generirana. Molimo vas ne odgovarajte na ovu poruku.</p>
       </div>
