@@ -81,11 +81,20 @@ export default function CartItem({ item }: CartItemProps) {
       <div className="flex items-center flex-1">
         <div className="w-20 h-20 mr-4 rounded overflow-hidden">
           <Link href={`/products/${product.id}`}>
-            <img
-              src={imageUrl}
-              alt={name}
-              className="w-full h-full object-cover"
-            />
+            <picture>
+              <source 
+                srcSet={imageUrl?.replace(/\.(jpg|jpeg|png)$/i, '.webp') || ""} 
+                type="image/webp" 
+              />
+              <img
+                src={imageUrl}
+                alt={name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                width="100"
+                height="100"
+              />
+            </picture>
           </Link>
         </div>
         

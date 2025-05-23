@@ -47,15 +47,24 @@ export default function ProductCard({ product }: ProductCardProps) {
           onMouseLeave={() => setIsHovered(false)}
         >
           <Link href={`/products/${id}`}>
-            <img
-              src={imageUrl || ""}
-              alt={name}
-              loading="lazy"
-              decoding="async"
-              width="300"
-              height="300"
-              className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? "scale-110" : ""}`}
-            />
+            <picture>
+              {/* WebP format za moderne preglednike */}
+              <source 
+                srcSet={imageUrl?.replace(/\.(jpg|jpeg|png)$/i, '.webp') || ""} 
+                type="image/webp" 
+              />
+              {/* Originalni format za starije preglednike */}
+              <img
+                src={imageUrl || ""}
+                alt={name}
+                loading="lazy"
+                decoding="async"
+                width="300"
+                height="300"
+                className={`w-full h-full object-cover transition-transform duration-500 ${isHovered ? "scale-110" : ""}`}
+                fetchpriority="high"
+              />
+            </picture>
           </Link>
 
           {/* New or Sale tags */}

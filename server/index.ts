@@ -19,9 +19,13 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // Za statičke resurse postavljamo keširanje
-  if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 sata
+  // Za statičke resurse postavljamo optimizirano keširanje
+  if (req.url.match(/\.(css|js)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 sata za CSS i JS
+  } else if (req.url.match(/\.(png|jpg|jpeg|gif|webp|avif|ico|svg)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 dana za slike
+  } else if (req.url.match(/\.(woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 dana za fontove
   }
   
   next();

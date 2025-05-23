@@ -25,7 +25,7 @@ const LoadingFallback = () => (
         animation: 'pulse 1.5s infinite ease-in-out'
       }} 
     />
-    <p style={{ fontFamily: 'sans-serif', color: '#666' }}>Učitavanje...</p>
+    <p style={{ fontFamily: 'sans-serif', color: '#666' }}>Laden...</p>
   </div>
 );
 
