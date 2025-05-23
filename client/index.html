@@ -119,29 +119,56 @@
         margin-top: 0;
       }
     </style>
+    <!-- Inline kritični CSS za brzinu -->
+    <style>
+      /* Kritični stil za što brži prikaz */
+      body {
+        opacity: 1;
+        transition: opacity 0.1s;
+      }
+      #root {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .hero-section {
+        background-position: center;
+        background-size: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+      }
+    </style>
+    
     <!-- Skripta za inicijalizaciju teme i jezika -->
     <script>
       (function () {
-        // Dohvaćanje teme iz lokalnog spremnika
-        const storedTheme = localStorage.getItem("theme");
-        const theme = storedTheme ? storedTheme : "light";
-
-        // Dohvati jezik iz lokalnog spremnika
-        const storedLang = localStorage.getItem("language");
-        const lang = storedLang ? storedLang : "hr";
-
-        // Postavi jezik
-        document.documentElement.lang = lang;
-
-        // Postavi temu
-        document.documentElement.classList.remove("light", "dark");
-        if (theme === "system") {
-          const systemDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          ).matches;
-          document.documentElement.classList.add(systemDark ? "dark" : "light");
-        } else {
-          document.documentElement.classList.add(theme);
+        try {
+          // Dohvaćanje teme iz lokalnog spremnika
+          const storedTheme = localStorage.getItem("theme");
+          const theme = storedTheme ? storedTheme : "light";
+  
+          // Dohvati jezik iz lokalnog spremnika
+          const storedLang = localStorage.getItem("language");
+          const lang = storedLang ? storedLang : "hr";
+  
+          // Postavi jezik
+          document.documentElement.lang = lang;
+  
+          // Postavi temu
+          document.documentElement.classList.remove("light", "dark");
+          if (theme === "system") {
+            const systemDark = window.matchMedia(
+              "(prefers-color-scheme: dark)",
+            ).matches;
+            document.documentElement.classList.add(systemDark ? "dark" : "light");
+          } else {
+            document.documentElement.classList.add(theme);
+          }
+        } catch (e) {
+          // Fallback ako dođe do greške
+          document.documentElement.classList.add("light");
         }
       })();
     </script>
