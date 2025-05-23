@@ -93,9 +93,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Provjera je li korisnik admin - ako je admin, dohvati i neaktivne proizvode
       const includeInactive = req.isAuthenticated() && req.user?.isAdmin;
-      const products = await storage.getAllProducts(includeInactive);
+      
+      // Check if category filter is applied
+      const categoryId = req.query.category ? parseInt(req.query.category as string) : null;
+      
+      let products;
+      if (categoryId) {
+        console.log(`Filtering products by category ID: ${categoryId}`);
+        products = await storage.getProductsByCategory(categoryId, includeInactive);
+        console.log(`Found ${products.length} products in category ${categoryId}`);
+      } else {
+        console.log("Getting all products, includeInactive:", includeInactive);
+        products = await storage.getAllProducts(includeInactive);
+        console.log(`Retrieved ${products.length} total products`);
+      }
+      
       res.json(products);
     } catch (error) {
+      console.error("Error fetching products:", error);
       res.status(500).json({ message: "Failed to fetch products" });
     }
   });

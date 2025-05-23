@@ -43,9 +43,24 @@ export default function ProductsPage() {
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
-  // Fetch all products
+  // Fetch products with category filtering
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products", filters.category !== "all" ? filters.category : null],
+    queryFn: async ({ queryKey }) => {
+      const categoryId = queryKey[1];
+      const url = categoryId 
+        ? `/api/products?category=${categoryId}` 
+        : "/api/products";
+      
+      console.log("Fetching products with URL:", url);
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      
+      return response.json();
+    },
   });
   
   // Fetch all categories

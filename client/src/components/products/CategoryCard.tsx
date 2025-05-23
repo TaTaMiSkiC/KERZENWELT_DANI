@@ -22,6 +22,12 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           <a 
             href={`/products?category=${id}`} 
             className="inline-block text-white font-accent text-sm border-b border-white pb-1 hover:border-primary hover:text-primary transition-colors cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.href = `/products?category=${id}`;
+              // Force the browser to fully reload the page with the new URL parameters
+              window.location.reload();
+            }}
           >
             {t('home.exploreCollection')}
           </a>

@@ -349,13 +349,13 @@ export class DatabaseStorage implements IStorage {
       results = await db
         .select()
         .from(products)
-        .where(eq(products.category_id, categoryId));
+        .where(eq(products.categoryId, categoryId));
     } else {
       results = await db
         .select()
         .from(products)
         .where(
-          and(eq(products.category_id, categoryId), eq(products.active, true)),
+          and(eq(products.categoryId, categoryId), eq(products.active, true)),
         );
     }
     
