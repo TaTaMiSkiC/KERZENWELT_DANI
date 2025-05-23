@@ -1,53 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="hr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1"
+    />
     <meta name="theme-color" content="#ffffff" />
     <title>Kerzenwelt by Dani | Handgemachte Kerzen</title>
-    <meta name="description" content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause." />
-    
+    <meta
+      name="description"
+      content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause."
+    />
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
-    
+
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://kerzenweltbydani.com/" />
-    <meta property="og:title" content="Kerzenwelt by Dani | Handgemachte Kerzen" />
-    <meta property="og:description" content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause." />
-    <meta property="og:image" content="https://kerzenweltbydani.com/logo.png" />
-    
+    <meta
+      property="og:title"
+      content="Kerzenwelt by Dani | Handgemachte Kerzen"
+    />
+    <meta
+      property="og:description"
+      content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause."
+    />
+    <meta
+      property="og:image"
+      content="https://opengraph.b-cdn.net/production/images/ec1a012f-bd7c-4670-958e-ac9b0040fc53.png?token=B-z0JoCmnK8Dt-3tf_g8WP4WU9jFN5ZMvgP1wUnWNoM&height=760&width=794&expires=33284003819"
+    />
+
     <!-- Performance optimizations -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://kerzenweltbydani.com" />
-    
+
     <!-- Preload ključnih fontova -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" as="style" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" />
-    
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      as="style"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+    />
+
     <!-- Preload ključnih slika -->
-    <link rel="preload" href="/logo.png" as="image" />
+    <link rel="preload" href="/logo.png" as="image" fetchpriority="high" />
+    
+    <!-- Optimizacija za mobilne uređaje -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
     <!-- Skripta za inicijalizaciju teme i jezika -->
     <script>
-      (function() {
+      (function () {
         // Dohvaćanje teme iz lokalnog spremnika
-        const storedTheme = localStorage.getItem('theme');
-        const theme = storedTheme ? storedTheme : 'light';
-        
+        const storedTheme = localStorage.getItem("theme");
+        const theme = storedTheme ? storedTheme : "light";
+
         // Dohvati jezik iz lokalnog spremnika
-        const storedLang = localStorage.getItem('language');
-        const lang = storedLang ? storedLang : 'hr';
-        
+        const storedLang = localStorage.getItem("language");
+        const lang = storedLang ? storedLang : "hr";
+
         // Postavi jezik
         document.documentElement.lang = lang;
-        
+
         // Postavi temu
-        document.documentElement.classList.remove('light', 'dark');
-        if (theme === 'system') {
-          const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          document.documentElement.classList.add(systemDark ? 'dark' : 'light');
+        document.documentElement.classList.remove("light", "dark");
+        if (theme === "system") {
+          const systemDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          document.documentElement.classList.add(systemDark ? "dark" : "light");
         } else {
           document.documentElement.classList.add(theme);
         }
@@ -58,6 +87,9 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+    <script
+      type="text/javascript"
+      src="https://replit.com/public/js/replit-dev-banner.js"
+    ></script>
   </body>
 </html>

@@ -7,7 +7,26 @@ import compression from "compression";
 
 const app = express();
 // Dodajemo kompresiju za brži prijenos podataka
-app.use(compression());
+app.use(compression({
+  level: 6, // Balans između brzine kompresije i omjera kompresije
+  threshold: 0 // Kompresija za sve veličine odgovora
+}));
+
+// Middleware za HTTP zaglavlja performansi i sigurnosti
+app.use((req, res, next) => {
+  // Dodajemo zaglavlja za poboljšanje sigurnosti
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Za statičke resurse postavljamo keširanje
+  if (req.url.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 sata
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

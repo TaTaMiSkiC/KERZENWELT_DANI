@@ -14,7 +14,7 @@ const FROM_EMAIL = "info@kerzenweltbydani.com";
 
 interface EmailParams {
   to: string;
-  from: "info@kerzenweltbydani.com";
+  from: string;
   subject: string;
   text?: string;
   html?: string;
@@ -222,6 +222,7 @@ export async function sendVerificationEmail(
     // Send the email
     return await sendEmail({
       to: email,
+      from: FROM_EMAIL,
       subject: subject,
       html: html,
     });
