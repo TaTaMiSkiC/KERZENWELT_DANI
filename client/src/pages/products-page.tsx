@@ -82,13 +82,8 @@ export default function ProductsPage() {
       return false;
     }
     
-    // Filter by category - simplified and direct approach
-    if (filters.category !== "all") {
-      const categoryId = parseInt(filters.category);
-      if ((product as any).category_id !== categoryId) {
-        return false;
-      }
-    }
+    // We don't need to filter by category here since we're doing it at the API level
+    // with our queryFn in the useQuery hook
     
     // Filter by search term
     if (filters.search && !product.name.toLowerCase().includes(filters.search.toLowerCase())) {
