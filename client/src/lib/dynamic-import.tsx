@@ -1,3 +1,7 @@
+// Diese Datei ist aktuell nicht in Verwendung, da wir die dynamische Ladung der Komponenten deaktiviert haben
+// Sie dient nur als Referenz für zukünftige Performance-Optimierungen
+
+/*
 import { lazy, Suspense, ComponentType } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -11,11 +15,7 @@ function LoadingSpinner() {
   );
 }
 
-/**
- * Funkcija za dinamičko učitavanje komponenti pomoću React.lazy
- * @param importFunc - Import funkcija za komponentu
- * @returns Komponenta omotana sa Suspense
- */
+// Funktion zum dynamischen Laden von Komponenten mit React.lazy
 export function dynamicImport<T extends ComponentType<any>>(
   importFunc: () => Promise<{ default: T }>
 ) {
@@ -29,3 +29,4 @@ export function dynamicImport<T extends ComponentType<any>>(
     );
   };
 }
+*/

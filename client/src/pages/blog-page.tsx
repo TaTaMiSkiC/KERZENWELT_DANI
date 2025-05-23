@@ -43,7 +43,7 @@ export default function SlikePage() {
   return (
     <>
       <Helmet>
-        <title>{pageData?.title || "Bilder" | Kerzenwelt by Dani</title>
+        <title>{pageData?.title || "Bilder"} | Kerzenwelt by Dani</title>
         <meta
           name="description"
           content="Die neuesten Fotos unserer Produkte und Kreationen finden Sie in der Instagram-Galerie Kerzenwelt by Dani."
@@ -54,11 +54,10 @@ export default function SlikePage() {
         <div className="container py-8 md:py-12">
           <div className="mb-8 text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              {isLoading ? (
-                <Skeleton className="h-10 w-[250px] mx-auto" />
-              ) : (
-                pageData?.title || "Bilder")
-              )}
+              {isLoading ? 
+                <Skeleton className="h-10 w-[250px] mx-auto" /> :
+                (pageData?.title || "Bilder")
+              }
             </h1>
             <div className="text-muted-foreground max-w-2xl mx-auto">
               {isLoading ? (

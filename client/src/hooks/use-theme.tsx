@@ -1,36 +1,18 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
 
-// Definiramo moguće teme
+// Definiramo mogućnosti tema
 type Theme = "light" | "dark" | "system";
 
-// Definirano što kontekst treba sadržavati
-interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-}
-
-// Postavljamo defaultnu vrijednost konteksta
-const defaultTheme: ThemeContextType = {
-  theme: "light",
-  setTheme: () => {}, // Prazna funkcija kao početna vrijednost
-};
-
-// Kreiramo kontekst s defaultnom vrijednošću
-const ThemeContext = createContext<ThemeContextType>(defaultTheme);
-
-// Funkcija za primjenu teme na HTML element
-function applyTheme(theme: Theme) {
-  if (typeof window === "undefined") return;
+// Funkcija koja će primijeniti temu kao CSS klasu
+function applyThemeToDOM(theme: Theme) {
+  if (typeof document === "undefined") return;
   
-  const root = window.document.documentElement;
-  
-  // Ukloni sve klase tema
+  const root = document.documentElement;
   root.classList.remove("light", "dark");
   
-  // Postavi odgovarajuću temu
   if (theme === "system") {
     const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
+      ? "dark" 
       : "light";
     root.classList.add(systemTheme);
   } else {
@@ -38,51 +20,54 @@ function applyTheme(theme: Theme) {
   }
 }
 
-// Običan React Provider koji koristi hooks kako treba
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Dohvati početnu temu iz localStorage
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
-    
-    const savedTheme = localStorage.getItem("theme") as Theme;
-    return (savedTheme && ["light", "dark", "system"].includes(savedTheme))
-      ? savedTheme
-      : "light";
-  });
-  
-  const setTheme = (newTheme: Theme) => {
+// Inicijalno primijenimo temu na učitavanje
+let initialTheme: Theme = "light";
+if (typeof window !== "undefined") {
+  const savedTheme = localStorage.getItem("theme") as Theme;
+  if (savedTheme && ["light", "dark", "system"].includes(savedTheme)) {
+    initialTheme = savedTheme;
+  }
+  applyThemeToDOM(initialTheme);
+}
+
+// Definicija konteksta s jednostavnim funkcijama
+interface ThemeContextType {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+}
+
+const ThemeContext = createContext<ThemeContextType>({
+  theme: initialTheme,
+  setTheme: (newTheme: Theme) => {
     if (typeof window !== "undefined") {
       localStorage.setItem("theme", newTheme);
+      applyThemeToDOM(newTheme);
     }
-    setThemeState(newTheme);
-    applyTheme(newTheme);
+  }
+});
+
+// Jednostavni Provider bez state-a
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Koristimo jednostavni objekt umjesto State-a
+  const themeValue = {
+    theme: initialTheme,
+    setTheme: (newTheme: Theme) => {
+      if (typeof window !== "undefined") {
+        initialTheme = newTheme;
+        localStorage.setItem("theme", newTheme);
+        applyThemeToDOM(newTheme);
+      }
+    }
   };
   
-  // Primijeni temu i slušaj promjene sistemske teme
-  useEffect(() => {
-    applyTheme(theme);
-    
-    if (typeof window !== "undefined") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleChange = () => {
-        if (theme === "system") {
-          applyTheme("system");
-        }
-      };
-      
-      mediaQuery.addEventListener("change", handleChange);
-      return () => mediaQuery.removeEventListener("change", handleChange);
-    }
-  }, [theme]);
-  
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={themeValue}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-// Hook za korištenje teme u komponentama
+// Hook za korištenje teme
 export function useTheme() {
   return useContext(ThemeContext);
 }
