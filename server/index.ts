@@ -3,8 +3,11 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./initDb";
 import { initDatabase } from "./db";
+import compression from "compression";
 
 const app = express();
+// Dodajemo kompresiju za brži prijenos podataka
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
