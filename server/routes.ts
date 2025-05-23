@@ -37,6 +37,7 @@ import {
   heroSettingsSchema,
   subscriberSchema,
   insertSubscriberSchema,
+  subscribers,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -2633,6 +2634,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing subscription:", error);
       res.status(500).json({ message: "Subscription failed. Please try again later." });
+    }
+  });
+  
+  // Admin endpoints za upravljanje pretplatnicima
+  app.get("/api/admin/subscribers", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const allSubscribers = await storage.getAllSubscribers();
+      res.status(200).json(allSubscribers);
+    } catch (error) {
+      console.error("Error fetching subscribers:", error);
+      res.status(500).json({ message: "Failed to fetch subscribers" });
+    }
+  });
+  
+  app.delete("/api/admin/subscribers/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid subscriber ID" });
+      }
+      
+      // Delete subscriber
+      await db.delete(subscribers).where(eq(subscribers.id, id));
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting subscriber:", error);
+      res.status(500).json({ message: "Failed to delete subscriber" });
     }
   });
   

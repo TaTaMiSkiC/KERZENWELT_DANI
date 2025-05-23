@@ -79,6 +79,11 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
       icon: <Users size={20} />
     },
     {
+      name: "Newsletter pretplatnici",
+      path: "/admin/subscribers",
+      icon: <Mail size={20} />
+    },
+    {
       name: t("admin.payments"),
       path: "/admin/payments",
       icon: <CreditCard size={20} />
