@@ -1,0 +1,54 @@
+
+Schaltflächen haben keinen für Screenreader zugänglichen Namen
+Wenn eine Schaltfläche keinen barrierefreien Namen hat, wird sie von Screenreadern nur als „Schaltfläche“ angesagt. Dadurch ist sie für Nutzer, die auf Screenreader angewiesen sind, unbrauchbar. Informationen zum barrierefreien Gestalten von Schaltflächen.
+Fehlerhafte Elemente
+div.flex > div.flex > div.ml-auto > button.inline-flex
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-:r2:" data-state="closed">
+Links haben keinen leicht erkennbaren Namen
+Linktext, der erkennbar, einzigartig und fokussierbar ist, erleichtert Screenreader-Nutzern die Verwendung. Dies gilt auch für alternativen Text für Bilder, die als Links verwendet werden. Informationen zu barrierefreien Links.
+Fehlerhafte Elemente
+div.flex > div.flex > div.hidden > a.text-foreground
+<a href="https://www.instagram.com/kerzenwelt_by_dani/" target="_blank" rel="noopener noreferrer" class="text-foreground hover:text-[#D4AF37] transition ml-1">
+div.container > div.flex > div.flex > a.text-foreground
+<a href="/auth" class="text-foreground hover:text-[#D4AF37] transition cursor-pointer">
+div.container > div.flex > div.flex > a.text-foreground
+<a href="/cart" class="text-foreground hover:text-[#D4AF37] transition relative cursor-pointer">
+div.grid > div > div.flex > a.text-secondary
+<a href="https://www.instagram.com/kerzenwelt_by_dani/" target="_blank" rel="noopener noreferrer" class="text-secondary hover:text-white transition-colors">
+Anhand dieser Möglichkeiten kannst du die Semantik der Steuerelemente deiner Anwendung verbessern. Dies kommt Nutzern von Hilfstechnologien wie Screenreadern zugute.
+Kontrast
+Das Kontrastverhältnis von Hintergrund- und Vordergrundfarben ist nicht ausreichend.
+Text mit geringem Kontrast ist für viele Nutzer schlecht oder gar nicht lesbar. Informationen zu einem ausreichenden Farbkontrast.
+Fehlerhafte Elemente
+Kerzenwelt
+<span class="text-[#D4AF37] heading text-xl md:text-3xl font-bold text-center md:text-l…">
+Kerzenwelt by Dani Startseite Produkte Über uns Bilder Kontakt Folgen Sie uns: …
+<header class="bg-background shadow-sm sticky top-0 z-50 border-b">
+by Dani
+<span class="text-[#D4AF37] text-sm md:text-xl md:ml-1 font-bold text-center md:text-le…">
+Kerzenwelt by Dani Startseite Produkte Über uns Bilder Kontakt Folgen Sie uns: …
+<header class="bg-background shadow-sm sticky top-0 z-50 border-b">
+Startseite
+<a href="/" class="font-body hover:text-[#D4AF37] transition cursor-pointer text-[#D4AF37]">
+Kerzenwelt by Dani Startseite Produkte Über uns Bilder Kontakt Folgen Sie uns: …
+<header class="bg-background shadow-sm sticky top-0 z-50 border-b">
+Kollektion erkunden →
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm fo…">
+Alle Produkte anzeigen
+<div class="hidden md:inline-flex items-center font-accent text-primary hover:text-opa…">
+Ausgewählte Produkte Unsere beliebtesten Produkte, die unsere Kunden lieben A…
+<section class="py-16 bg-muted/30">
+body
+<body>
+Mehr über uns erfahren
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm fo…">
+Einloggen und eine Bewertung hinzufügen
+<a href="/auth" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…">
+Abonnieren
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…" type="submit">
+© 2025 Kerzenwelt by Dani. Alle Rechte vorbehalten.
+<p class="text-gray-500 text-sm mb-1">
+Kerzenwelt by Dani Handgefertigte Kerzen aus natürlichen Inhaltsstoffen. Von u…
+<footer class="bg-text-dark text-white pt-16 pb-8">
+Akzeptiere alles
+<button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md…">

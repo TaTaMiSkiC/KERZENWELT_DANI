@@ -168,8 +168,10 @@ export default function Header() {
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-foreground hover:text-[#D4AF37] transition ml-1"
+                aria-label="Instagram"
               >
                 <Instagram size={20} />
+                <span className="sr-only">Instagram</span>
               </a>
             </div>
             
@@ -179,14 +181,15 @@ export default function Header() {
             </div>
             
             <div className="ml-auto mr-4 md:ml-0 md:mr-0">
-              <SearchDialog />
+              <SearchDialog aria-label={t('search.title')} />
             </div>
             
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-foreground hover:text-[#D4AF37] hover:bg-transparent">
+                  <Button variant="ghost" size="icon" className="text-foreground hover:text-[#D4AF37] hover:bg-transparent" aria-label={t('nav.account')}>
                     <User size={20} />
+                    <span className="sr-only">{t('nav.account')}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -213,18 +216,20 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href="/auth" className="text-foreground hover:text-[#D4AF37] transition cursor-pointer">
+              <Link href="/auth" className="text-foreground hover:text-[#D4AF37] transition cursor-pointer" aria-label={t('nav.login')}>
                 <User size={20} />
+                <span className="sr-only">{t('nav.login')}</span>
               </Link>
             )}
             
-            <Link href="/cart" className="text-foreground hover:text-[#D4AF37] transition relative cursor-pointer">
+            <Link href="/cart" className="text-foreground hover:text-[#D4AF37] transition relative cursor-pointer" aria-label={t('nav.cart')}>
               <ShoppingBag size={20} />
               {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-[#D4AF37] text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-[#D4AF37] text-white rounded-full text-xs w-5 h-5 flex items-center justify-center" aria-label={`${cartItemCount} ${cartItemCount === 1 ? t('products.product') : t('products.products')}`}>
                   {cartItemCount}
                 </span>
               )}
+              <span className="sr-only">{t('nav.cart')}{cartItemCount > 0 ? `, ${cartItemCount} ${cartItemCount === 1 ? t('products.product') : t('products.products')}` : ''}</span>
             </Link>
             
             {/* Mobile menu toggle */}
@@ -233,8 +238,12 @@ export default function Header() {
               size="icon" 
               className="md:hidden text-foreground hover:text-[#D4AF37] hover:bg-transparent"
               onClick={() => setMobileMenuOpen(true)}
+              aria-label={t('nav.menu') || "Menu"}
+              aria-haspopup="true" 
+              aria-expanded={mobileMenuOpen}
             >
               <Menu size={24} />
+              <span className="sr-only">{t('nav.menu') || "Menu"}</span>
             </Button>
           </div>
         </div>
