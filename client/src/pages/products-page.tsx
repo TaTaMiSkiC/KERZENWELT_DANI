@@ -63,8 +63,12 @@ export default function ProductsPage() {
     
     // Filter by category
     if (filters.category !== "all") {
-      // Access category_id from the raw object data since TypeScript definitions might not match DB structure
-      const productCategoryId = product.categoryId || (product as any).category_id;
+      // Get the category ID directly from the raw product object to ensure we catch both naming conventions
+      const rawProduct = product as any;
+      const productCategoryId = rawProduct.categoryId || rawProduct.category_id;
+      
+      console.log(`Comparing product ${product.name} (categoryId: ${productCategoryId}) with filter: ${filters.category}`);
+      
       if (productCategoryId !== parseInt(filters.category)) {
         return false;
       }
