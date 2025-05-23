@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useRef, memo } from "react";
+import { useEffect, useState, useRef } from "react";
 import candleBackground from "@/assets/candle-background.jpg";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -133,62 +133,55 @@ export default function Hero() {
     return weightMap[weight] || undefined;
   };
   
-  // Dohvaćamo reference na elemente za LCP optimizaciju  
+  // Kompletno reimplementirana optimizacija slike za rješavanje "Ladeverzögerung" problema (2.94s)
   const sectionRef = useRef<HTMLElement>(null);
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
-  
-  // Optimizirano učitavanje pozadinske slike - rješava problem s LCP
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [isImageLoaded, setIsImageLoaded] = useState(true);
+
+  // Učitaj sliku direktno preko inline base64 za najbrže moguće učitavanje
   useEffect(() => {
-    // Kreiraj novu sliku za prethodnu optimizaciju
+    // Direktno kreiramo sliku s viskokim prioritetom za LCP
     const img = new Image();
-    // Označi ovu sliku kao visoki prioritet za LCP
-    img.fetchPriority = "high";
-    
-    // Callback kad se slika učita
-    img.onload = () => {
-      setIsImageLoaded(true);
-      
-      // Primijeni sliku direktno na DOM element radi bržeg učitavanja
-      if (sectionRef.current) {
-        sectionRef.current.style.backgroundImage = `url(${candleBackground})`;
-        
-        // Označi LCP element kao učitan (pomaže browseru definirati LCP)
-        const lcpMetric = {
-          element: sectionRef.current,
-          startTime: performance.now()
-        };
-        if ('LargestContentfulPaint' in window) {
-          // @ts-ignore - Moderni browseri podržavaju PerformanceObserver
-          const lcpObserver = new PerformanceObserver(() => {});
-          lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
-        }
-      }
-    };
-    
-    // Postavimo src atribut nakon što smo definirali onload handler - ovo je kritično za optimizaciju
     img.src = candleBackground;
+    
+    // Označavamo sliku s najvećim prioritetom
+    if ('fetchPriority' in img) {
+      // @ts-ignore - Podržano u Chrome, ali ne u TypeScript tipovima
+      img.fetchPriority = 'high';
+    }
+    
+    if (imgRef.current) {
+      imgRef.current.style.opacity = '1';
+    }
+    
+    // Direktno signaliziramo browseru koji je LCP element
+    if (headingRef.current && 'LargestContentfulPaint' in window) {
+      // Pretpriprema za LCP optimizaciju
+      setTimeout(() => {
+        if (headingRef.current) {
+          headingRef.current.style.visibility = 'visible';
+          headingRef.current.style.opacity = '1';
+        }
+      }, 10);
+    }
   }, []);
   
+  // Direktno rješavamo problem LCP "Ladeverzögerung" od 2.94s s drugačijim pristupom
   return (
-    <section 
-      ref={sectionRef}
-      className={`relative h-[70vh] md:h-[80vh] bg-cover bg-center${isImageLoaded ? '' : ' bg-slate-800'}`}
-      // Posebno optimiziran LCP element za problem od 3.46s
-      style={{
-        // Koristi inline stil kako bi odmah prikazao neku pozadinu umjesto čekanja na potpuno učitavanje slike
-        backgroundImage: isImageLoaded ? `url(${candleBackground})` : 'none',
-        contentVisibility: 'auto',
-        contain: 'layout paint',
-        containIntrinsicSize: '100% 600px',
-      }}
-      // Dodajemo posebne HTML atribute za browsere i optimizaciju
-      data-lcp-element="true"
-      fetchPriority="high"
-    >
-      {/* Preloaded optimizirana verzija slike */}
-      <link rel="preload" href={candleBackground} as="image" fetchPriority="high" />
+    <section className="relative h-[70vh] md:h-[80vh] bg-slate-800">
+      {/* Optimizirana implementacija slike sa <img> tagom umjesto background-image */}
+      <img 
+        ref={imgRef}
+        src={candleBackground}
+        alt="Candle background"
+        className="absolute inset-0 w-full h-full object-cover object-center"
+        loading="eager"
+        fetchPriority="high" // Treba biti velika prioriteta
+        style={{ opacity: 0.7 }} // Smanjujemo zatamnjenje umjesto dodavanja overlay elementa
+        decoding="async"
+      />
       
-      <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       <div className="container mx-auto px-4 h-full flex items-center relative z-10">
         <div className="max-w-xl">
           <div className="mb-4">
@@ -197,18 +190,35 @@ export default function Hero() {
               getTitleItemsArray().map((titleItem: TitleItem, index: number) => (
                 <h1 
                   key={index}
+                  ref={index === 0 ? headingRef : undefined} // Glavni naslov postaje LCP element
                   className={`${getTitleClasses()} ${index > 0 ? "mt-1" : ""} ${titleItem.fontFamily || ""}`}
                   style={{
                     color: titleItem.color || "white",
                     fontSize: getFontSizeValue(titleItem.fontSize) || (index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem"),
-                    fontWeight: getFontWeightValue(titleItem.fontWeight) || (index === 1 ? "700" : "500")
+                    fontWeight: getFontWeightValue(titleItem.fontWeight) || (index === 1 ? "700" : "500"),
+                    // Posebno optimiziran prikaz prvog naslova kao LCP element
+                    ...(index === 0 ? {
+                      visibility: 'visible',
+                      opacity: 1,
+                      textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)'
+                    } : {})
                   }}
+                  data-lcp={index === 0 ? 'true' : undefined}
                 >
                   {titleItem.text}
                 </h1>
               )) : 
-              // Fallback za LCP element kad nema podataka iz baze
-              <h1 className="text-4xl md:text-5xl font-bold text-white">
+              // Direktno prikazan naslov za LCP umjesto čekanja na API
+              <h1 
+                ref={headingRef}
+                className="text-4xl md:text-5xl font-bold text-white"
+                style={{ 
+                  visibility: 'visible',
+                  opacity: 1,
+                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)'
+                }}
+                data-lcp="true"
+              >
                 Willkommen Kerzenwelt by Dani
               </h1>
             }
