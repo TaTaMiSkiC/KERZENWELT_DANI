@@ -1,14 +1,15 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
+import { ReactNode } from "react";
 
-export function ProtectedRoute({
-  path,
-  component: Component,
-}: {
+interface ProtectedRouteProps {
   path: string;
-  component: () => React.ReactNode;
-}) {
+  children?: ReactNode;
+  component?: () => ReactNode;
+}
+
+export function ProtectedRoute({ path, children, component: Component }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -23,5 +24,10 @@ export function ProtectedRoute({
     return <Redirect to="/auth" />;
   }
 
-  return <Component />;
+  // Podržava obje varijante korištenja: preko component i preko children
+  if (Component) {
+    return <Component />;
+  }
+  
+  return <>{children}</>;
 }
