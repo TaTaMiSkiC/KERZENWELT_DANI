@@ -1,0 +1,314 @@
+robots.txt ist ungültig 103 Fehler gefunden
+Wenn deine robots.txt-Datei fehlerhaft ist, können Crawler möglicherweise nicht nachvollziehen, wie deine Website gecrawlt oder indexiert werden soll. Weitere Informationen zu robots.txt.
+Line #
+Content
+Error
+1
+<!doctype html>
+Syntax not understood
+2
+<html lang="de">
+Syntax not understood
+3
+<head>
+Syntax not understood
+4
+<meta charset="UTF-8" />
+Syntax not understood
+5
+<meta
+Syntax not understood
+6
+name="viewport"
+Syntax not understood
+7
+content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+Syntax not understood
+8
+/>
+Syntax not understood
+9
+<meta name="theme-color" content="#ffffff" />
+Syntax not understood
+10
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+Syntax not understood
+11
+<title>Kerzenwelt by Dani | Handgemachte Kerzen</title>
+Syntax not understood
+12
+<meta
+Syntax not understood
+13
+name="description"
+Syntax not understood
+14
+content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause."
+Syntax not understood
+15
+/>
+Syntax not understood
+17
+<!-- Favicon -->
+Syntax not understood
+18
+<link rel="icon" type="image/png" href="/logo.png" />
+Syntax not understood
+19
+<link rel="apple-touch-icon" href="/logo.png" />
+Syntax not understood
+21
+<!-- Cache Control -->
+Syntax not understood
+22
+<meta http-equiv="Cache-Control" content="max-age=86400" />
+Syntax not understood
+24
+<!-- Performance Optimizations -->
+Syntax not understood
+25
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+Syntax not understood
+26
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+Unknown directive
+28
+<!-- SEO Improvements -->
+Syntax not understood
+29
+<meta name="robots" content="index, follow" />
+Syntax not understood
+30
+<meta name="author" content="Kerzenwelt by Dani" />
+Syntax not understood
+31
+<meta name="keywords" content="Kerzen, handgemacht, Duftkerzen, Geschenk, natürlich, Dekoration, Villach" />
+Syntax not understood
+33
+<!-- Mobile Optimization -->
+Syntax not understood
+34
+<meta name="mobile-web-app-capable" content="yes" />
+Syntax not understood
+35
+<meta name="apple-mobile-web-app-capable" content="yes" />
+Syntax not understood
+36
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+Syntax not understood
+38
+<!-- Open Graph / Social Media -->
+Syntax not understood
+39
+<meta property="og:type" content="website" />
+Unknown directive
+40
+<meta property="og:url" content="https://kerzenweltbydani.com/" />
+Unknown directive
+41
+<meta
+Syntax not understood
+42
+property="og:title"
+Unknown directive
+43
+content="Kerzenwelt by Dani | Handgemachte Kerzen"
+Syntax not understood
+44
+/>
+Syntax not understood
+45
+<meta
+Syntax not understood
+46
+property="og:description"
+Unknown directive
+47
+content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause."
+Syntax not understood
+48
+/>
+Syntax not understood
+49
+<meta property="og:image" content="/logo.png" />
+Unknown directive
+51
+<!-- Twitter Card data -->
+Syntax not understood
+52
+<meta name="twitter:card" content="summary_large_image">
+Unknown directive
+53
+<meta name="twitter:title" content="Kerzenwelt by Dani | Handgemachte Kerzen">
+Unknown directive
+54
+<meta name="twitter:description" content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause.">
+Unknown directive
+55
+<meta name="twitter:image" content="/logo.png">
+Unknown directive
+56
+<link rel="dns-prefetch" href="https://kerzenweltbydani.com" />
+Unknown directive
+58
+<!-- Preload ključnih fontova -->
+Syntax not understood
+59
+<link
+Syntax not understood
+60
+rel="preload"
+Syntax not understood
+61
+href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+Unknown directive
+62
+as="style"
+Syntax not understood
+63
+/>
+Syntax not understood
+64
+<link
+Syntax not understood
+65
+rel="stylesheet"
+Syntax not understood
+66
+href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+Unknown directive
+67
+/>
+Syntax not understood
+69
+<!-- Preload ključnih slika -->
+Syntax not understood
+70
+<link rel="preload" href="/logo.png" as="image" fetchpriority="high" />
+Syntax not understood
+72
+<!-- Optimizacija za mobilne uređaje -->
+Syntax not understood
+73
+<meta name="apple-mobile-web-app-capable" content="yes" />
+Syntax not understood
+74
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+Syntax not understood
+75
+<meta name="format-detection" content="telephone=no" />
+Syntax not understood
+77
+<!-- Dodatne optimizacije za brže učitavanje -->
+Syntax not understood
+78
+<link rel="preload" as="font" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" crossorigin="anonymous" />
+Unknown directive
+79
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+Syntax not understood
+80
+<!-- Skripta za inicijalizaciju teme i jezika -->
+Syntax not understood
+81
+<script>
+Syntax not understood
+82
+(function () {
+Syntax not understood
+83
+// Dohvaćanje teme iz lokalnog spremnika
+Syntax not understood
+84
+const storedTheme = localStorage.getItem("theme");
+Syntax not understood
+85
+const theme = storedTheme ? storedTheme : "light";
+Unknown directive
+87
+// Dohvati jezik iz lokalnog spremnika
+Syntax not understood
+88
+const storedLang = localStorage.getItem("language");
+Syntax not understood
+89
+const lang = storedLang ? storedLang : "hr";
+Unknown directive
+91
+// Postavi jezik
+Syntax not understood
+92
+document.documentElement.lang = lang;
+Syntax not understood
+94
+// Postavi temu
+Syntax not understood
+95
+document.documentElement.classList.remove("light", "dark");
+Syntax not understood
+96
+if (theme === "system") {
+Syntax not understood
+97
+const systemDark = window.matchMedia(
+Syntax not understood
+98
+"(prefers-color-scheme: dark)",
+Unknown directive
+99
+).matches;
+Syntax not understood
+100
+document.documentElement.classList.add(systemDark ? "dark" : "light");
+Unknown directive
+101
+} else {
+Syntax not understood
+102
+document.documentElement.classList.add(theme);
+Syntax not understood
+103
+}
+Syntax not understood
+104
+})();
+Syntax not understood
+105
+</script>
+Syntax not understood
+106
+<script type="module" crossorigin src="/assets/index-CRqvZZNd.js"></script>
+Syntax not understood
+107
+<link rel="stylesheet" crossorigin href="/assets/index-Bvyb1FB4.css">
+Syntax not understood
+108
+</head>
+Syntax not understood
+109
+<body>
+Syntax not understood
+110
+<div id="root"></div>
+Syntax not understood
+111
+<!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+Syntax not understood
+112
+<script
+Syntax not understood
+113
+type="text/javascript"
+Syntax not understood
+114
+src="https://replit.com/public/js/replit-dev-banner.js"
+Unknown directive
+115
+></script>
+Syntax not understood
+116
+</body>
+Syntax not understood
+117
+</html>
+Syntax not understood

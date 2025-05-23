@@ -21,11 +21,11 @@ app.use((req, res, next) => {
   
   // Za statičke resurse postavljamo optimizirano keširanje
   if (req.url.match(/\.(css|js)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 sata za CSS i JS
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 godina za CSS i JS
   } else if (req.url.match(/\.(png|jpg|jpeg|gif|webp|avif|ico|svg)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 dana za slike
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 godina za slike
   } else if (req.url.match(/\.(woff|woff2|ttf|eot)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 dana za fontove
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 godina za fontove
   }
   
   next();

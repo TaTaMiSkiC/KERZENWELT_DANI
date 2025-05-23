@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://kerzenweltbydani.com/sitemap.xml
+
+# Disallow Admin Paths
+Disallow: /admin/
+Disallow: /api/
