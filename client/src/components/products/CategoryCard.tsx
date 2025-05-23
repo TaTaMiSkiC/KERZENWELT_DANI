@@ -20,7 +20,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20 flex items-end p-6">
         <div>
           <h3 className="heading text-white text-2xl font-semibold mb-2">{name}</h3>
-          <Link href={`/products?category=${id}`} className="inline-block text-white font-accent text-sm border-b border-white pb-1 hover:border-primary hover:text-primary transition-colors cursor-pointer">
+          <Link href={`/products?category=${id}`} data-category-id={id} className="inline-block text-white font-accent text-sm border-b border-white pb-1 hover:border-primary hover:text-primary transition-colors cursor-pointer">
             {t('home.exploreCollection')}
           </Link>
         </div>

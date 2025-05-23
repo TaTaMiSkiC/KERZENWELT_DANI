@@ -38,7 +38,7 @@ function getInitialTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
   
   const setTheme = (newTheme: Theme) => {
     localStorage.setItem("theme", newTheme);
@@ -52,7 +52,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (savedTheme !== theme) {
       setThemeState(savedTheme);
     }
-  }, []);
+  }, [theme]);
 
   // Inicijalno postavi temu i dodaj listener za promjene medija (system tema)
   useEffect(() => {

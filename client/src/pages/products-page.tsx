@@ -54,19 +54,23 @@ export default function ProductsPage() {
   });
   
   // Filter products based on filters
+  // Log initial products data for debugging
+  useEffect(() => {
+    if (products && products.length > 0) {
+      console.log("All products:", products.map(p => ({id: p.id, name: p.name, category: (p as any).category_id})));
+    }
+  }, [products]);
+
   const filteredProducts = products?.filter((product) => {
-    // Filtriramo neaktivne proizvode - ovo je dodatno sigurnosno filtriranje
-    // iako bi server trebao slati samo aktivne proizvode neadminima  
+    // Filter inactive products
     if (product.active === false) {
       return false;
     }
     
-    // Filter by category
+    // Filter by category - simplified and direct approach
     if (filters.category !== "all") {
-      // Access the raw object to get the category_id field directly
-      const rawProduct = product as any;
-      // In the database, the field is definitely called category_id (snake_case)
-      if (rawProduct.category_id !== parseInt(filters.category)) {
+      const categoryId = parseInt(filters.category);
+      if ((product as any).category_id !== categoryId) {
         return false;
       }
     }
