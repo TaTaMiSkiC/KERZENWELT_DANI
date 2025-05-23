@@ -29,8 +29,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       to: params.to,
       from: params.from || FROM_EMAIL,
       subject: params.subject,
-      text: params.text,
-      html: params.html,
+      text: params.text || "",
+      html: params.html || "",
     });
     console.log(`Email sent to ${params.to} with subject: ${params.subject}`);
     return true;
