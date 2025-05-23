@@ -107,21 +107,21 @@ async function createDefaultCategories() {
   console.log("Kreiranje kategorija...");
 
   await db.insert(categories).values([
-    // {
-    //   name: "Mirisne svijeće",
-    //   description: "Kolekcija ručno izrađenih mirisnih svijeća",
-    //   imageUrl: "https://images.unsplash.com/photo-1603204077779-bed963ea7d0e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
-    // },
-    // {
-    //   name: "Dekorativne svijeće",
-    //   description: "Jedinstvene dekorativne svijeće za vaš dom",
-    //   imageUrl: "https://images.unsplash.com/photo-1574263039840-82c0aa6c0a68?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
-    // },
-    // {
-    //   name: "Posebne prigode",
-    //   description: "Svijeće za vjenčanja, rođendane i posebne prilike",
-    //   imageUrl: "https://images.unsplash.com/photo-1634317542867-0afe3dc09511?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
-    // }
+    {
+      name: "Kerzenbox",
+      description: "Kolekcija ručno izrađenih svijeća",
+      imageUrl: "https://images.unsplash.com/photo-1603204077779-bed963ea7d0e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
+    },
+    {
+      name: "Dekorativne svijeće",
+      description: "Jedinstvene dekorativne svijeće za vaš dom",
+      imageUrl: "https://images.unsplash.com/photo-1574263039840-82c0aa6c0a68?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
+    },
+    {
+      name: "Posebne prigode",
+      description: "Svijeće za vjenčanja, rođendane i posebne prilike",
+      imageUrl: "https://images.unsplash.com/photo-1634317542867-0afe3dc09511?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=880&q=80"
+    }
   ]);
 
   console.log("Kategorije uspješno kreirane");
