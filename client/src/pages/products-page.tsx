@@ -63,6 +63,7 @@ export default function ProductsPage() {
     
     // Filter by category
     if (filters.category !== "all" && product.categoryId !== parseInt(filters.category)) {
+      console.log(`Proizvod ${product.name} ima categoryId ${product.categoryId}, filter kategorija je ${filters.category}`);
       return false;
     }
     
@@ -109,6 +110,7 @@ export default function ProductsPage() {
   
   useEffect(() => {
     if (categoryParam) {
+      console.log("Kategorija iz URL-a:", categoryParam);
       setFilters(prev => ({ ...prev, category: categoryParam }));
     }
   }, [categoryParam]);
