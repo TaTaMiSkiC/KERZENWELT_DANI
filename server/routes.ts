@@ -100,7 +100,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let products;
       if (categoryId) {
         console.log(`Filtering products by category ID: ${categoryId}`);
+        
+        // Use the storage method for consistency
         products = await storage.getProductsByCategory(categoryId, includeInactive);
+          
         console.log(`Found ${products.length} products in category ${categoryId}`);
       } else {
         console.log("Getting all products, includeInactive:", includeInactive);
