@@ -84,17 +84,13 @@ export default function Footer() {
               </li>
 
               <li>
-                <Link href="/contact">
-                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
-                    {t("nav.contact")}
-                  </div>
+                <Link href="/contact" className="text-gray-400 hover:text-white transition cursor-pointer">
+                  {t("nav.contact")}
                 </Link>
               </li>
               <li>
-                <Link href="/newsletter">
-                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
-                    Newsletter
-                  </div>
+                <Link href="/newsletter" className="text-gray-400 hover:text-white transition cursor-pointer">
+                  Newsletter
                 </Link>
               </li>
             </ul>
@@ -107,18 +103,14 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/profile">
-                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
-                    {t("footer.myAccount")}
-                  </div>
+                <Link href="/profile" className="text-gray-400 hover:text-white transition cursor-pointer">
+                  {t("footer.myAccount")}
                 </Link>
               </li>
 
               <li>
-                <Link href="/payment">
-                  <div className="text-gray-400 hover:text-white transition cursor-pointer">
-                    {t("footer.paymentMethods")}
-                  </div>
+                <Link href="/payment" className="text-gray-400 hover:text-white transition cursor-pointer">
+                  {t("footer.paymentMethods")}
                 </Link>
               </li>
             </ul>
