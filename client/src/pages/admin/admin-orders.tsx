@@ -493,11 +493,14 @@ export default function AdminOrders() {
 
       {/* Order Details Dialog */}
       <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl" aria-describedby="order-details-description">
           <DialogHeader>
             <DialogTitle>
               {t("admin.notification.order")} #{selectedOrder?.id}
             </DialogTitle>
+            <DialogDescription id="order-details-description">
+              Detalji narudžbe i mogućnosti upravljanja
+            </DialogDescription>
             <DialogDescription>
               {t("admin.orders.orderPlacedOn")}{" "}
               {new Date(selectedOrder?.createdAt || "").toLocaleDateString()}
