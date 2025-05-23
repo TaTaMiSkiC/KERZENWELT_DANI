@@ -11,6 +11,8 @@ import { heroSettingsSchema } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Language } from "@/hooks/use-language";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 // Define title item structure that matches schema.ts
 type TitleItem = {
@@ -67,34 +69,37 @@ const fontWeights = [
   { value: "black", label: "Schwarz (900)" },
 ];
 
+// Default title items for each language
+const defaultTitleItems = {
+  de: [
+    { text: "Willkommen", fontSize: "2xl", fontWeight: "medium", color: "white" },
+    { text: "Kerzenwelt by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+    { text: "Wo Kerzen Wärme und Stil vereinen", fontSize: "xl", fontWeight: "medium", color: "white" },
+  ],
+  hr: [
+    { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
+    { text: "Svijet svijeća by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+    { text: "Gdje se toplina i stil spajaju", fontSize: "xl", fontWeight: "medium", color: "white" },
+  ],
+  en: [
+    { text: "Welcome", fontSize: "2xl", fontWeight: "medium", color: "white" },
+    { text: "The Candle World by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+    { text: "Where warmth and style unite", fontSize: "xl", fontWeight: "medium", color: "white" },
+  ],
+  it: [
+    { text: "Benvenuti", fontSize: "2xl", fontWeight: "medium", color: "white" },
+    { text: "Il mondo delle candele di Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+    { text: "Dove calore e stile si incontrano", fontSize: "xl", fontWeight: "medium", color: "white" },
+  ],
+  sl: [
+    { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
+    { text: "Svet sveč by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
+    { text: "Kjer se toplina in stil združita", fontSize: "xl", fontWeight: "medium", color: "white" },
+  ],
+};
+
 const defaultHeroSettings: HeroSettings = {
-  titleText: {
-    de: [
-      { text: "Willkommen", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Kerzenwelt by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Wo Kerzen Wärme und Stil vereinen", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    hr: [
-      { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Svijet svijeća by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Gdje se toplina i stil spajaju", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    en: [
-      { text: "Welcome", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "The Candle World by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Where warmth and style unite", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    it: [
-      { text: "Benvenuti", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Il mondo delle candele di Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Dove calore e stile si incontrano", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ],
-    sl: [
-      { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
-      { text: "Svet sveč by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-      { text: "Kjer se toplina in stil združita", fontSize: "xl", fontWeight: "medium", color: "white" },
-    ]
-  },
+  titleText: defaultTitleItems,
   subtitleText: {
     de: "Entdecken Sie unsere einzigartige Sammlung handgefertigter Kerzen, perfekt für jede Gelegenheit.",
     hr: "Otkrijte našu jedinstvenu kolekciju ručno izrađenih svijeća, savršenih za svaku prigodu.",
@@ -102,7 +107,6 @@ const defaultHeroSettings: HeroSettings = {
     it: "Scopri la nostra collezione unica di candele artigianali, perfette per ogni occasione.",
     sl: "Odkrijte našo edinstveno zbirko ročno izdelanih sveč, popolnih za vsako priložnost."
   },
-
   subtitleFontSize: "lg md:text-xl",
   subtitleFontWeight: "normal",
   subtitleColor: "white opacity-90"
@@ -112,15 +116,44 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
   const { toast } = useToast();
   const [selectedLanguage, setSelectedLanguage] = useState<Language>("de");
   
-  // Merge initialData with default values
-  const mergedData = initialData ?? defaultHeroSettings;
+  // Process initial data to ensure it has the correct structure
+  const processInitialData = (data: any): HeroSettings => {
+    const processed = { ...defaultHeroSettings, ...data };
+    
+    // For each language, ensure titleText exists and has the correct structure
+    supportedLanguages.forEach(lang => {
+      // If titleText for this language doesn't exist or is an array of strings (old format)
+      if (!processed.titleText[lang.value] || 
+          (Array.isArray(processed.titleText[lang.value]) && 
+          processed.titleText[lang.value].length > 0 && 
+          typeof processed.titleText[lang.value][0] === 'string')) {
+        
+        // Convert string array to TitleItem array if needed
+        if (Array.isArray(processed.titleText[lang.value]) && 
+            typeof processed.titleText[lang.value][0] === 'string') {
+          
+          processed.titleText[lang.value] = (processed.titleText[lang.value] as string[]).map((text, index) => ({
+            text,
+            fontSize: index === 0 ? "2xl" : index === 1 ? "4xl" : "xl",
+            fontWeight: index === 1 ? "bold" : "medium",
+            color: "white"
+          }));
+        } else {
+          // Use default title items for this language
+          processed.titleText[lang.value] = defaultTitleItems[lang.value as keyof typeof defaultTitleItems];
+        }
+      }
+    });
+    
+    return processed;
+  };
   
-  // Create form
+  // Create form with processed initial data
   const form = useForm<HeroSettings>({
     resolver: zodResolver(heroSettingsSchema),
-    defaultValues: mergedData,
+    defaultValues: processInitialData(initialData),
   });
-
+  
   // Handle form submission
   const heroMutation = useMutation({
     mutationFn: async (data: HeroSettings) => {
@@ -134,7 +167,7 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Beim Speichern der Heldenbereich-Einstellungen ist ein Fehler aufgetreten");
+        throw new Error(error.message || "Beim Speichern der Hero-Einstellungen ist ein Fehler aufgetreten");
       }
 
       return await response.json();
@@ -142,7 +175,7 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
     onSuccess: () => {
       toast({
         title: "Erfolgreich gespeichert",
-        description: "Die Heldenbereich-Einstellungen wurden erfolgreich aktualisiert.",
+        description: "Die Hero-Einstellungen wurden erfolgreich aktualisiert.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/settings/hero"] });
     },
@@ -159,27 +192,10 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
     heroMutation.mutate(data);
   }
 
-  // Preview styles for the form
-  const getTitleStyle = () => {
-    return {
-      fontSize: getFontSizeValue(form.watch("titleFontSize")),
-      fontWeight: getFontWeightValue(form.watch("titleFontWeight")),
-      color: form.watch("titleColor"),
-    };
-  };
-
-  const getSubtitleStyle = () => {
-    return {
-      fontSize: getFontSizeValue(form.watch("subtitleFontSize")),
-      fontWeight: getFontWeightValue(form.watch("subtitleFontWeight")),
-      color: form.watch("subtitleColor"),
-    };
-  };
-
-  // Helper function to convert tailwind classes to CSS values for preview
+  // Function to get font size value in rems for preview
   function getFontSizeValue(size: string) {
     // Handle responsive sizes by taking the first value
-    const firstSize = size.split(" ")[0];
+    const firstSize = size?.split(" ")[0] || "";
     const sizeMap: Record<string, string> = {
       sm: "0.875rem",
       base: "1rem",
@@ -197,6 +213,7 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
     return match && sizeMap[match[0]] ? sizeMap[match[0]] : "1rem";
   }
 
+  // Function to get font weight value for preview
   function getFontWeightValue(weight: string) {
     const weightMap: Record<string, string> = {
       thin: "100",
@@ -209,255 +226,347 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
       extrabold: "800",
       black: "900",
     };
-    return weightMap[weight] || "400";
+    return weightMap[weight || "normal"] || "400";
+  }
+
+  // Add a new title line for current language
+  function addTitleLine() {
+    const currentTitles = form.getValues(`titleText.${selectedLanguage}`) || [];
+    
+    const newTitleItem: TitleItem = {
+      text: "Neue Zeile",
+      fontSize: "xl",
+      fontWeight: "medium",
+      color: "white"
+    };
+    
+    form.setValue(`titleText.${selectedLanguage}`, [...currentTitles, newTitleItem], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }
+
+  // Remove title line at specified index
+  function removeTitleLine(index: number) {
+    const currentTitles = form.getValues(`titleText.${selectedLanguage}`) || [];
+    
+    if (currentTitles.length <= 1) {
+      toast({
+        title: "Information",
+        description: "Mindestens eine Titelzeile muss vorhanden sein.",
+      });
+      return;
+    }
+    
+    const updatedTitles = currentTitles.filter((_, i) => i !== index);
+    
+    form.setValue(`titleText.${selectedLanguage}`, updatedTitles, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-background p-4 rounded-md border">
-          <h3 className="text-lg font-medium mb-3">Titel und Untertitel Vorschau</h3>
-          <div className="p-4 bg-gray-800 rounded-md">
-            {Array.isArray(form.watch(`titleText.${selectedLanguage}`)) && 
-              form.watch(`titleText.${selectedLanguage}`).map((titlePart, index) => (
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Language selection tabs */}
+        <Tabs
+          defaultValue="de"
+          value={selectedLanguage}
+          onValueChange={(value) => setSelectedLanguage(value as Language)}
+          className="mb-4"
+        >
+          <TabsList className="mb-2">
+            {supportedLanguages.map((lang) => (
+              <TabsTrigger key={lang.value} value={lang.value}>
+                {lang.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+
+        {/* Preview box */}
+        <Card className="bg-gray-800 text-white overflow-hidden">
+          <CardHeader className="bg-gray-700 py-2">
+            <CardTitle className="text-sm">Vorschau ({supportedLanguages.find(l => l.value === selectedLanguage)?.label})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div>
+              {form.watch(`titleText.${selectedLanguage}`)?.map((titleItem, index) => (
                 <h1 
                   key={index}
+                  className={index > 0 ? "mt-1" : ""}
                   style={{
-                    ...getTitleStyle(),
-                    fontSize: index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem",
-                    fontWeight: index === 1 ? "700" : "500",
-                    marginBottom: "0.25rem"
+                    color: titleItem.color || "white",
+                    fontSize: getFontSizeValue(titleItem.fontSize),
+                    fontWeight: getFontWeightValue(titleItem.fontWeight)
                   }}
                 >
-                  {titlePart}
+                  {titleItem.text}
                 </h1>
-              ))
-            }
-            <p style={getSubtitleStyle()} className="mb-0 mt-3">
-              {form.watch(`subtitleText.${selectedLanguage}`)}
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-lg font-medium mb-3">Heldenbereich Text</h3>
-          <Tabs value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as Language)}>
-            <TabsList className="mb-4">
-              {supportedLanguages.map((lang) => (
-                <TabsTrigger key={lang.value} value={lang.value}>
-                  {lang.label}
-                </TabsTrigger>
               ))}
-            </TabsList>
+              <p 
+                className="mt-3"
+                style={{
+                  color: form.watch("subtitleColor") || "white",
+                  fontSize: getFontSizeValue(form.watch("subtitleFontSize")),
+                  fontWeight: getFontWeightValue(form.watch("subtitleFontWeight"))
+                }}
+              >
+                {form.watch(`subtitleText.${selectedLanguage}`)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-            {supportedLanguages.map((lang) => (
-              <TabsContent key={lang.value} value={lang.value} className="space-y-4">
-                <div className="border p-4 rounded-md mb-4">
-                  <h3 className="font-medium mb-3">Titel Einstellungen ({lang.label})</h3>
-                  {[0, 1, 2].map((index) => (
-                    <FormField
-                      key={index}
-                      control={form.control}
-                      name={`titleText.${lang.value}`}
-                      render={({ field }) => (
-                        <FormItem className="mb-3">
-                          <FormLabel>Titel {index + 1}</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder={`Titel Zeile ${index + 1}`} 
-                              value={Array.isArray(field.value) ? (field.value[index] || '') : ''}
-                              onChange={(e) => {
-                                // Ensure field.value is an array
-                                const currentValue = Array.isArray(field.value) ? field.value : [];
-                                const newValue = [...currentValue];
-                                newValue[index] = e.target.value;
-                                field.onChange(newValue);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-
+        {/* Title section */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-medium">Titel bearbeiten</h2>
+          
+          {form.watch(`titleText.${selectedLanguage}`)?.map((_, index) => (
+            <Card key={index} className="border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between py-3">
+                <CardTitle className="text-md">Titelzeile {index + 1}</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => removeTitleLine(index)}
+                >
+                  Entfernen
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-0">
                 <FormField
                   control={form.control}
-                  name={`subtitleText.${lang.value}`}
+                  name={`titleText.${selectedLanguage}.${index}.text`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Untertitel ({lang.label})</FormLabel>
+                      <FormLabel>Text</FormLabel>
                       <FormControl>
-                        <Input placeholder="Untertitel eingeben" {...field} />
+                        <Input placeholder="Titeltext eingeben" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Titel Styling</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="titleFontSize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Schriftgröße</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Schriftgröße auswählen" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {fontSizes.map((size) => (
-                        <SelectItem key={size.value} value={size.value}>
-                          {size.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`titleText.${selectedLanguage}.${index}.fontSize`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Schriftgröße</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Schriftgröße" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {fontSizes.map((size) => (
+                              <SelectItem key={size.value} value={size.value}>
+                                {size.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name="titleFontWeight"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Schriftstärke</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Schriftstärke auswählen" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {fontWeights.map((weight) => (
-                        <SelectItem key={weight.value} value={weight.value}>
-                          {weight.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                  <FormField
+                    control={form.control}
+                    name={`titleText.${selectedLanguage}.${index}.fontWeight`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Schriftstärke</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Schriftstärke" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {fontWeights.map((weight) => (
+                              <SelectItem key={weight.value} value={weight.value}>
+                                {weight.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          <FormField
-            control={form.control}
-            name="titleColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Farbe</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input type="text" placeholder="Farbe (z.B. white, #fff)" {...field} />
-                  </FormControl>
-                  <Input 
-                    type="color" 
-                    className="w-12 p-1 h-10" 
-                    value={field.value.startsWith("#") ? field.value : "#ffffff"} 
-                    onChange={(e) => field.onChange(e.target.value)}
+                  <FormField
+                    control={form.control}
+                    name={`titleText.${selectedLanguage}.${index}.color`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Farbe</FormLabel>
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input
+                              placeholder="white, #ffffff"
+                              {...field}
+                            />
+                          </FormControl>
+                          {field.value?.startsWith('#') && (
+                            <Input 
+                              type="color" 
+                              className="w-12 p-1" 
+                              value={field.value} 
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              </CardContent>
+            </Card>
+          ))}
+
+          <Button
+            type="button"
+            onClick={addTitleLine}
+            className="mt-4"
+            variant="outline"
+          >
+            Neue Titelzeile hinzufügen
+          </Button>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Untertitel Styling</h3>
+        {/* Subtitle section */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-medium">Untertitel bearbeiten</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="subtitleFontSize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Schriftgröße</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <FormField
+                control={form.control}
+                name={`subtitleText.${selectedLanguage}`}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Untertitel Text</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Schriftgröße auswählen" />
-                      </SelectTrigger>
+                      <Input placeholder="Untertitel eingeben" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      {fontSizes.map((size) => (
-                        <SelectItem key={size.value} value={size.value}>
-                          {size.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="subtitleFontWeight"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Schriftstärke</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Schriftstärke auswählen" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {fontWeights.map((weight) => (
-                        <SelectItem key={weight.value} value={weight.value}>
-                          {weight.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              <Separator className="my-4" />
+              
+              <h3 className="text-md font-medium">Untertitel-Stil (für alle Sprachen)</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="subtitleFontSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Schriftgröße</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Schriftgröße" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {fontSizes.map((size) => (
+                            <SelectItem key={size.value} value={size.value}>
+                              {size.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={form.control}
-            name="subtitleColor"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Farbe</FormLabel>
-                <div className="flex space-x-2">
-                  <FormControl>
-                    <Input type="text" placeholder="Farbe (z.B. white, #fff)" {...field} />
-                  </FormControl>
-                  <Input 
-                    type="color" 
-                    className="w-12 p-1 h-10" 
-                    value={field.value.startsWith("#") ? field.value : "#ffffff"} 
-                    onChange={(e) => field.onChange(e.target.value)}
-                  />
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name="subtitleFontWeight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Schriftstärke</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Schriftstärke" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {fontWeights.map((weight) => (
+                            <SelectItem key={weight.value} value={weight.value}>
+                              {weight.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="subtitleColor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Farbe</FormLabel>
+                      <div className="flex space-x-2">
+                        <FormControl>
+                          <Input
+                            placeholder="white, #ffffff"
+                            {...field}
+                          />
+                        </FormControl>
+                        {field.value?.startsWith('#') && (
+                          <Input 
+                            type="color" 
+                            className="w-12 p-1" 
+                            value={field.value} 
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <Button type="submit" disabled={heroMutation.isPending}>
-          {heroMutation.isPending ? "Speichern..." : "Einstellungen speichern"}
+        <Button
+          type="submit"
+          disabled={heroMutation.isPending}
+          className="mt-8 w-full md:w-auto"
+        >
+          {heroMutation.isPending ? "Speichern..." : "Änderungen speichern"}
         </Button>
       </form>
     </Form>

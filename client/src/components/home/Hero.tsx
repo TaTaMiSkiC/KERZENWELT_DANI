@@ -4,11 +4,28 @@ import { useQuery } from "@tanstack/react-query";
 import candleBackground from "@/assets/candle-background.jpg";
 import { useLanguage } from "@/hooks/use-language";
 
+// Define TitleItem interface
+type TitleItem = {
+  text: string;
+  fontSize: string;
+  fontWeight: string;
+  color: string;
+};
+
+// Define HeroSettings interface
+type HeroSettings = {
+  titleText: Record<string, TitleItem[]>;
+  subtitleText: Record<string, string>;
+  subtitleFontSize: string;
+  subtitleFontWeight: string;
+  subtitleColor: string;
+};
+
 export default function Hero() {
   const { t, language } = useLanguage();
   
   // Fetch hero settings from API
-  const { data: heroSettings } = useQuery({
+  const { data: heroSettings } = useQuery<HeroSettings | null>({
     queryKey: ["/api/settings/hero"],
     queryFn: async () => {
       try {
@@ -25,7 +42,7 @@ export default function Hero() {
   });
   
   // Get title array for the current language, or fallback to translation
-  const getTitleItemsArray = () => {
+  const getTitleItemsArray = (): TitleItem[] => {
     if (heroSettings?.titleText && heroSettings.titleText[language]) {
       return heroSettings.titleText[language];
     }
@@ -119,7 +136,7 @@ export default function Hero() {
       <div className="container mx-auto px-4 h-full flex items-center relative z-10">
         <div className="max-w-xl">
           <div className="mb-4">
-            {getTitleItemsArray().map((titleItem, index) => (
+            {getTitleItemsArray().map((titleItem: TitleItem, index: number) => (
               <h1 
                 key={index}
                 className={getTitleClasses() + (index > 0 ? " mt-1" : "")}
