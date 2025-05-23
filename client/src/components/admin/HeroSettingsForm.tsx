@@ -20,6 +20,7 @@ type TitleItem = {
   fontSize: string;
   fontWeight: string;
   color: string;
+  fontFamily?: string;
 };
 
 // Define hero settings structure that matches schema.ts
@@ -67,6 +68,20 @@ const fontWeights = [
   { value: "bold", label: "Fett (700)" },
   { value: "extrabold", label: "Extrafett (800)" },
   { value: "black", label: "Schwarz (900)" },
+];
+
+// Font family options
+const fontFamilies = [
+  { value: "", label: "Standard (System)" },
+  { value: "font-serif", label: "Serif" },
+  { value: "font-mono", label: "Monospace" },
+  { value: "font-cursive", label: "Cursive" },
+  { value: "font-montserrat", label: "Montserrat" },
+  { value: "font-playfair", label: "Playfair Display" },
+  { value: "font-roboto", label: "Roboto" },
+  { value: "font-open-sans", label: "Open Sans" },
+  { value: "font-lato", label: "Lato" },
+  { value: "font-dancing-script", label: "Dancing Script" },
 ];
 
 // Default title items for each language
@@ -351,7 +366,7 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name={`titleText.${selectedLanguage}.${index}.fontSize`}
@@ -399,6 +414,36 @@ export default function HeroSettingsForm({ initialData }: HeroSettingsFormProps)
                             {fontWeights.map((weight) => (
                               <SelectItem key={weight.value} value={weight.value}>
                                 {weight.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`titleText.${selectedLanguage}.${index}.fontFamily`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Schriftart</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Schriftart wählen" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {fontFamilies.map((font) => (
+                              <SelectItem key={font.value} value={font.value}>
+                                {font.label}
                               </SelectItem>
                             ))}
                           </SelectContent>

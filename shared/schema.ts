@@ -416,6 +416,7 @@ export const heroSettingsSchema = z.object({
         fontSize: z.string().optional().default("xl"),
         fontWeight: z.string().optional().default("medium"),
         color: z.string().optional().default("white"),
+        fontFamily: z.string().optional(),
       })
     ])
   )),

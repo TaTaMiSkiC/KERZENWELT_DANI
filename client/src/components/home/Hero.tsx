@@ -10,6 +10,7 @@ type TitleItem = {
   fontSize: string;
   fontWeight: string;
   color: string;
+  fontFamily?: string;
 };
 
 // Define HeroSettings interface
@@ -139,7 +140,7 @@ export default function Hero() {
             {getTitleItemsArray().map((titleItem: TitleItem, index: number) => (
               <h1 
                 key={index}
-                className={getTitleClasses() + (index > 0 ? " mt-1" : "")}
+                className={`${getTitleClasses()} ${index > 0 ? "mt-1" : ""} ${titleItem.fontFamily || ""}`}
                 style={{
                   color: titleItem.color || "white",
                   fontSize: getFontSizeValue(titleItem.fontSize) || (index === 0 ? "2.25rem" : index === 1 ? "3rem" : "1.875rem"),
