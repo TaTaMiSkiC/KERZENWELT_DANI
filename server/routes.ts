@@ -80,6 +80,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Nedostaje Stripe session ID" });
       }
       
+      // Provjeri postoji li već narudžba s ovim session ID-jem
+      const existingOrdersResult = await db.execute(
+        sql`SELECT * FROM orders WHERE stripe_session_id = ${sessionId}`
+      );
+      
+      const existingOrders = existingOrdersResult.rows;
+      
+      if (existingOrders && existingOrders.length > 0) {
+        console.log("Narudžba već postoji za ovu Stripe sesiju:", existingOrders[0].id);
+        return res.json({
+          success: true,
+          orderId: existingOrders[0].id,
+          message: "Narudžba već postoji"
+        });
+      }
+      
       // Dohvati sesiju iz Stripe-a
       const session = await stripe.checkout.sessions.retrieve(sessionId, {
         expand: ['line_items', 'payment_intent']
@@ -150,46 +166,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: "",
       };
       
-      // Pretvori stavke košarice u stavke narudžbe koje odgovaraju shemi
-      const formattedItems = cartItems.map(item => {
-        // Dohvati miris ako postoji
-        let scentName = null;
-        if (item.scent) {
-          scentName = item.scent.name;
-        } else if (item.scentId) {
-          // Ako imamo scentId, ali nemamo scent objekt, pokušat ćemo ga dohvatiti
-          const scent = db.query.scents.findFirst({
-            where: (s, { eq }) => eq(s.id, item.scentId as number)
-          });
-          if (scent) {
-            scentName = scent.name;
-          }
-        }
-        
-        // Osnovni format stavke narudžbe koji odgovara shemi
-        return {
-          orderId: 0, // Privremeno - bit će zamijenjeno u createOrder funkciji
+      // Spoji sve u jedan poziv - stvaranje narudžbe i dodavanje stavki
+      const result = await storage.createOrder(orderData, 
+        cartItems.map(item => ({
+          orderId: 0, // Bit će postavljeno u createOrder funkciji
           productId: item.productId,
           productName: item.product.name,
           quantity: item.quantity,
           price: item.product.price.toString(),
-          scentId: item.scentId || null,
-          scentName: scentName,
-          colorId: item.colorId || null,
+          scentId: item.scentId,
+          scentName: item.scent ? item.scent.name : null,
+          colorId: item.colorId,
           colorName: item.colorName || null,
-          colorIds: item.colorIds || null,
-          hasMultipleColors: item.hasMultipleColors || false
-        };
-      });
+          colorIds: typeof item.colorIds === 'string' ? item.colorIds : null,
+          hasMultipleColors: Boolean(item.hasMultipleColors)
+        }))
+      );
       
-      console.log("Formatirane stavke narudžbe:", formattedItems);
-      
-      console.log("Stavke narudžbe prije spremanja:", orderItems);
-      
-      // Spremi narudžbu u bazu podataka
-      const createdOrder = await storage.createOrder(orderData, orderItems);
-      
-      if (!createdOrder) {
+      if (!result) {
         return res.status(500).json({ error: "Greška pri kreiranju narudžbe" });
       }
       
@@ -199,7 +193,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Vrati ID narudžbe
       return res.json({ 
         success: true, 
-        orderId: createdOrder.id,
+        orderId: result.id,
         message: "Narudžba uspješno kreirana"
       });
     } catch (error) {
