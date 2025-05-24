@@ -35,7 +35,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
       amount: Math.round(parseFloat(amount) * 100), // Convert to cents
       currency: "eur",
       metadata,
-      payment_method_types: ['card'] as any,
+      payment_method_types: ["card"] as any,
     });
 
     // Return the client secret to the client
@@ -110,47 +110,50 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     // Dohvaćamo proizvode iz košarice ako je korisnik prijavljen
     let lineItems = [];
-    
+
     if (userId) {
       try {
         // Dohvaćamo stavke košarice za korisnika
         const cartItems = await storage.getCartItems(userId);
+
+        // Pripremamo informacije o proizvodima
         
-        // Kreiramo line items za svaki proizvod u košarici
+        // Sada kreiramo line items s uključenim podacima o mirisima
         if (cartItems && cartItems.length > 0) {
-          lineItems = cartItems.map(item => {
-            // Pripremamo naziv proizvoda (s bojom i mirisom ako postoje)
+          lineItems = cartItems.map((item) => {
             let productName = item.product.name;
-            
-            // Dodaj informacije o boji ako postoji
+
             if (item.colorName) {
               productName += ` - ${item.colorName}`;
             }
-            
-            // Dodaj informacije o mirisu ako postoji
-            if (item.scentName) {
-              productName += ` - ${item.scentName}`;
+
+            // Dodajemo naziv mirisa ako postoji
+            if (item.scentId) {
+              productName += ` - Duft: ${item.scentId}`;
             }
-            
-            // Kreiraj punu URL za sliku
+
+            // Priprema male slike (pretpostavka: koristiš /images/thumbs/ za thumbnail)
             let imageUrl = null;
             if (item.product.imageUrl) {
-              // Ako imamo relativnu putanju slike, pretvorimo je u punu URL
-              const baseUrl = `${req.protocol}://${req.get('host')}`;
-              imageUrl = item.product.imageUrl.startsWith('http') 
-                ? item.product.imageUrl 
-                : `${baseUrl}${item.product.imageUrl}`;
+              const baseUrl = `${req.protocol}://${req.get("host")}`;
+              const rawUrl = item.product.imageUrl;
+
+              // Pretpostavljamo da thumbnail slika postoji u /images/thumbs/
+              const thumbUrl = rawUrl.replace("/images/", "/images/thumbs/");
+
+              imageUrl = thumbUrl.startsWith("http")
+                ? thumbUrl
+                : `${baseUrl}${thumbUrl}`;
             }
-            
+
             return {
               price_data: {
-                currency: 'eur',
                 product_data: {
                   name: productName,
-                  description: item.product.description ? item.product.description.substring(0, 100) + '...' : '',
-                  images: imageUrl ? [imageUrl] : undefined,
+                  images: imageUrl ? [imageUrl] : [],
                 },
-                unit_amount: Math.round(item.product.price * 100), // cijena u centima
+                currency: "eur",
+                unit_amount: Math.round(item.product.price * 100),
               },
               quantity: item.quantity,
             };
@@ -160,7 +163,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
         console.error("Greška pri dohvaćanju proizvoda iz košarice:", error);
       }
     }
-    
+
     // Ako nismo uspjeli dohvatiti proizvode iz košarice, koristimo ukupan iznos
     if (!lineItems.length) {
       lineItems = [
@@ -179,7 +182,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
         },
       ];
     }
-    
+
     // Kreiramo sesiju za naplatu
     // Napomena: tipovi i opcije prilagođeni prema Stripe dokumentaciji
     const session = await stripe.checkout.sessions.create({
