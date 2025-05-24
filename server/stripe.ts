@@ -234,6 +234,51 @@ export async function createCheckoutSession(req: Request, res: Response) {
       console.error("Greška pri dohvaćanju postavki za dostavu:", error);
     }
 
+    // Izračunamo ukupan iznos košarice direktno - za provjeru
+    let cartTotal = 0;
+    let productSubtotal = 0;
+    let shippingCost = 0;
+    let freeShippingThreshold = 0;
+    
+    try {
+      const freeShippingThresholdSetting = await storage.getSetting("freeShippingThreshold");
+      const standardShippingRateSetting = await storage.getSetting("standardShippingRate");
+      
+      if (freeShippingThresholdSetting && standardShippingRateSetting) {
+        freeShippingThreshold = parseFloat(freeShippingThresholdSetting.value);
+        const standardShippingRate = parseFloat(standardShippingRateSetting.value);
+        
+        // Dohvati stavke košarice ako korisnik postoji
+        let userCartItems = [];
+        if (userId) {
+          try {
+            userCartItems = await storage.getCartItems(userId);
+          } catch (e) {
+            console.error("Greška pri dohvaćanju stavki košarice:", e);
+          }
+        }
+        
+        if (userCartItems && userCartItems.length > 0) {
+          productSubtotal = userCartItems.reduce((sum: number, item: any) => {
+            return sum + (parseFloat(String(item.product.price)) * item.quantity);
+          }, 0);
+        } else {
+          productSubtotal = parseFloat(amount);
+        }
+        
+        // Dodaj trošak dostave ako je potrebno
+        if (productSubtotal < freeShippingThreshold) {
+          shippingCost = standardShippingRate;
+        }
+        
+        cartTotal = productSubtotal + shippingCost;
+        
+        console.log(`Ukupno košarica (server): ${cartTotal}€ (proizvodi: ${productSubtotal}€ + dostava: ${shippingCost}€)`);
+      }
+    } catch (error) {
+      console.error("Greška pri izračunu ukupne cijene:", error);
+    }
+
     // Kreiramo sesiju za naplatu
     const session = await stripe.checkout.sessions.create({
       payment_method_types: paymentMethodTypes as any,
@@ -241,7 +286,13 @@ export async function createCheckoutSession(req: Request, res: Response) {
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
-      metadata,
+      // Dodajemo metapodatke za prikaz detalja na desnoj strani
+      metadata: {
+        ...metadata,
+        subtotal: `${productSubtotal.toFixed(2)} €`,
+        shipping: shippingCost > 0 ? `${shippingCost.toFixed(2)} €` : "Kostenlos",
+        total: `${cartTotal.toFixed(2)} €`
+      },
       customer_email: customerEmail || undefined,
       locale: "de",
       billing_address_collection: "required" as any,
