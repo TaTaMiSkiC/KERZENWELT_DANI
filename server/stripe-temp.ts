@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Stripe from "stripe";
-import { storage } from "./storage";
+import { storage } from "./dbStorage";
 
 // Initialize Stripe with the secret key from environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
