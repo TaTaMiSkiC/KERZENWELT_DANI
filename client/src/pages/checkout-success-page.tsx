@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/Layout";
 import { CheckCircle } from "lucide-react";
@@ -36,8 +35,12 @@ export default function CheckoutSuccessPage() {
     const processPayment = async () => {
       try {
         // Pozovi backend da završi narudžbu i zabilježi plaćanje
-        const response = await apiRequest("POST", "/api/process-stripe-payment", {
-          sessionId: sessionId
+        const response = await fetch("/api/process-stripe-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sessionId: sessionId }),
         });
         
         if (!response.ok) {
