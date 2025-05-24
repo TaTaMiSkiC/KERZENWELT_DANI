@@ -113,7 +113,7 @@ export default function CheckoutForm() {
       postalCode: user?.postalCode || "",
       country: user?.country || "Österreich",
       customerNote: "",
-      paymentMethod: "credit_card",
+      paymentMethod: "stripe",
       saveAddress: true,
       sameAsBilling: true,
     },
@@ -193,7 +193,7 @@ export default function CheckoutForm() {
         shippingCost: shippingCost.toString(),
         paymentMethod: data.paymentMethod,
         paymentStatus:
-          data.paymentMethod === "bank_transfer" ? "pending" : "completed",
+          data.paymentMethod === "bank" || data.paymentMethod === "cash" || data.paymentMethod === "pickup" ? "pending" : "completed",
         shippingAddress: data.address,
         shippingCity: data.city,
         shippingPostalCode: data.postalCode,
@@ -628,65 +628,66 @@ export default function CheckoutForm() {
 
           {/* Payment method specific forms */}
           <div className="mt-4">
-            {watchPaymentMethod === "credit_card" && (
+            {watchPaymentMethod === "stripe" && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <FormLabel>Broj kartice</FormLabel>
-                    <Input placeholder="1234 5678 9012 3456" />
-                  </div>
-                  <div>
-                    <FormLabel>Ime na kartici</FormLabel>
-                    <Input placeholder="IME PREZIME" />
-                  </div>
-                  <div>
-                    <FormLabel>Datum isteka</FormLabel>
-                    <Input placeholder="MM/GG" />
-                  </div>
-                  <div>
-                    <FormLabel>CVV kod</FormLabel>
-                    <Input placeholder="123" />
+                <div className="border rounded-lg p-4 bg-neutral">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t('checkout.paymentMethods.stripe.description')}
+                  </p>
+                  <div className="bg-background rounded-md p-4">
+                    <p className="text-sm">
+                      {t('checkout.paymentMethods.stripe.securityNote')}
+                    </p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">
-                  Svi podaci se šalju šifrirano i sigurni su. Nikada ne spremamo
-                  podatke vaše kartice.
-                </p>
               </div>
             )}
 
-            {watchPaymentMethod === "paypal" && (
-              <div className="border rounded-lg p-4 bg-neutral">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Kliknite na PayPal gumb ispod za sigurno plaćanje putem PayPal
-                  servisa.
-                </p>
-                <div className="flex justify-center">
-                  <PayPalButton
-                    amount={total.toFixed(2)}
-                    currency="EUR"
-                    intent="CAPTURE"
-                    onPaymentSuccess={handlePayPalSuccess}
-                    onPaymentError={handlePayPalError}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Nakon uspješnog plaćanja, vaša narudžba će biti automatski
-                  kreirana i potvrđena.
-                </p>
-              </div>
-            )}
-
-            {watchPaymentMethod === "bank_transfer" && (
+            {watchPaymentMethod === "cash" && (
               <div className="border rounded-lg p-4 bg-neutral">
                 <p className="text-sm mb-4">
-                  Nakon što potvrdite narudžbu, poslat ćemo vam email s podacima
-                  za plaćanje:
+                  {t('checkout.paymentMethods.cash.description')}
+                </p>
+                <div className="bg-background rounded-md p-4">
+                  <p className="text-sm font-medium">{t('checkout.paymentMethods.cash.instructions')}</p>
+                </div>
+              </div>
+            )}
+
+            {watchPaymentMethod === "pickup" && (
+              <div className="border rounded-lg p-4 bg-neutral">
+                <p className="text-sm mb-4">
+                  {t('checkout.paymentMethods.pickup.description')}
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex">
-                    <span className="font-medium w-32">Primatelj:</span>
-                    <span>Kerzenwelt by Dani d.o.o.</span>
+                    <span className="font-medium w-32">{t('checkout.storeLocation')}:</span>
+                    <span>Kerzenwelt by Dani</span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-medium w-32">{t('checkout.address')}:</span>
+                    <span>Widmanngasse 37, 9500 Villach, Österreich</span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-medium w-32">{t('checkout.businessHours')}:</span>
+                    <span>
+                      {t('checkout.mondayToFriday')}: 9:00 - 18:00<br />
+                      {t('checkout.saturday')}: 9:00 - 13:00
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {watchPaymentMethod === "bank" && (
+              <div className="border rounded-lg p-4 bg-neutral">
+                <p className="text-sm mb-4">
+                  {t('checkout.paymentMethods.bank.description')}
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex">
+                    <span className="font-medium w-32">{t('checkout.recipient')}:</span>
+                    <span>Kerzenwelt by Dani</span>
                   </div>
                   <div className="flex">
                     <span className="font-medium w-32">IBAN:</span>
@@ -775,8 +776,7 @@ export default function CheckoutForm() {
             size="lg"
             disabled={
               isSubmitting ||
-              !form.getValues("sameAsBilling") ||
-              (watchPaymentMethod === "paypal" && !paypalOrderComplete)
+              !form.getValues("sameAsBilling")
             }
           >
             {isSubmitting ? (
