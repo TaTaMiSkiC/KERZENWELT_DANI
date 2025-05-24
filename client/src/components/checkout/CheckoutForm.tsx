@@ -705,25 +705,40 @@ export default function CheckoutForm() {
                   </div>
                 </div>
                 
-                {showStripeForm && clientSecret && (
-                  <div className="mt-4">
-                    <StripePaymentElement 
-                      clientSecret={clientSecret}
-                      onSuccess={(paymentIntent) => {
-                        setStripePaymentComplete(true);
-                        // Continue with checkout form submission
+                <div className="mt-4">
+                  {!showStripeForm && (
+                    <Button 
+                      type="button"
+                      onClick={() => {
+                        // Trigger payment intent creation
                         form.handleSubmit(onSubmit)();
                       }}
-                      onError={(error) => {
-                        toast({
-                          title: "Zahlungsfehler",
-                          description: error.message,
-                          variant: "destructive",
-                        });
-                      }}
-                    />
-                  </div>
-                )}
+                      className="w-full"
+                    >
+                      Zur Zahlung fortfahren
+                    </Button>
+                  )}
+                  
+                  {showStripeForm && clientSecret && (
+                    <div className="mt-4">
+                      <StripePaymentElement 
+                        clientSecret={clientSecret}
+                        onSuccess={(paymentIntent) => {
+                          setStripePaymentComplete(true);
+                          // Continue with checkout form submission
+                          form.handleSubmit(onSubmit)();
+                        }}
+                        onError={(error) => {
+                          toast({
+                            title: "Zahlungsfehler",
+                            description: error.message,
+                            variant: "destructive",
+                          });
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
