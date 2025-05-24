@@ -87,7 +87,7 @@ export default function CartItem({ item }: CartItemProps) {
                 type="image/webp" 
               />
               <img
-                src={imageUrl || "/images/placeholder.jpg"}
+                src={imageUrl && imageUrl.startsWith('/') ? imageUrl : `/images/placeholder.jpg`}
                 alt={name}
                 className="w-full h-full object-cover"
                 loading="lazy"

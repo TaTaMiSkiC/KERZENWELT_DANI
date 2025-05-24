@@ -162,9 +162,14 @@ export default function CheckoutPage() {
                         <div className="flex">
                           <div className="w-16 h-16 mr-4 rounded overflow-hidden">
                             <img
-                              src={item.product.imageUrl}
+                              src={item.product.imageUrl && item.product.imageUrl.startsWith('/') ? item.product.imageUrl : '/images/placeholder.jpg'}
                               alt={item.product.name}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const imgElement = e.currentTarget;
+                                imgElement.onerror = null;
+                                imgElement.src = "/images/placeholder.jpg";
+                              }}
                             />
                           </div>
                           <div>
