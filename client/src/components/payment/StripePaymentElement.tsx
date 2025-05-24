@@ -20,6 +20,7 @@ const StripeCheckoutForm = ({ onSuccess, onError }: StripeCheckoutFormProps) => 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const { t } = useLanguage();
+  const orderId = window.sessionStorage.getItem('currentOrderId');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

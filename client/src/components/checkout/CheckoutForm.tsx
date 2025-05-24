@@ -130,23 +130,61 @@ export default function CheckoutForm() {
       return;
     }
 
-    // If Stripe is selected as payment method, check if payment is complete
-    if (data.paymentMethod === "stripe") {
-      // For Stripe, we'll create the intent when placing the order
-      // and let the payment flow continue normally
+    // If Stripe is selected as payment method and payment is not complete yet
+    if (data.paymentMethod === "stripe" && !stripePaymentComplete) {
+      setIsSubmitting(true);
+      
       try {
+        // Create a preliminary order to get an order ID
+        const orderItems = cartItems?.map((item) => ({
+          productId: item.productId,
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          hasMultipleColors: item.hasMultipleColors,
+          selectedColorsCount: item.selectedColorsCount,
+          colorInfo: item.colorInfo,
+          scent: item.scent,
+        }));
+
+        // Calculate totals for the order
+        const cartTotal = calculateCartTotal(cartItems);
+        const discountAmount = calculateDiscount(cartTotal, discountCode);
+        const shippingCost = isFreeShipping ? 0 : standardShippingRate;
+        const orderTotal = cartTotal - discountAmount + shippingCost;
+        
+        // Store the order data in session to use later
+        sessionStorage.setItem('pendingOrderData', JSON.stringify({
+          data,
+          orderItems,
+          cartTotal,
+          discountAmount,
+          shippingCost,
+          orderTotal
+        }));
+        
+        // Create the payment intent with Stripe
         const response = await apiRequest("POST", "/api/create-payment-intent", {
-          amount: total
+          amount: orderTotal,
+          orderId: 'pending' // We'll update this with the real order ID after payment
         });
+        
         const responseData = await response.json();
         setClientSecret(responseData.clientSecret);
         setShowStripeForm(true);
+        setIsSubmitting(false);
+        
+        toast({
+          title: "Zahlungsinformationen",
+          description: "Bitte schließen Sie den Zahlungsvorgang ab, um Ihre Bestellung zu bestätigen.",
+        });
+        
         return; // Exit early to wait for Stripe payment completion
       } catch (error) {
         console.error("Error creating payment intent:", error);
         toast({
-          title: t("checkout.stripeError"),
-          description: t("checkout.stripeErrorDescription"),
+          title: "Zahlungsfehler",
+          description: "Bei der Verarbeitung Ihrer Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -555,9 +593,9 @@ export default function CheckoutForm() {
                       >
                         <CreditCard className="mr-2 h-5 w-5 text-primary" />
                         <div className="flex-1">
-                          <span className="font-medium">{t('checkout.paymentMethods.stripe.title')}</span>
+                          <span className="font-medium">Online Zahlung (Stripe)</span>
                           <p className="text-sm text-gray-500">
-                            {t('checkout.paymentMethods.stripe.description')}
+                            Visa, Mastercard, American Express, Klarna, PayPal, EPS, Online Banking
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -645,12 +683,26 @@ export default function CheckoutForm() {
             {watchPaymentMethod === "stripe" && (
               <div className="space-y-4">
                 <div className="border rounded-lg p-4 bg-neutral">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t('checkout.paymentMethods.stripe.description')}
-                  </p>
-                  <div className="bg-background rounded-md p-4">
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    <img src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" alt="Visa" className="h-8" />
+                    <img src="https://www.mastercard.com/content/dam/public/mastercardcom/eu/de/logos/mc-logo-52.svg" alt="Mastercard" className="h-8" />
+                    <img src="https://cdn.freebiesupply.com/logos/large/2x/american-express-logo-png-transparent.png" alt="Amex" className="h-8" />
+                    <img src="https://www.klarna.com/assets/sites/5/2020/04/27140600/Klarna-LogoRGB-Black.jpg" alt="Klarna" className="h-8" />
+                    <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg" alt="PayPal" className="h-8" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/EPS-payment-system-logo.svg/1280px-EPS-payment-system-logo.svg.png" alt="EPS" className="h-8" />
+                  </div>
+                  <p className="text-sm mb-3">Wählen Sie Ihre bevorzugte Zahlungsmethode im nächsten Schritt aus:</p>
+                  <ul className="text-sm list-disc pl-5 space-y-1">
+                    <li>Kreditkarte (Visa, Mastercard, American Express)</li>
+                    <li>Klarna</li>
+                    <li>PayPal</li>
+                    <li>EPS Online Banking</li>
+                    <li>Sofortüberweisung</li>
+                    <li>Banküberweisung (SEPA)</li>
+                  </ul>
+                  <div className="bg-background rounded-md p-4 mt-4">
                     <p className="text-sm">
-                      {t('checkout.paymentMethods.stripe.securityNote')}
+                      Alle Zahlungsdaten werden sicher über eine verschlüsselte Verbindung übertragen.
                     </p>
                   </div>
                 </div>
@@ -666,7 +718,7 @@ export default function CheckoutForm() {
                       }}
                       onError={(error) => {
                         toast({
-                          title: t("checkout.paymentError"),
+                          title: "Zahlungsfehler",
                           description: error.message,
                           variant: "destructive",
                         });

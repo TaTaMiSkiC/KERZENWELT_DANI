@@ -23,13 +23,28 @@ export async function createPaymentIntent(req: Request, res: Response) {
       });
     }
 
+    // Get order ID if available
+    const { orderId } = req.body;
+    const metadata: Record<string, string> = {};
+    if (orderId) {
+      metadata.order_id = orderId.toString();
+    }
+
     // Create a payment intent with the amount in cents (Stripe requires amounts in the smallest currency unit)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(parseFloat(amount) * 100), // Convert to cents
       currency: "eur",
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      metadata,
+      payment_method_types: [
+        'card',           // Credit cards (Visa, Mastercard, American Express)
+        'klarna',         // Klarna
+        'paypal',         // PayPal
+        'eps',            // EPS (Austrian payment system)
+        'giropay',        // Online Banking (German)
+        'bancontact',     // Online Banking (Belgium)
+        'ideal',          // Online Banking (Netherlands)
+        'sepa_debit'      // SEPA bank transfers
+      ],
     });
 
     // Return the client secret to the client
