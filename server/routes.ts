@@ -150,8 +150,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: "",
       };
       
+      // Pretvori stavke košarice u stavke narudžbe koje odgovaraju shemi
+      const formattedItems = cartItems.map(item => {
+        // Dohvati miris ako postoji
+        let scentName = null;
+        if (item.scent) {
+          scentName = item.scent.name;
+        } else if (item.scentId) {
+          // Ako imamo scentId, ali nemamo scent objekt, pokušat ćemo ga dohvatiti
+          const scent = db.query.scents.findFirst({
+            where: (s, { eq }) => eq(s.id, item.scentId as number)
+          });
+          if (scent) {
+            scentName = scent.name;
+          }
+        }
+        
+        // Osnovni format stavke narudžbe koji odgovara shemi
+        return {
+          orderId: 0, // Privremeno - bit će zamijenjeno u createOrder funkciji
+          productId: item.productId,
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price.toString(),
+          scentId: item.scentId || null,
+          scentName: scentName,
+          colorId: item.colorId || null,
+          colorName: item.colorName || null,
+          colorIds: item.colorIds || null,
+          hasMultipleColors: item.hasMultipleColors || false
+        };
+      });
+      
+      console.log("Formatirane stavke narudžbe:", formattedItems);
+      
+      console.log("Stavke narudžbe prije spremanja:", orderItems);
+      
       // Spremi narudžbu u bazu podataka
-      const createdOrder = await storage.createOrder(orderData, cartItems);
+      const createdOrder = await storage.createOrder(orderData, orderItems);
       
       if (!createdOrder) {
         return res.status(500).json({ error: "Greška pri kreiranju narudžbe" });

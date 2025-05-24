@@ -679,101 +679,93 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderItems(orderId: number): Promise<OrderItemWithProduct[]> {
     try {
-      // Koristimo direktni SQL upit kako bismo osigurali pristup svim poljima
-      // i omogućili pristup poljima za višestruke boje
-      const { rows } = await pool.query(
-        `
-        SELECT 
-          oi.id,
-          oi.order_id,
-          oi.product_id,
-          oi.product_name,
-          oi.quantity,
-          oi.price,
-          oi.scent_id,
-          oi.scent_name,
-          oi.color_id,
-          oi.color_name,
-          oi.color_ids,
-          oi.has_multiple_colors,
-          p.id as product_id,
-          p.name as product_name,
-          p.description as product_description,
-          p.price as product_price,
-          p.image_url as product_image_url,
-          p.category_id as product_category_id,
-          p.stock as product_stock,
-          p.featured as product_featured,
-          p.created_at as product_created_at,
-          p.allow_multiple_colors as product_allow_multiple_colors,
-          p.active as product_active,
-          s.id as scent_id,
-          s.name as scent_name,
-          c.id as color_id,
-          c.name as color_name
-        FROM order_items oi
-        LEFT JOIN products p ON oi.product_id = p.id
-        LEFT JOIN scents s ON oi.scent_id = s.id
-        LEFT JOIN colors c ON oi.color_id = c.id
-        WHERE oi.order_id = $1
-      `,
-        [orderId],
+      console.log(`Dohvaćanje stavki narudžbe: ${orderId}`);
+      
+      // Provjeri postojanje narudžbe
+      const order = await this.getOrder(orderId);
+      if (!order) {
+        console.log("Narudžba nije pronađena:", orderId);
+        return [];
+      }
+      
+      console.log(`Pronađena narudžba: ${order.id} Korisnik narudžbe: ${order.userId}`);
+      
+      // Dohvati sve stavke narudžbe pomoću Drizzle ORM-a
+      const items = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+      
+      console.log("Dohvaćene stavke narudžbe SQL:", items);
+      console.log("Dohvaćeno stavki:", items.length);
+      
+      if (items.length === 0) {
+        return [];
+      }
+      
+      // Obogati stavke s podacima o proizvodima
+      const enrichedItems = await Promise.all(
+        items.map(async (item) => {
+          // Dohvati proizvod za svaku stavku
+          const [product] = await db.select().from(products).where(eq(products.id, item.productId));
+          
+          // Kreiraj podatke o proizvodu - koristi podatke iz baze ili fallback
+          const productData = {
+            id: item.productId,
+            name: item.productName || (product ? product.name : `Proizvod #${item.productId}`),
+            description: product ? product.description : "",
+            price: product ? product.price : "0",
+            imageUrl: product ? product.imageUrl : null,
+            categoryId: product ? product.categoryId : 0,
+            stock: product ? product.stock : 0,
+            featured: product ? product.featured : false,
+            active: product ? product.active : true,
+            createdAt: product ? product.createdAt : new Date(),
+            allowMultipleColors: product ? product.allowMultipleColors : false,
+            scent: null,
+            color: null,
+            burnTime: product ? product.burnTime : null,
+            hasColorOptions: product ? product.hasColorOptions : false,
+            dimensions: product ? product.dimensions : null,
+            weight: product ? product.weight : null,
+            materials: product ? product.materials : null,
+            instructions: product ? product.instructions : null,
+            maintenance: product ? product.maintenance : null,
+          };
+          
+          // Dohvati podatke o mirisu ako postoji
+          let scentName = item.scentName;
+          if (item.scentId && !scentName) {
+            const [scent] = await db.select().from(scents).where(eq(scents.id, item.scentId));
+            scentName = scent ? scent.name : null;
+          }
+          
+          // Dohvati podatke o boji ako postoji
+          let colorName = item.colorName;
+          if (item.colorId && !colorName) {
+            const [color] = await db.select().from(colors).where(eq(colors.id, item.colorId));
+            colorName = color ? color.name : null;
+          }
+          
+          // Vrati obogaćenu stavku
+          return {
+            id: item.id,
+            orderId: item.orderId,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            product: productData,
+            scentId: item.scentId,
+            colorId: item.colorId,
+            scentName: scentName,
+            colorName: colorName,
+            productName: item.productName || productData.name,
+            hasMultipleColors: item.hasMultipleColors || false,
+            colorIds: item.colorIds
+          };
+        })
       );
-
-      console.log("Dohvaćene stavke narudžbe SQL:", rows);
-
-      // Mapiramo rezultate u OrderItemWithProduct format
-      const result = rows.map((item: any) => {
-        // Pretvaramo snake_case u camelCase
-        const productData = {
-          id: item.product_id,
-          name: item.product_name || `Proizvod #${item.product_id}`,
-          description: item.product_description || "",
-          price: item.product_price || "0",
-          imageUrl: item.product_image_url,
-          categoryId: item.product_category_id,
-          stock: item.product_stock || 0,
-          featured: !!item.product_featured,
-          createdAt: item.product_created_at || new Date(),
-          active: !!item.product_active,
-          allowMultipleColors: !!item.product_allow_multiple_colors,
-          // Dodajemo dodatna polja koja očekuje Product tip
-          scent: null,
-          color: null,
-          burnTime: null,
-          hasColorOptions: false,
-          dimensions: null,
-          weight: null,
-          materials: null,
-          instructions: null,
-          maintenance: null,
-        };
-
-        // Provjeri postoji li polje za višestruke boje u bazi
-        const hasMultipleColors = !!item.has_multiple_colors;
-
-        return {
-          id: item.id,
-          orderId: item.order_id,
-          productId: item.product_id,
-          quantity: item.quantity,
-          price: item.price,
-          product: productData,
-          scentId: item.scent_id,
-          colorId: item.color_id,
-          scentName: item.scent_name || null,
-          colorName: item.color_name || null,
-          productName: item.product_name || null,
-          // Dodajemo podršku za višestruke boje - koristimo vrijednost iz tablice
-          // ako postoji, inače fallback na proizvod
-          hasMultipleColors:
-            hasMultipleColors || !!productData.allowMultipleColors,
-        };
-      });
-
-      console.log("Konačni rezultat:", JSON.stringify(result[0]));
-
-      return result;
+      
+      console.log("Obogaćene stavke:", enrichedItems.length);
+      
+      return enrichedItems;
     } catch (error) {
       console.error(`Greška prilikom dohvaćanja stavki narudžbe: ${error}`);
       return [];
