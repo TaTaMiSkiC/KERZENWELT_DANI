@@ -697,6 +697,7 @@ export default function CheckoutForm() {
                   <StripeBuyButton 
                     buyButtonId="buy_btn_1RSE3J18VqtjageHCcynbnHv"
                     publishableKey="pk_live_51RRIGF18VqtjageH4OETwSP54rYIgYw3xXvsJNSFiOiATkGLRdxNBR7zt9cUC8sBr7LFYN9P9SKYj5AtHLgZ2Aw300bLYv2UxV"
+                    amount={total}
                   />
                 </div>
                 
