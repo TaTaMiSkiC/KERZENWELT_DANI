@@ -8,7 +8,7 @@ import {
   capturePaypalOrder,
   loadPaypalDefault,
 } from "./paypal";
-import { createPaymentIntent } from "./stripe";
+import { createPaymentIntent, createCheckoutSession } from "./stripe";
 import { upload, resizeImage } from "./imageUpload";
 import fs from "fs";
 import path from "path";
@@ -57,6 +57,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe routes
   app.post("/api/create-payment-intent", async (req, res) => {
     await createPaymentIntent(req, res);
+  });
+  
+  app.post("/api/create-checkout-session", async (req, res) => {
+    await createCheckoutSession(req, res);
   });
 
   // Enable serving static files from the public directory

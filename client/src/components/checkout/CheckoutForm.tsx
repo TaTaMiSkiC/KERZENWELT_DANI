@@ -704,15 +704,25 @@ export default function CheckoutForm() {
                 <div className="mt-4">
                   <Button 
                     type="button"
-                    onClick={() => {
-                      // Instead of using our custom payment flow, we'll use the pre-configured Stripe Buy Button
-                      // Just submit the form for processing
-                      form.handleSubmit(onSubmit)();
-                      setStripePaymentComplete(true); // Mark payment as complete when using Buy Button
+                    onClick={async () => {
+                      try {
+                        // Pokreni Stripe Checkout s točnim iznosom
+                        import { initiateStripeCheckout } from "@/lib/stripeCheckout";
+                        await initiateStripeCheckout(total);
+                        
+                        // Neće se izvršiti ako korisnik bude preusmjeren
+                        setStripePaymentComplete(true);
+                      } catch (error) {
+                        toast({
+                          title: "Fehler",
+                          description: "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+                          variant: "destructive",
+                        });
+                      }
                     }}
                     className="w-full"
                   >
-                    Bestellung abschließen
+                    Mit Karte zahlen ({total.toFixed(2)} €)
                   </Button>
                 </div>
               </div>
