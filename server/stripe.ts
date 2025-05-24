@@ -35,16 +35,9 @@ export async function createPaymentIntent(req: Request, res: Response) {
       amount: Math.round(parseFloat(amount) * 100), // Convert to cents
       currency: "eur",
       metadata,
-      payment_method_types: [
-        'card',           // Credit cards (Visa, Mastercard, American Express)
-        'klarna',         // Klarna
-        'paypal',         // PayPal
-        'eps',            // EPS (Austrian payment system)
-        'giropay',        // Online Banking (German)
-        'bancontact',     // Online Banking (Belgium)
-        'ideal',          // Online Banking (Netherlands)
-        'sepa_debit'      // SEPA bank transfers
-      ],
+      automatic_payment_methods: {
+        enabled: true,
+      },
     });
 
     // Return the client secret to the client
