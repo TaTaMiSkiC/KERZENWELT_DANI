@@ -85,15 +85,10 @@ export async function createCheckoutSession(req: Request, res: Response) {
       metadata.order_id = orderId.toString();
     }
     
-    // Koristimo samo 'card' kao metodu plaćanja jer druge metode nisu aktivirane u Stripe računu
-    // VAŽNO: Kada aktivirate druge metode plaćanja u Stripe Dashboard-u
-    // (https://dashboard.stripe.com/account/payments/settings),
-    // možete odkomentirati donji kod za podršku više metoda plaćanja
+    // Kreiramo listu podržanih metoda plaćanja
+    // VAŽNO: Ove metode moraju biti aktivirane u Stripe Dashboard-u
+    // (https://dashboard.stripe.com/account/payments/settings)
     
-    const paymentMethodTypes = ['card'];
-    
-    /* 
-    // Ovaj kod se može koristiti kad su sve metode plaćanja aktivirane
     const paymentMethodTypes = ['card']; // Uvijek imamo karticu kao opciju
     
     // Dodajemo specifičnu metodu plaćanja ako je tražena i validna
@@ -110,7 +105,6 @@ export async function createCheckoutSession(req: Request, res: Response) {
         // U slučaju greške, nastavljamo samo s 'card' opcijom
       }
     }
-    */
       
     // Kreiramo sesiju za naplatu
     // Napomena: tipovi i opcije prilagođeni prema Stripe dokumentaciji
