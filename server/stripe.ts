@@ -88,7 +88,16 @@ export async function createCheckoutSession(req: Request, res: Response) {
     
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: [
+        'card',         // Kreditkarte
+        'klarna',       // Klarna
+        'paypal',       // PayPal
+        'eps',          // EPS (Austrian Online Banking)
+        'sofort',       // Sofort (Online Banking)
+        'sepa_debit',   // SEPA bankovna transakcija
+        'giropay',      // Još jedna metoda online bankarstva
+        'ideal'         // iDEAL (online banking)
+      ],
       line_items: [
         {
           price_data: {
@@ -108,6 +117,10 @@ export async function createCheckoutSession(req: Request, res: Response) {
       metadata,
       customer_email: customerEmail || undefined,
       locale: 'de',
+      billing_address_collection: 'auto',
+      phone_number_collection: {
+        enabled: true,
+      },
     });
 
     // Return the session ID to the client
