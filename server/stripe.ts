@@ -88,9 +88,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
     
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
-      // Uključujemo samo metode plaćanja koje su podržane i aktivirane na vašem računu
-      // Određene metode plaćanja možda zahtijevaju dodatne postavke u Stripe Dashboard
-      payment_method_types: ['card', 'paypal'],
+      // Koristimo samo kartično plaćanje koje sigurno radi
+      payment_method_types: ['card'],
       
       allow_promotion_codes: true, // Dozvoljavamo promo kodove
       shipping_address_collection: {
