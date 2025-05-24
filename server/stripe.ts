@@ -192,6 +192,47 @@ export async function createCheckoutSession(req: Request, res: Response) {
         },
       ];
     }
+    
+    // Dodajemo troškove dostave ako su potrebni
+    // Pokušavamo dohvatiti postavke za dostavu
+    try {
+      const freeShippingThresholdSetting = await storage.getSetting("freeShippingThreshold");
+      const standardShippingRateSetting = await storage.getSetting("standardShippingRate");
+      
+      if (freeShippingThresholdSetting && standardShippingRateSetting) {
+        const freeShippingThreshold = parseFloat(freeShippingThresholdSetting.value);
+        const standardShippingRate = parseFloat(standardShippingRateSetting.value);
+        
+        // Računamo ukupan iznos proizvoda (bez dostave)
+        let totalProductAmount = 0;
+        
+        if (cartItems && cartItems.length > 0) {
+          totalProductAmount = cartItems.reduce((sum, item) => {
+            return sum + (parseFloat(String(item.product.price)) * item.quantity);
+          }, 0);
+        } else {
+          totalProductAmount = parseFloat(amount);
+        }
+        
+        // Provjeravamo je li potrebno dodati troškove dostave
+        if (totalProductAmount < freeShippingThreshold && standardShippingRate > 0) {
+          // Dodajemo dostavu kao zasebnu stavku
+          lineItems.push({
+            price_data: {
+              currency: "eur",
+              product_data: {
+                name: "Versandkosten",
+                description: "Standardversand",
+              },
+              unit_amount: Math.round(standardShippingRate * 100), // cijena u centima
+            },
+            quantity: 1,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Greška pri dohvaćanju postavki za dostavu:", error);
+    }
 
     // Kreiramo sesiju za naplatu
     const session = await stripe.checkout.sessions.create({
