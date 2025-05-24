@@ -88,10 +88,9 @@ export async function createCheckoutSession(req: Request, res: Response) {
     
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      // Trenutno koristimo samo kartično plaćanje
-      // Druge metode (PayPal, Klarna itd.) mogu se dodati samo ako su posebno aktivirane za Checkout u Stripe Dashboard
-      // Potrebno je dodatno konfigurirati Stripe račun za korištenje tih metoda
+      // Uključujemo samo metode plaćanja koje su podržane i aktivirane na vašem računu
+      // Određene metode plaćanja možda zahtijevaju dodatne postavke u Stripe Dashboard
+      payment_method_types: ['card', 'paypal'],
       
       allow_promotion_codes: true, // Dozvoljavamo promo kodove
       shipping_address_collection: {
