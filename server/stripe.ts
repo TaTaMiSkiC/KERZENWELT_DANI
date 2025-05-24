@@ -35,9 +35,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
       amount: Math.round(parseFloat(amount) * 100), // Convert to cents
       currency: "eur",
       metadata,
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'], // Only use card payments for now
     });
 
     // Return the client secret to the client
