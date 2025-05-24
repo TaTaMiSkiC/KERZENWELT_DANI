@@ -9,6 +9,7 @@ import { useSettings } from "@/hooks/use-settings-api";
 import StripePaymentElement from "@/components/payment/StripePaymentElement";
 import StripeBuyButton from "@/components/payment/StripeBuyButton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { initiateStripeCheckout } from "@/lib/stripeCheckout";
 import { useLocation } from "wouter";
 import {
   Form,
@@ -707,7 +708,6 @@ export default function CheckoutForm() {
                     onClick={async () => {
                       try {
                         // Pokreni Stripe Checkout s točnim iznosom
-                        import { initiateStripeCheckout } from "@/lib/stripeCheckout";
                         await initiateStripeCheckout(total);
                         
                         // Neće se izvršiti ako korisnik bude preusmjeren
