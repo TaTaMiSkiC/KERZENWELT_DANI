@@ -7,6 +7,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings-api";
 import StripePaymentElement from "@/components/payment/StripePaymentElement";
+import StripeBuyButton from "@/components/payment/StripeBuyButton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
@@ -686,52 +687,32 @@ export default function CheckoutForm() {
                     <img src="https://www.mastercard.com/content/dam/public/mastercardcom/eu/de/logos/mc-logo-52.svg" alt="Mastercard" className="h-8" />
                     <img src="https://cdn.freebiesupply.com/logos/large/2x/american-express-logo-png-transparent.png" alt="Amex" className="h-8" />
                   </div>
-                  <p className="text-sm mb-3">Zahlen Sie sicher mit Ihrer Kreditkarte:</p>
-                  <ul className="text-sm list-disc pl-5 space-y-1">
-                    <li>Visa</li>
-                    <li>Mastercard</li>
-                    <li>American Express</li>
-                  </ul>
-                  <div className="bg-background rounded-md p-4 mt-4">
+                  <p className="text-sm mb-3">Zahlen Sie sicher und einfach mit Stripe:</p>
+                  <div className="bg-background rounded-md p-4 mt-4 mb-4">
                     <p className="text-sm">
                       Alle Zahlungsdaten werden sicher über eine verschlüsselte Verbindung übertragen.
                     </p>
                   </div>
+
+                  <StripeBuyButton 
+                    buyButtonId="buy_btn_1RSE3J18VqtjageHCcynbnHv"
+                    publishableKey="pk_live_51RRIGF18VqtjageH4OETwSP54rYIgYw3xXvsJNSFiOiATkGLRdxNBR7zt9cUC8sBr7LFYN9P9SKYj5AtHLgZ2Aw300bLYv2UxV"
+                  />
                 </div>
                 
                 <div className="mt-4">
-                  {!showStripeForm && (
-                    <Button 
-                      type="button"
-                      onClick={() => {
-                        // Trigger payment intent creation
-                        form.handleSubmit(onSubmit)();
-                      }}
-                      className="w-full"
-                    >
-                      Zur Zahlung fortfahren
-                    </Button>
-                  )}
-                  
-                  {showStripeForm && clientSecret && (
-                    <div className="mt-4">
-                      <StripePaymentElement 
-                        clientSecret={clientSecret}
-                        onSuccess={(paymentIntent) => {
-                          setStripePaymentComplete(true);
-                          // Continue with checkout form submission
-                          form.handleSubmit(onSubmit)();
-                        }}
-                        onError={(error) => {
-                          toast({
-                            title: "Zahlungsfehler",
-                            description: error.message,
-                            variant: "destructive",
-                          });
-                        }}
-                      />
-                    </div>
-                  )}
+                  <Button 
+                    type="button"
+                    onClick={() => {
+                      // Instead of using our custom payment flow, we'll use the pre-configured Stripe Buy Button
+                      // Just submit the form for processing
+                      form.handleSubmit(onSubmit)();
+                      setStripePaymentComplete(true); // Mark payment as complete when using Buy Button
+                    }}
+                    className="w-full"
+                  >
+                    Bestellung abschließen
+                  </Button>
                 </div>
               </div>
             )}
