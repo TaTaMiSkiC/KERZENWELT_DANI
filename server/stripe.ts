@@ -4,7 +4,7 @@ import { storage } from "./storage";
 
 // Initialize Stripe with the secret key from environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+  throw new Error("Missing required Stripe secret: STRIPE_SECRET_KEY");
 }
 
 // Inicijalizacija Stripe sa tajnim ključem
@@ -16,7 +16,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function createPaymentIntent(req: Request, res: Response) {
   try {
     const { amount } = req.body;
-    
+
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
         error: "Invalid amount. Amount must be a positive number.",
@@ -35,7 +35,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
       amount: Math.round(parseFloat(amount) * 100), // Convert to cents
       currency: "eur",
       metadata,
-      payment_method_types: ['card'], // Only use card payments for now
+      payment_method_types: ['card'] as any,
     });
 
     // Return the client secret to the client
@@ -55,7 +55,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
     const { amount, orderId, paymentMethod, successUrl, cancelUrl } = req.body;
-    
+
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
         error: "Invalid amount. Amount must be a positive number.",
@@ -70,8 +70,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     // Get user information if logged in
     const userId = req.user?.id;
-    let customerEmail = '';
-    
+    let customerEmail = "";
+
     if (userId) {
       const user = await storage.getUser(userId);
       if (user?.email) {
@@ -84,55 +84,106 @@ export async function createCheckoutSession(req: Request, res: Response) {
     if (orderId) {
       metadata.order_id = orderId.toString();
     }
-    
+
     // Kreiramo listu podržanih metoda plaćanja
     // VAŽNO: Ove metode moraju biti aktivirane u Stripe Dashboard-u
     // (https://dashboard.stripe.com/account/payments/settings)
+
+    // ✅ Validne metode koje Stripe podržava – moraš ih imati aktivirane u dashboardu
+    const supportedMethods = ["card", "paypal", "klarna", "eps"];
+
+    // 🎯 Odredi koje metode koristiti u ovom checkoutu
+    let paymentMethodTypes: string[] = [];
+
+    if (paymentMethod && supportedMethods.includes(paymentMethod)) {
+      // Ako klijent traži određenu metodu, pošalji samo nju + 'card' kao backup
+      paymentMethodTypes = ["card"];
+      if (paymentMethod !== "card") {
+        paymentMethodTypes.push(paymentMethod);
+      }
+    } else {
+      // Ako klijent ništa nije odabrao ili metoda nije podržana, koristi sve metode
+      paymentMethodTypes = supportedMethods;
+    }
+
+    console.log("⚡ Stripe payment_method_types:", paymentMethodTypes);
+
+    // Dohvaćamo proizvode iz košarice ako je korisnik prijavljen
+    let lineItems = [];
     
-    const paymentMethodTypes = ['card']; // Uvijek imamo karticu kao opciju
-    
-    // Dodajemo specifičnu metodu plaćanja ako je tražena i validna
-    if (paymentMethod && paymentMethod !== 'card' && paymentMethod !== 'stripe') {
+    if (userId) {
       try {
-        // Podržane metode plaćanja - trebaju biti aktivirane u Stripe Dashboard-u
-        const supportedMethods = ['card', 'paypal', 'klarna', 'eps', 'sofort', 'giropay', 'ideal', 'sepa_debit'];
+        // Dohvaćamo stavke košarice za korisnika
+        const cartItems = await storage.getCartItems(userId);
         
-        if (supportedMethods.includes(paymentMethod)) {
-          paymentMethodTypes.push(paymentMethod);
+        // Kreiramo line items za svaki proizvod u košarici
+        if (cartItems && cartItems.length > 0) {
+          lineItems = cartItems.map(item => {
+            // Pripremamo naziv proizvoda (s bojom i mirisom ako postoje)
+            let productName = item.product.name;
+            
+            // Dodaj informacije o boji ako postoji
+            if (item.colorName) {
+              productName += ` - ${item.colorName}`;
+            }
+            
+            // Dodaj informacije o mirisu ako postoji
+            if (item.scentName) {
+              productName += ` - ${item.scentName}`;
+            }
+            
+            return {
+              price_data: {
+                currency: 'eur',
+                product_data: {
+                  name: productName,
+                  description: item.product.description ? item.product.description.substring(0, 100) + '...' : '',
+                },
+                unit_amount: Math.round(item.product.price * 100), // cijena u centima
+              },
+              quantity: item.quantity,
+            };
+          });
         }
       } catch (error) {
-        console.error("Error adding payment method:", error);
-        // U slučaju greške, nastavljamo samo s 'card' opcijom
+        console.error("Greška pri dohvaćanju proizvoda iz košarice:", error);
       }
     }
-      
-    // Kreiramo sesiju za naplatu
-    // Napomena: tipovi i opcije prilagođeni prema Stripe dokumentaciji
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'] as any, // Zasad samo kartice
-      line_items: [
+    
+    // Ako nismo uspjeli dohvatiti proizvode iz košarice, koristimo ukupan iznos
+    if (!lineItems.length) {
+      lineItems = [
         {
           price_data: {
-            currency: 'eur',
+            currency: "eur",
             product_data: {
-              name: 'Bestellung aus Kerzenwelt by Dani',
-              description: orderId ? `Bestellnummer: ${orderId}` : 'Online-Bestellung',
+              name: "Bestellung aus Kerzenwelt by Dani",
+              description: orderId
+                ? `Bestellnummer: ${orderId}`
+                : "Online-Bestellung",
             },
-            unit_amount: Math.round(parseFloat(amount) * 100), // Convert to cents
+            unit_amount: Math.round(parseFloat(amount) * 100),
           },
           quantity: 1,
         },
-      ],
-      mode: 'payment',
+      ];
+    }
+    
+    // Kreiramo sesiju za naplatu
+    // Napomena: tipovi i opcije prilagođeni prema Stripe dokumentaciji
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: paymentMethodTypes as any,
+      line_items: lineItems,
+      mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata,
       customer_email: customerEmail || undefined,
-      locale: 'de',
-      billing_address_collection: 'required' as any,
+      locale: "de",
+      billing_address_collection: "required" as any,
       phone_number_collection: {
-        enabled: true
-      }
+        enabled: true,
+      },
     } as any);
 
     // Return the session ID to the client
