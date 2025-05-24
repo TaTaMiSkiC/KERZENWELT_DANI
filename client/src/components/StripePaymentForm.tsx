@@ -22,7 +22,6 @@ interface CheckoutFormProps {
 }
 
 const CheckoutForm = ({
-  amount,
   onPaymentSuccess,
   onPaymentError,
 }: CheckoutFormProps) => {
@@ -87,52 +86,26 @@ const CheckoutForm = ({
 };
 
 interface StripePaymentFormProps {
-  amount: number;
-  onPaymentSuccess: (paymentIntent: any) => void;
-  onPaymentError: (error: any) => void;
+  clientSecret: string;
+  onSuccess: (paymentIntent: any) => void;
+  onError: (error: any) => void;
 }
 
 export default function StripePaymentForm({
-  amount,
-  onPaymentSuccess,
-  onPaymentError,
+  clientSecret,
+  onSuccess,
+  onError,
 }: StripePaymentFormProps) {
-  const [clientSecret, setClientSecret] = useState('');
-
-  useEffect(() => {
-    // Create PaymentIntent as soon as the component loads
-    const createPaymentIntent = async () => {
-      try {
-        const response = await apiRequest('POST', '/api/create-payment-intent', {
-          amount: amount,
-        });
-        
-        const data = await response.json();
-        setClientSecret(data.clientSecret);
-      } catch (error) {
-        console.error('Error creating payment intent:', error);
-        onPaymentError(error);
-      }
-    };
-
-    createPaymentIntent();
-  }, [amount, onPaymentError]);
 
   return (
     <div className="mt-4">
-      {clientSecret ? (
-        <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <CheckoutForm 
-            amount={amount} 
-            onPaymentSuccess={onPaymentSuccess} 
-            onPaymentError={onPaymentError} 
-          />
-        </Elements>
-      ) : (
-        <div className="flex justify-center py-4">
-          <LoaderCircle className="h-6 w-6 animate-spin text-primary" />
-        </div>
-      )}
+      <Elements stripe={stripePromise} options={{ clientSecret }}>
+        <CheckoutForm 
+          amount={0} 
+          onPaymentSuccess={onSuccess} 
+          onPaymentError={onError} 
+        />
+      </Elements>
     </div>
   );
 }

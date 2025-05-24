@@ -64,9 +64,10 @@ export default function CheckoutForm() {
   const schema = checkoutSchema(t);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<string>("stripe");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("stripe");
   const [stripePaymentComplete, setStripePaymentComplete] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [showStripeForm, setShowStripeForm] = useState(false);
 
   // Dohvati postavke za dostavu
   const { data: freeShippingThresholdSetting } = getSetting(
@@ -129,13 +130,25 @@ export default function CheckoutForm() {
       return;
     }
 
-    // Ako je odabran Stripe kao način plaćanja, provjeri je li plaćanje izvršeno
-    if (data.paymentMethod === "stripe" && !stripePaymentComplete) {
-      toast({
-        title: t("checkout.paypalNotCompleted"),
-        description: t("checkout.paypalNotCompletedDescription"),
-        variant: "destructive",
-      });
+    // If Stripe is selected as payment method, check if payment is complete
+    if (data.paymentMethod === "stripe") {
+      // For Stripe, we'll create the intent when placing the order
+      // and let the payment flow continue normally
+      try {
+        const response = await apiRequest("POST", "/api/create-payment-intent", {
+          amount: total
+        });
+        const responseData = await response.json();
+        setClientSecret(responseData.clientSecret);
+        setShowStripeForm(true);
+        return; // Exit early to wait for Stripe payment completion
+      } catch (error) {
+        console.error("Error creating payment intent:", error);
+        toast({
+          title: t("checkout.stripeError"),
+          description: t("checkout.stripeErrorDescription"),
+          variant: "destructive",
+        });
       setIsSubmitting(false);
       return;
     }
