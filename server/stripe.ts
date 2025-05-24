@@ -35,7 +35,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
       amount: Math.round(parseFloat(amount) * 100), // Convert to cents
       currency: "eur",
       metadata,
-      payment_method_types: ['card'] as any,
+      payment_method_types: ["card"] as any,
     });
 
     // Return the client secret to the client
@@ -109,36 +109,41 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     // Pripremamo line items za Stripe Checkout
     let lineItems: any[] = [];
-    
+
     // Dohvaćamo stavke košarice i računamo ukupan iznos proizvoda
     let totalProductAmount = 0;
     let shippingCost = 0;
     let totalAmount = 0;
     let userCartItems: any[] = [];
-    
+
     // Ako je korisnik prijavljen, dohvaćamo podatke o košarici
     if (userId) {
       try {
         userCartItems = await storage.getCartItems(userId);
         console.log("Dohvaćene stavke košarice:", userCartItems);
-        
+
         // Ako imamo stavke u košarici, kreiramo line items
         if (userCartItems && userCartItems.length > 0) {
           // Računamo ukupan iznos proizvoda (bez dostave)
-          totalProductAmount = userCartItems.reduce((sum: number, item: any) => {
-            return sum + parseFloat(String(item.product.price)) * item.quantity;
-          }, 0);
-          
+          totalProductAmount = userCartItems.reduce(
+            (sum: number, item: any) => {
+              return (
+                sum + parseFloat(String(item.product.price)) * item.quantity
+              );
+            },
+            0,
+          );
+
           // Mapiranje svih stavki u košarici
           for (const item of userCartItems) {
             // Oblikujemo naziv proizvoda s informacijama o boji i mirisu
             let productName = item.product.name;
-            
+
             // Dodajemo boju ako postoji
             if (item.colorName) {
               productName += ` - ${item.colorName}`;
             }
-            
+
             // Dohvaćamo naziv mirisa ako postoji ID mirisa
             if (item.scentId) {
               try {
@@ -147,34 +152,39 @@ export async function createCheckoutSession(req: Request, res: Response) {
                   productName += ` - Duft: ${scent.name}`;
                 }
               } catch (error) {
-                console.error(`Greška pri dohvaćanju mirisa ${item.scentId}:`, error);
+                console.error(
+                  `Greška pri dohvaćanju mirisa ${item.scentId}:`,
+                  error,
+                );
               }
             }
-            
+
             // Pripremamo URL slike
             const baseUrl = `${req.protocol}://${req.get("host")}`;
             let imageUrl = null;
-            
+
             if (item.product.imageUrl) {
-              imageUrl = item.product.imageUrl.startsWith("http") 
-                ? item.product.imageUrl 
+              imageUrl = item.product.imageUrl.startsWith("http")
+                ? item.product.imageUrl
                 : `${baseUrl}${item.product.imageUrl}`;
             }
-            
+
             // Kreiramo Stripe line item za ovu stavku
             lineItems.push({
               price_data: {
                 currency: "eur",
                 product_data: {
                   name: productName,
-                  description: item.product.description 
-                    ? (item.product.description.length > 100 
-                       ? item.product.description.substring(0, 97) + "..." 
-                       : item.product.description)
+                  description: item.product.description
+                    ? item.product.description.length > 100
+                      ? item.product.description.substring(0, 97) + "..."
+                      : item.product.description
                     : "",
                   images: imageUrl ? [imageUrl] : undefined,
                 },
-                unit_amount: Math.round(parseFloat(String(item.product.price)) * 100), // cijena u centima
+                unit_amount: Math.round(
+                  parseFloat(String(item.product.price)) * 100,
+                ), // cijena u centima
               },
               quantity: item.quantity,
             });
@@ -184,11 +194,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
         console.error("Greška pri dohvaćanju stavki košarice:", error);
       }
     }
-    
+
     // Ako nismo uspjeli dohvatiti stavke iz košarice, koristimo generički line item
     if (lineItems.length === 0) {
       totalProductAmount = parseFloat(amount);
-      
+
       lineItems = [
         {
           price_data: {
@@ -209,18 +219,18 @@ export async function createCheckoutSession(req: Request, res: Response) {
     // Dohvaćamo postavke za dostavu i dodajemo troškove dostave ako je potrebno
     try {
       const freeShippingThresholdSetting = await storage.getSetting(
-        "freeShippingThreshold"
+        "freeShippingThreshold",
       );
       const standardShippingRateSetting = await storage.getSetting(
-        "standardShippingRate"
+        "standardShippingRate",
       );
 
       if (freeShippingThresholdSetting && standardShippingRateSetting) {
         const freeShippingThreshold = parseFloat(
-          freeShippingThresholdSetting.value
+          freeShippingThresholdSetting.value,
         );
         const standardShippingRate = parseFloat(
-          standardShippingRateSetting.value
+          standardShippingRateSetting.value,
         );
 
         // Dodajemo troškove dostave ako je potrebno
@@ -229,7 +239,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
           standardShippingRate > 0
         ) {
           shippingCost = standardShippingRate;
-          
+
           // Dodajemo dostavu kao zasebnu stavku u Stripe Checkout
           lineItems.push({
             price_data: {
@@ -240,14 +250,16 @@ export async function createCheckoutSession(req: Request, res: Response) {
               },
               unit_amount: Math.round(standardShippingRate * 100), // cijena u centima
             },
-            quantity: 1,
+            // quantity: 1,
           });
         }
-        
+
         // Ukupan iznos je zbroj proizvoda i dostave
         totalAmount = totalProductAmount + shippingCost;
-        
-        console.log(`Ukupno košarica (server): ${totalAmount}€ (proizvodi: ${totalProductAmount}€ + dostava: ${shippingCost}€)`);
+
+        console.log(
+          `Ukupno košarica (server): ${totalAmount}€ (proizvodi: ${totalProductAmount}€ + dostava: ${shippingCost}€)`,
+        );
       }
     } catch (error) {
       console.error("Greška pri dohvaćanju postavki za dostavu:", error);
@@ -264,7 +276,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
       metadata: {
         ...metadata,
         subtotal: `${totalProductAmount.toFixed(2)} €`,
-        shipping: shippingCost > 0 ? `${shippingCost.toFixed(2)} €` : "Kostenlos",
+        shipping:
+          shippingCost > 0 ? `${shippingCost.toFixed(2)} €` : "Kostenlos",
         total: `${totalAmount.toFixed(2)} €`,
       },
       customer_email: customerEmail || undefined,
