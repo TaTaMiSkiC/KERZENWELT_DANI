@@ -55,7 +55,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
  */
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
-    const { amount, orderId, successUrl, cancelUrl } = req.body;
+    const { amount, orderId, paymentMethod, successUrl, cancelUrl } = req.body;
     
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
@@ -86,18 +86,12 @@ export async function createCheckoutSession(req: Request, res: Response) {
       metadata.order_id = orderId.toString();
     }
     
-    // Create a Stripe Checkout Session
+    // Za sada koristimo samo 'card' kao metodu plaćanja zbog ograničenja Stripe računa
+    // Kasnije, kad su sve metode aktivirane u Stripe dashboardu, možemo koristiti specifične metode
+    const paymentMethodTypes = ['card'];
+      
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: [
-        'card',         // Kreditkarte
-        'klarna',       // Klarna
-        'paypal',       // PayPal
-        'eps',          // EPS (Austrian Online Banking)
-        'sofort',       // Sofort (Online Banking)
-        'sepa_debit',   // SEPA bankovna transakcija
-        'giropay',      // Još jedna metoda online bankarstva
-        'ideal'         // iDEAL (online banking)
-      ],
+      payment_method_types: paymentMethodTypes,
       line_items: [
         {
           price_data: {

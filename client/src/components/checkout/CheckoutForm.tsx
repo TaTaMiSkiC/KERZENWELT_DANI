@@ -801,7 +801,7 @@ export default function CheckoutForm() {
                       onClick={async () => {
                         try {
                           // Pokreni Stripe Checkout s točnim iznosom
-                          await initiateStripeCheckout(total);
+                          await initiateStripeCheckout(total, watchPaymentMethod);
                           
                           // Neće se izvršiti ako korisnik bude preusmjeren
                           setStripePaymentComplete(true);
