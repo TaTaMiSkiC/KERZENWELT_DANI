@@ -9,10 +9,6 @@ import {
   loadPaypalDefault,
 } from "./paypal";
 import { createPaymentIntent, createCheckoutSession } from "./stripe";
-import Stripe from "stripe";
-
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 import { upload, resizeImage } from "./imageUpload";
 import fs from "fs";
 import path from "path";
@@ -65,154 +61,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/create-checkout-session", async (req, res) => {
     await createCheckoutSession(req, res);
-  });
-  
-  // API za testiranje Stripe plaćanja (samo za administratore)
-  app.post("/api/create-test-session", async (req, res) => {
-    // Provjeri je li korisnik admin
-    if (!req.isAuthenticated() || !req.user?.isAdmin) {
-      return res.status(403).json({ error: "Pristup zabranjen. Potrebna su administratorska prava." });
-    }
-    
-    await createTestSession(req, res);
-  });
-  
-  // Process Stripe payment after successful checkout
-  app.post("/api/process-stripe-payment", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "Niste prijavljeni" });
-      }
-      
-      const { sessionId } = req.body;
-      
-      if (!sessionId) {
-        return res.status(400).json({ error: "Nedostaje Stripe session ID" });
-      }
-      
-      // Provjeri postoji li već narudžba s ovim session ID-jem
-      const existingOrdersResult = await db.execute(
-        sql`SELECT * FROM orders WHERE stripe_session_id = ${sessionId}`
-      );
-      
-      const existingOrders = existingOrdersResult.rows;
-      
-      if (existingOrders && existingOrders.length > 0) {
-        console.log("Narudžba već postoji za ovu Stripe sesiju:", existingOrders[0].id);
-        return res.json({
-          success: true,
-          orderId: existingOrders[0].id,
-          message: "Narudžba već postoji"
-        });
-      }
-      
-      // Dohvati sesiju iz Stripe-a
-      const session = await stripe.checkout.sessions.retrieve(sessionId, {
-        expand: ['line_items', 'payment_intent']
-      });
-      
-      if (!session) {
-        return res.status(404).json({ error: "Stripe sesija nije pronađena" });
-      }
-      
-      // Provjeri da je sesija završena
-      if (session.status !== 'complete') {
-        return res.status(400).json({ error: "Plaćanje nije završeno" });
-      }
-      
-      // Dohvati korisnika
-      const userId = req.user.id;
-      
-      // Dohvati stavke košarice
-      const cartItems = await storage.getCartItems(userId);
-      
-      if (!cartItems || cartItems.length === 0) {
-        return res.status(400).json({ error: "Košarica je prazna" });
-      }
-      
-      // Izračunaj ukupan iznos košarice
-      let totalAmount = 0;
-      
-      for (const item of cartItems) {
-        totalAmount += parseFloat(String(item.product.price)) * item.quantity;
-      }
-      
-      // Dohvati troškove dostave
-      const freeShippingThresholdSetting = await storage.getSetting("freeShippingThreshold");
-      const standardShippingRateSetting = await storage.getSetting("standardShippingRate");
-      
-      let shippingCost = 0;
-      
-      if (freeShippingThresholdSetting && standardShippingRateSetting) {
-        const freeShippingThreshold = parseFloat(freeShippingThresholdSetting.value);
-        const standardShippingRate = parseFloat(standardShippingRateSetting.value);
-        
-        if (totalAmount < freeShippingThreshold) {
-          shippingCost = standardShippingRate;
-        }
-      }
-      
-      // Ukupan iznos s dostavom
-      const grandTotal = totalAmount + shippingCost;
-      
-      // Kreiraj narudžbu
-      const orderData = {
-        userId,
-        total: grandTotal.toString(), // Konvertiramo u string kako zahtijeva schema
-        status: "processing", // Narudžba je plaćena ali još nije poslana
-        paymentMethod: "stripe",
-        paymentStatus: "paid",
-        shippingCost: shippingCost.toString(), // Konvertiramo u string
-        firstName: req.user.firstName || "",
-        lastName: req.user.lastName || "",
-        email: req.user.email || "",
-        phone: req.user.phone || "",
-        address: req.user.address || "",
-        city: req.user.city || "",
-        postalCode: req.user.postalCode || "",
-        country: req.user.country || "Austrija",
-        stripeSessionId: sessionId,
-        stripePaymentIntentId: session.payment_intent ? String(session.payment_intent) : "",
-        notes: "",
-      };
-      
-      // Spoji sve u jedan poziv - stvaranje narudžbe i dodavanje stavki
-      const result = await storage.createOrder(orderData, 
-        cartItems.map(item => ({
-          orderId: 0, // Bit će postavljeno u createOrder funkciji
-          productId: item.productId,
-          productName: item.product.name,
-          quantity: item.quantity,
-          price: item.product.price.toString(),
-          scentId: item.scentId,
-          scentName: item.scent ? item.scent.name : null,
-          colorId: item.colorId,
-          colorName: item.colorName || null,
-          colorIds: typeof item.colorIds === 'string' ? item.colorIds : null,
-          hasMultipleColors: Boolean(item.hasMultipleColors)
-        }))
-      );
-      
-      if (!result) {
-        return res.status(500).json({ error: "Greška pri kreiranju narudžbe" });
-      }
-      
-      // Očisti košaricu korisnika
-      await storage.clearCart(userId);
-      
-      // Vrati ID narudžbe
-      return res.json({ 
-        success: true, 
-        orderId: result.id,
-        message: "Narudžba uspješno kreirana"
-      });
-    } catch (error) {
-      console.error("Greška pri obradi Stripe plaćanja:", error);
-      return res.status(500).json({ 
-        error: "Greška pri obradi plaćanja",
-        message: error instanceof Error ? error.message : "Nepoznata greška"
-      });
-    }
   });
 
   // Enable serving static files from the public directory
@@ -1870,20 +1718,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(settings);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch settings" });
-    }
-  });
-  
-  // Dohvati postavke načina plaćanja
-  app.get("/api/settings/payment", async (req, res) => {
-    try {
-      const allSettings = await storage.getAllSettings();
-      const paymentSettings = allSettings.filter(setting => 
-        setting.key.startsWith("payment_") && setting.key.endsWith("_enabled")
-      );
-      res.json(paymentSettings);
-    } catch (error) {
-      console.error("Greška pri dohvaćanju postavki plaćanja:", error);
-      res.status(500).json({ error: "Greška pri dohvaćanju postavki plaćanja" });
     }
   });
 

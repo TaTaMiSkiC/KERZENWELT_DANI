@@ -36,12 +36,6 @@ export async function initializeDatabase() {
   if (!settingsExist) {
     await createDefaultSettings();
   }
-  
-  // Provjeri postojanje postavki načina plaćanja
-  const paymentSettingsExist = await checkPaymentSettingsExist();
-  if (!paymentSettingsExist) {
-    await createDefaultPaymentSettings();
-  }
 
   // Provjeri postojanje kontakt postavki
   const contactSettingsExist = await checkContactSettingsExist();
@@ -67,64 +61,6 @@ export async function initializeDatabase() {
   }
 
   console.log("Inicijalizacija baze podataka završena");
-}
-
-// Provjera i kreiranje postavki načina plaćanja
-async function checkPaymentSettingsExist() {
-  const paymentStripe = await db.select().from(settings).where(eq(settings.key, "payment_stripe_enabled"));
-  const paymentPaypal = await db.select().from(settings).where(eq(settings.key, "payment_paypal_enabled"));
-  const paymentKlarna = await db.select().from(settings).where(eq(settings.key, "payment_klarna_enabled"));
-  const paymentEPS = await db.select().from(settings).where(eq(settings.key, "payment_eps_enabled"));
-  const paymentBankTransfer = await db.select().from(settings).where(eq(settings.key, "payment_bank_transfer_enabled"));
-  
-  return paymentStripe.length > 0 && paymentPaypal.length > 0 && paymentKlarna.length > 0 
-    && paymentEPS.length > 0 && paymentBankTransfer.length > 0;
-}
-
-async function createDefaultPaymentSettings() {
-  console.log("Kreiranje zadanih postavki načina plaćanja...");
-  
-  // Stripe - Kreditna kartica
-  await db.insert(settings).values({
-    key: "payment_stripe_enabled",
-    value: "true",
-    description: "Omogućuje plaćanje kreditnim karticama putem Stripe-a",
-    category: "payment"
-  });
-  
-  // PayPal
-  await db.insert(settings).values({
-    key: "payment_paypal_enabled",
-    value: "true",
-    description: "Omogućuje plaćanje putem PayPal-a",
-    category: "payment"
-  });
-  
-  // Klarna
-  await db.insert(settings).values({
-    key: "payment_klarna_enabled",
-    value: "true",
-    description: "Omogućuje plaćanje putem Klarna",
-    category: "payment"
-  });
-  
-  // EPS - Online Banking (Austrija)
-  await db.insert(settings).values({
-    key: "payment_eps_enabled",
-    value: "true",
-    description: "Omogućuje plaćanje putem EPS (Online Banking Austrija)",
-    category: "payment"
-  });
-  
-  // Bankovna doznaka
-  await db.insert(settings).values({
-    key: "payment_bank_transfer_enabled",
-    value: "true",
-    description: "Omogućuje plaćanje putem bankovne doznake",
-    category: "payment"
-  });
-  
-  console.log("Zadane postavke načina plaćanja su kreirane");
 }
 
 // Funkcija za provjeru postoji li admin korisnik
