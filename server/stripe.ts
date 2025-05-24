@@ -7,9 +7,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16" as any,
-});
+// Inicijalizacija Stripe sa tajnim ključem
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 /**
  * Create a payment intent for a checkout transaction
@@ -86,12 +85,37 @@ export async function createCheckoutSession(req: Request, res: Response) {
       metadata.order_id = orderId.toString();
     }
     
-    // Za sada koristimo samo 'card' kao metodu plaćanja zbog ograničenja Stripe računa
-    // Kasnije, kad su sve metode aktivirane u Stripe dashboardu, možemo koristiti specifične metode
+    // Koristimo samo 'card' kao metodu plaćanja jer druge metode nisu aktivirane u Stripe računu
+    // VAŽNO: Kada aktivirate druge metode plaćanja u Stripe Dashboard-u
+    // (https://dashboard.stripe.com/account/payments/settings),
+    // možete odkomentirati donji kod za podršku više metoda plaćanja
+    
     const paymentMethodTypes = ['card'];
+    
+    /* 
+    // Ovaj kod se može koristiti kad su sve metode plaćanja aktivirane
+    const paymentMethodTypes = ['card']; // Uvijek imamo karticu kao opciju
+    
+    // Dodajemo specifičnu metodu plaćanja ako je tražena i validna
+    if (paymentMethod && paymentMethod !== 'card' && paymentMethod !== 'stripe') {
+      try {
+        // Podržane metode plaćanja - trebaju biti aktivirane u Stripe Dashboard-u
+        const supportedMethods = ['card', 'paypal', 'klarna', 'eps', 'sofort', 'giropay', 'ideal', 'sepa_debit'];
+        
+        if (supportedMethods.includes(paymentMethod)) {
+          paymentMethodTypes.push(paymentMethod);
+        }
+      } catch (error) {
+        console.error("Error adding payment method:", error);
+        // U slučaju greške, nastavljamo samo s 'card' opcijom
+      }
+    }
+    */
       
+    // Kreiramo sesiju za naplatu
+    // Napomena: tipovi i opcije prilagođeni prema Stripe dokumentaciji
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: paymentMethodTypes,
+      payment_method_types: ['card'] as any, // Zasad samo kartice
       line_items: [
         {
           price_data: {
@@ -111,11 +135,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
       metadata,
       customer_email: customerEmail || undefined,
       locale: 'de',
-      billing_address_collection: 'auto',
+      billing_address_collection: 'required' as any,
       phone_number_collection: {
-        enabled: true,
-      },
-    });
+        enabled: true
+      }
+    } as any);
 
     // Return the session ID to the client
     res.json({ sessionId: session.id, url: session.url });

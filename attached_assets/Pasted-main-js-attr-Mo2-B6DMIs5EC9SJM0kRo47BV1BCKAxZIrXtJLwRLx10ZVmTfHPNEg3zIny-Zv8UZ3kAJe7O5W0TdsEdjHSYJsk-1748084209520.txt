@@ -1,0 +1,29 @@
+main.js?attr=Mo2_B6DMIs5EC9SJM0kRo47BV1BCKAxZIrXtJLwRLx10ZVmTfHPNEg3zIny_Zv8UZ3kAJe7O5W0TdsEdjHSYJskB82iZNyB9_JDr_5b8j6ukRt4R_RDDHJmi_PZjJrVAFY_Tzm80mZ84RmGsIvHZyg:3372 
+            
+            
+           POST https://35972460-91c6-42dd-92bc-da912b0e3609-00-1drcd7m558rz7.worf.replit.dev/api/create-checkout-session 500 (Internal Server Error)
+fetchCallImpl @ main.js?attr=Mo2_B6DMIs5EC9SJM0kRo47BV1BCKAxZIrXtJLwRLx10ZVmTfHPNEg3zIny_Zv8UZ3kAJe7O5W0TdsEdjHSYJskB82iZNyB9_JDr_5b8j6ukRt4R_RDDHJmi_PZjJrVAFY_Tzm80mZ84RmGsIvHZyg:3372
+fetch @ main.js?attr=Mo2_B6DMIs5EC9SJM0kRo47BV1BCKAxZIrXtJLwRLx10ZVmTfHPNEg3zIny_Zv8UZ3kAJe7O5W0TdsEdjHSYJskB82iZNyB9_JDr_5b8j6ukRt4R_RDDHJmi_PZjJrVAFY_Tzm80mZ84RmGsIvHZyg:3378
+apiRequest @ queryClient.ts:18
+initiateStripeCheckout @ stripeCheckout.ts:32
+onClick @ CheckoutForm.tsx:804
+callCallback2 @ chunk-RPCDYKBN.js?v=d2a93789:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=d2a93789:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=d2a93789:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=d2a93789:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=d2a93789:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=d2a93789:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=d2a93789:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=d2a93789:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=d2a93789:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=d2a93789:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=d2a93789:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=d2a93789:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=d2a93789:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=d2a93789:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=d2a93789:5449Understand this error
+stripeCheckout.ts:54 Greška pri pokretanju Stripe Checkout-a: Error: 500: {"error":"Failed to create checkout session","message":"The payment method type provided: sofort is invalid. Please ensure the provided type is activated in your dashboard (https://dashboard.stripe.com/account/payments/settings) and your account is enabled for any preview features that you are trying to use. See https://stripe.com/docs/payments/payment-methods/integration-options for supported payment method, currency, and country combinations."}
+    at throwIfResNotOk (queryClient.ts:6:11)
+    at async apiRequest (queryClient.ts:25:3)
+    at async initiateStripeCheckout (stripeCheckout.ts:32:22)
+    at async onClick (CheckoutForm.tsx:804:27)
