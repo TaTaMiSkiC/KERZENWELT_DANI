@@ -632,7 +632,7 @@ export default function CheckoutForm() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <img
-                            src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg"
+                            src="/payment-icons/paypal.svg"
                             alt="PayPal"
                             className="h-6"
                           />
@@ -658,7 +658,7 @@ export default function CheckoutForm() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <img
-                            src="https://www.klarna.com/assets/sites/5/2020/04/27140600/Klarna-LogoRGB-Black.jpg"
+                            src="/payment-icons/klarna.svg"
                             alt="Klarna"
                             className="h-6"
                           />
@@ -684,7 +684,7 @@ export default function CheckoutForm() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/EPS-payment-system-logo.svg/1280px-EPS-payment-system-logo.svg.png"
+                            src="/payment-icons/eps.svg"
                             alt="EPS"
                             className="h-6"
                           />
@@ -701,7 +701,11 @@ export default function CheckoutForm() {
                         htmlFor="sofort"
                         className="flex items-center cursor-pointer w-full"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><path d="M6 9h12v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M18 4H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>
+                        <img
+                            src="/payment-icons/sofort.svg"
+                            alt="Sofort"
+                            className="mr-2 h-6"
+                          />
                         <div className="flex-1">
                           <span className="font-medium">Online Banking</span>
                           <p className="text-sm text-gray-500">
