@@ -74,8 +74,16 @@ export default function PaymentsPage() {
   // Testiranje Stripe plaćanja iz admin panela
   const handleTestStripePayment = async () => {
     try {
-      // Preusmjeri na checkout stranicu s testnim parametrima
-      window.location.href = "/checkout?test=true";
+      // Kreiraj test session direktno kroz API
+      const response = await apiRequest("POST", "/api/create-test-session", {});
+      const data = await response.json();
+      
+      if (data && data.url) {
+        // Otvori Stripe checkout dirketno
+        window.location.href = data.url;
+      } else {
+        throw new Error("Nedostaje URL za Stripe test session");
+      }
     } catch (error) {
       console.error("Greška pri testiranju Stripe plaćanja:", error);
       toast({

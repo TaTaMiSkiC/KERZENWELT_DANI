@@ -67,6 +67,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await createCheckoutSession(req, res);
   });
   
+  // API za testiranje Stripe plaćanja (samo za administratore)
+  app.post("/api/create-test-session", async (req, res) => {
+    // Provjeri je li korisnik admin
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Pristup zabranjen. Potrebna su administratorska prava." });
+    }
+    
+    await createTestSession(req, res);
+  });
+  
   // Process Stripe payment after successful checkout
   app.post("/api/process-stripe-payment", async (req, res) => {
     try {

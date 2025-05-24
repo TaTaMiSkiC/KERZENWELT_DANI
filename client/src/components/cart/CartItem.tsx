@@ -87,12 +87,18 @@ export default function CartItem({ item }: CartItemProps) {
                 type="image/webp" 
               />
               <img
-                src={imageUrl || ""}
+                src={imageUrl || "/images/placeholder.jpg"}
                 alt={name}
                 className="w-full h-full object-cover"
                 loading="lazy"
                 width="100"
                 height="100"
+                onError={(e) => {
+                  // Ako slika ne može biti učitana, koristi placeholder
+                  const imgElement = e.currentTarget;
+                  imgElement.onerror = null; // Spriječi beskonačnu petlju
+                  imgElement.src = "/images/placeholder.jpg";
+                }}
               />
             </picture>
           </Link>

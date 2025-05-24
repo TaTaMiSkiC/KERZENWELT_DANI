@@ -50,6 +50,49 @@ export async function createPaymentIntent(req: Request, res: Response) {
 }
 
 /**
+ * Create a test Stripe Checkout Session for admins
+ */
+export async function createTestSession(req: Request, res: Response) {
+  try {
+    // Kreiraj test artikl
+    const testItems = [{
+      name: "Test Produkt",
+      price: 1.00,
+      quantity: 1
+    }];
+    
+    // Kreiraj sesiju za testiranje
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: testItems.map(item => ({
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: item.name,
+          },
+          unit_amount: Math.round(item.price * 100),
+        },
+        quantity: item.quantity,
+      })),
+      mode: "payment",
+      success_url: `${req.protocol}://${req.get("host")}/checkout-success?test=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.protocol}://${req.get("host")}/admin/payments`,
+      metadata: {
+        isTest: "true"
+      }
+    });
+    
+    res.json({ url: session.url });
+  } catch (error: any) {
+    console.error("Greška pri kreiranju test checkout sesije:", error);
+    res.status(500).json({ 
+      error: "Greška pri kreiranju test checkout sesije",
+      message: error.message
+    });
+  }
+}
+
+/**
  * Create a Stripe Checkout Session for a cart
  * With product information and images
  */
