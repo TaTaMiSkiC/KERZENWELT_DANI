@@ -49,7 +49,7 @@ const checkoutSchema = (t: TFunction) =>
     postalCode: z.string().min(4, t("checkout.postalCodeRequired")),
     country: z.string().min(2, t("checkout.countryRequired")),
     customerNote: z.string().optional(),
-    paymentMethod: z.enum(["stripe", "cash", "pickup", "bank"]),
+    paymentMethod: z.enum(["stripe", "cash", "pickup", "bank", "paypal", "klarna", "eps", "sofort"]),
     saveAddress: z.boolean().optional(),
     sameAsBilling: z.boolean().optional(),
   });
@@ -583,6 +583,7 @@ export default function CheckoutForm() {
                     }}
                     className="flex flex-col space-y-2"
                   >
+                    {/* Kreditna kartica (Stripe) */}
                     <div
                       className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "stripe" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
@@ -613,6 +614,123 @@ export default function CheckoutForm() {
                       </label>
                     </div>
 
+                    {/* PayPal */}
+                    <div
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "paypal" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                    >
+                      <RadioGroupItem value="paypal" id="paypal" />
+                      <label
+                        htmlFor="paypal"
+                        className="flex items-center cursor-pointer w-full"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        <div className="flex-1">
+                          <span className="font-medium">PayPal</span>
+                          <p className="text-sm text-gray-500">
+                            Bezahlen Sie schnell und sicher mit PayPal
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg"
+                            alt="PayPal"
+                            className="h-6"
+                          />
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Klarna */}
+                    <div
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "klarna" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                    >
+                      <RadioGroupItem value="klarna" id="klarna" />
+                      <label
+                        htmlFor="klarna"
+                        className="flex items-center cursor-pointer w-full"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        <div className="flex-1">
+                          <span className="font-medium">Klarna</span>
+                          <p className="text-sm text-gray-500">
+                            Bezahlen Sie mit Klarna
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src="https://www.klarna.com/assets/sites/5/2020/04/27140600/Klarna-LogoRGB-Black.jpg"
+                            alt="Klarna"
+                            className="h-6"
+                          />
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* EPS Online Banking */}
+                    <div
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "eps" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                    >
+                      <RadioGroupItem value="eps" id="eps" />
+                      <label
+                        htmlFor="eps"
+                        className="flex items-center cursor-pointer w-full"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <div className="flex-1">
+                          <span className="font-medium">EPS</span>
+                          <p className="text-sm text-gray-500">
+                            Online Banking (Österreich)
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/EPS-payment-system-logo.svg/1280px-EPS-payment-system-logo.svg.png"
+                            alt="EPS"
+                            className="h-6"
+                          />
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Online Banking */}
+                    <div
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "sofort" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                    >
+                      <RadioGroupItem value="sofort" id="sofort" />
+                      <label
+                        htmlFor="sofort"
+                        className="flex items-center cursor-pointer w-full"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><path d="M6 9h12v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M18 4H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>
+                        <div className="flex-1">
+                          <span className="font-medium">Online Banking</span>
+                          <p className="text-sm text-gray-500">
+                            Sofortüberweisung
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Bankovna transakcija */}
+                    <div
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "bank" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                    >
+                      <RadioGroupItem value="bank" id="bank" />
+                      <label
+                        htmlFor="bank"
+                        className="flex items-center cursor-pointer w-full"
+                      >
+                        <Building className="mr-2 h-5 w-5 text-primary" />
+                        <div className="flex-1">
+                          <span className="font-medium">Banküberweisung</span>
+                          <p className="text-sm text-gray-500">
+                            Zahlen Sie per Überweisung
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                    
+                    {/* Gotovina */}
                     <div
                       className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "cash" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
@@ -631,6 +749,7 @@ export default function CheckoutForm() {
                       </label>
                     </div>
 
+                    {/* Preuzimanje u trgovini */}
                     <div
                       className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "pickup" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
@@ -648,29 +767,6 @@ export default function CheckoutForm() {
                         </div>
                       </label>
                     </div>
-
-                    <div
-                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "bank" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
-                    >
-                      <RadioGroupItem
-                        value="bank"
-                        id="bank"
-                      />
-                      <label
-                        htmlFor="bank"
-                        className="flex items-center cursor-pointer w-full"
-                      >
-                        <Building className="mr-2 h-5 w-5 text-primary" />
-                        <div className="flex-1">
-                          <span className="font-medium">
-                            {t('checkout.paymentMethods.bank.title')}
-                          </span>
-                          <p className="text-sm text-gray-500">
-                            Podaci za plaćanje bit će poslani na vaš email
-                          </p>
-                        </div>
-                      </label>
-                    </div>
                   </RadioGroup>
                 </FormControl>
                 <FormMessage />
@@ -680,50 +776,52 @@ export default function CheckoutForm() {
 
           {/* Payment method specific forms */}
           <div className="mt-4">
-            {watchPaymentMethod === "stripe" && (
+            {(watchPaymentMethod === "stripe" || watchPaymentMethod === "paypal" || watchPaymentMethod === "klarna" || watchPaymentMethod === "eps" || watchPaymentMethod === "sofort") && (
               <div className="space-y-4">
                 <div className="border rounded-lg p-4 bg-neutral">
                   <div className="flex flex-wrap gap-3 mb-4">
                     <img src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" alt="Visa" className="h-8" />
                     <img src="https://www.mastercard.com/content/dam/public/mastercardcom/eu/de/logos/mc-logo-52.svg" alt="Mastercard" className="h-8" />
                     <img src="https://cdn.freebiesupply.com/logos/large/2x/american-express-logo-png-transparent.png" alt="Amex" className="h-8" />
+                    <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg" alt="PayPal" className="h-8" />
+                    <img src="https://www.klarna.com/assets/sites/5/2020/04/27140600/Klarna-LogoRGB-Black.jpg" alt="Klarna" className="h-8" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/EPS-payment-system-logo.svg/1280px-EPS-payment-system-logo.svg.png" alt="EPS" className="h-8" />
                   </div>
-                  <p className="text-sm mb-3">Zahlen Sie sicher und einfach mit Stripe:</p>
+                  
+                  <p className="text-sm mb-3">Zahlen Sie sicher und einfach mit Online-Zahlungsmethoden:</p>
                   <div className="bg-background rounded-md p-4 mt-4 mb-4">
                     <p className="text-sm">
                       Alle Zahlungsdaten werden sicher über eine verschlüsselte Verbindung übertragen.
                     </p>
                   </div>
-
-                  <StripeBuyButton 
-                    buyButtonId="buy_btn_1RSE3J18VqtjageHCcynbnHv"
-                    publishableKey="pk_live_51RRIGF18VqtjageH4OETwSP54rYIgYw3xXvsJNSFiOiATkGLRdxNBR7zt9cUC8sBr7LFYN9P9SKYj5AtHLgZ2Aw300bLYv2UxV"
-                    amount={total}
-                  />
-                </div>
-                
-                <div className="mt-4">
-                  <Button 
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        // Pokreni Stripe Checkout s točnim iznosom
-                        await initiateStripeCheckout(total);
-                        
-                        // Neće se izvršiti ako korisnik bude preusmjeren
-                        setStripePaymentComplete(true);
-                      } catch (error) {
-                        toast({
-                          title: "Fehler",
-                          description: "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    className="w-full"
-                  >
-                    Mit Karte zahlen ({total.toFixed(2)} €)
-                  </Button>
+                  
+                  <div className="mt-4">
+                    <Button 
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          // Pokreni Stripe Checkout s točnim iznosom
+                          await initiateStripeCheckout(total);
+                          
+                          // Neće se izvršiti ako korisnik bude preusmjeren
+                          setStripePaymentComplete(true);
+                        } catch (error) {
+                          toast({
+                            title: "Fehler",
+                            description: "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      className="w-full"
+                    >
+                      {watchPaymentMethod === "paypal" ? "Mit PayPal zahlen" : 
+                       watchPaymentMethod === "klarna" ? "Mit Klarna zahlen" : 
+                       watchPaymentMethod === "eps" ? "Mit EPS Online-Banking zahlen" : 
+                       watchPaymentMethod === "sofort" ? "Mit Sofortüberweisung zahlen" : 
+                       "Mit Karte zahlen"} ({total.toFixed(2)} €)
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
