@@ -787,9 +787,10 @@ export default function CheckoutForm() {
                     <img src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" alt="Visa" className="h-8" />
                     <img src="https://www.mastercard.com/content/dam/public/mastercardcom/eu/de/logos/mc-logo-52.svg" alt="Mastercard" className="h-8" />
                     <img src="https://cdn.freebiesupply.com/logos/large/2x/american-express-logo-png-transparent.png" alt="Amex" className="h-8" />
-                    <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg" alt="PayPal" className="h-8" />
-                    <img src="https://www.klarna.com/assets/sites/5/2020/04/27140600/Klarna-LogoRGB-Black.jpg" alt="Klarna" className="h-8" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/EPS-payment-system-logo.svg/1280px-EPS-payment-system-logo.svg.png" alt="EPS" className="h-8" />
+                    <img src="/payment-icons/paypal.svg" alt="PayPal" className="h-8" />
+                    <img src="/payment-icons/klarna.svg" alt="Klarna" className="h-8" />
+                    <img src="/payment-icons/eps.svg" alt="EPS" className="h-8" />
+                    <img src="/payment-icons/sofort.svg" alt="Sofort" className="h-8" />
                   </div>
                   
                   <p className="text-sm mb-3">Zahlen Sie sicher und einfach mit Online-Zahlungsmethoden:</p>
