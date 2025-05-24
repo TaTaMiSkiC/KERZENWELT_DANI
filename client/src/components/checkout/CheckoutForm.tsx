@@ -618,23 +618,182 @@ export default function CheckoutForm() {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={(value: string) => {
-                      field.onChange(value);
-                      setSelectedPaymentMethod(value);
-                    }}
-                    className="flex flex-col space-y-2"
-                  >
-                    {/* Kreditna kartica (Stripe) */}
-                    <div
-                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "stripe" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
-                    >
-                      <RadioGroupItem value="stripe" id="stripe" />
-                      <label
-                        htmlFor="stripe"
-                        className="flex items-center cursor-pointer w-full"
+                  <div className="flex flex-col space-y-2">
+                    {/* Stripe */}
+                    {paymentMethods.stripe && (
+                      <div
+                        className={`flex items-center space-x-2 border rounded-lg p-4 ${
+                          field.value === "stripe" 
+                            ? "border-primary bg-accent bg-opacity-10" 
+                            : "border-gray-200"
+                        }`}
                       >
+                        <input 
+                          type="radio"
+                          id="stripe"
+                          value="stripe"
+                          checked={field.value === "stripe"}
+                          onChange={() => {
+                            field.onChange("stripe");
+                            setSelectedPaymentMethod("stripe");
+                          }}
+                          className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="stripe"
+                          className="flex items-center cursor-pointer w-full"
+                        >
+                          <CreditCard className="mr-2 h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <span className="font-medium">Kreditkarte</span>
+                            <p className="text-sm text-gray-500">
+                              Visa, Mastercard, American Express
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* PayPal */}
+                    {paymentMethods.paypal && (
+                      <div
+                        className={`flex items-center space-x-2 border rounded-lg p-4 ${
+                          field.value === "paypal" 
+                            ? "border-primary bg-accent bg-opacity-10" 
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <input 
+                          type="radio"
+                          id="paypal"
+                          value="paypal"
+                          checked={field.value === "paypal"}
+                          onChange={() => {
+                            field.onChange("paypal");
+                            setSelectedPaymentMethod("paypal");
+                          }}
+                          className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="paypal"
+                          className="flex items-center cursor-pointer w-full"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                          <div className="flex-1">
+                            <span className="font-medium">PayPal</span>
+                            <p className="text-sm text-gray-500">
+                              Bezahlen Sie schnell und sicher mit PayPal
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* Bank Transfer */}
+                    {paymentMethods.bank && (
+                      <div
+                        className={`flex items-center space-x-2 border rounded-lg p-4 ${
+                          field.value === "bank" 
+                            ? "border-primary bg-accent bg-opacity-10" 
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <input 
+                          type="radio"
+                          id="bank"
+                          value="bank"
+                          checked={field.value === "bank"}
+                          onChange={() => {
+                            field.onChange("bank");
+                            setSelectedPaymentMethod("bank");
+                          }}
+                          className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="bank"
+                          className="flex items-center cursor-pointer w-full"
+                        >
+                          <Building className="mr-2 h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <span className="font-medium">Überweisung</span>
+                            <p className="text-sm text-gray-500">
+                              Bezahlen Sie per Banküberweisung
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* Cash on Delivery */}
+                    {paymentMethods.cash && (
+                      <div
+                        className={`flex items-center space-x-2 border rounded-lg p-4 ${
+                          field.value === "cash" 
+                            ? "border-primary bg-accent bg-opacity-10" 
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <input 
+                          type="radio"
+                          id="cash"
+                          value="cash"
+                          checked={field.value === "cash"}
+                          onChange={() => {
+                            field.onChange("cash");
+                            setSelectedPaymentMethod("cash");
+                          }}
+                          className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="cash"
+                          className="flex items-center cursor-pointer w-full"
+                        >
+                          <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <span className="font-medium">Nachnahme</span>
+                            <p className="text-sm text-gray-500">
+                              Bezahlung bei Lieferung an den Paketboten
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* In-store Pickup */}
+                    {paymentMethods.pickup && (
+                      <div
+                        className={`flex items-center space-x-2 border rounded-lg p-4 ${
+                          field.value === "pickup" 
+                            ? "border-primary bg-accent bg-opacity-10" 
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <input 
+                          type="radio"
+                          id="pickup"
+                          value="pickup"
+                          checked={field.value === "pickup"}
+                          onChange={() => {
+                            field.onChange("pickup");
+                            setSelectedPaymentMethod("pickup");
+                          }}
+                          className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="pickup"
+                          className="flex items-center cursor-pointer w-full"
+                        >
+                          <Building className="mr-2 h-5 w-5 text-primary" />
+                          <div className="flex-1">
+                            <span className="font-medium">Abholung im Geschäft</span>
+                            <p className="text-sm text-gray-500">
+                              Zahlung bei Abholung in unserem Geschäft
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
+                  </div>
                         <CreditCard className="mr-2 h-5 w-5 text-primary" />
                         <div className="flex-1">
                           <span className="font-medium">Kreditkarte</span>
