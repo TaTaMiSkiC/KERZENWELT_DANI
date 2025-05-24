@@ -32,19 +32,46 @@ const StripeCheckoutForm = ({ onSuccess, onError }: StripeCheckoutFormProps) => 
     setIsLoading(true);
     setErrorMessage(undefined);
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/order-success`,
-      },
-      redirect: 'if_required',
-    });
+    try {
+      // Confirm the payment with Stripe
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          // Add metadata to link with our order
+          payment_method_data: {
+            billing_details: {
+              name: 'Kerzenwelt by Dani Kunde'
+            }
+          },
+          return_url: `${window.location.origin}/order-success`,
+        },
+        redirect: 'if_required',
+      });
 
-    if (error) {
-      setErrorMessage(error.message);
+      if (error) {
+        console.error('Payment error:', error);
+        setErrorMessage(error.message);
+        onError(error);
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        console.log('Payment succeeded:', paymentIntent);
+        
+        // Get the pending order data from session storage
+        const pendingOrderData = sessionStorage.getItem('pendingOrderData');
+        if (pendingOrderData) {
+          // Clear the stored data
+          sessionStorage.removeItem('pendingOrderData');
+          
+          // Let the parent component know payment was successful
+          onSuccess(paymentIntent);
+        } else {
+          console.error('No pending order data found');
+          setErrorMessage('Bestelldaten nicht gefunden. Bitte versuchen Sie es erneut.');
+        }
+      }
+    } catch (error) {
+      console.error('Error during payment confirmation:', error);
+      setErrorMessage('Bei der Zahlungsabwicklung ist ein unerwarteter Fehler aufgetreten.');
       onError(error);
-    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      onSuccess(paymentIntent);
     }
 
     setIsLoading(false);

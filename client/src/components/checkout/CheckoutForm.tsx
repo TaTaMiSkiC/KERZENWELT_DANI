@@ -123,8 +123,8 @@ export default function CheckoutForm() {
   const onSubmit = async (data: CheckoutFormValues) => {
     if (!cartItems || cartItems.length === 0) {
       toast({
-        title: t("checkout.emptyCart"),
-        description: t("checkout.emptyCartDescription"),
+        title: "Warenkorb ist leer",
+        description: "Bitte fügen Sie Produkte zu Ihrem Warenkorb hinzu, bevor Sie zur Kasse gehen.",
         variant: "destructive",
       });
       return;
@@ -142,15 +142,13 @@ export default function CheckoutForm() {
           quantity: item.quantity,
           price: item.product.price,
           hasMultipleColors: item.hasMultipleColors,
-          selectedColorsCount: item.selectedColorsCount,
-          colorInfo: item.colorInfo,
           scent: item.scent,
         }));
 
         // Calculate totals for the order
-        const cartTotal = calculateCartTotal(cartItems);
-        const discountAmount = calculateDiscount(cartTotal, discountCode);
-        const shippingCost = isFreeShipping ? 0 : standardShippingRate;
+        const cartTotal = cartItems?.reduce((sum, item) => sum + (item.quantity * Number(item.product.price)), 0) || 0;
+        const discountAmount = 0; // If you have discount logic, replace this
+        const shippingCost = isFreeShipping ? 0 : Number(standardShippingRate);
         const orderTotal = cartTotal - discountAmount + shippingCost;
         
         // Store the order data in session to use later
