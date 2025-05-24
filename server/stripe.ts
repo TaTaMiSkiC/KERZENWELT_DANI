@@ -132,12 +132,23 @@ export async function createCheckoutSession(req: Request, res: Response) {
               productName += ` - ${item.scentName}`;
             }
             
+            // Kreiraj punu URL za sliku
+            let imageUrl = null;
+            if (item.product.imageUrl) {
+              // Ako imamo relativnu putanju slike, pretvorimo je u punu URL
+              const baseUrl = `${req.protocol}://${req.get('host')}`;
+              imageUrl = item.product.imageUrl.startsWith('http') 
+                ? item.product.imageUrl 
+                : `${baseUrl}${item.product.imageUrl}`;
+            }
+            
             return {
               price_data: {
                 currency: 'eur',
                 product_data: {
                   name: productName,
                   description: item.product.description ? item.product.description.substring(0, 100) + '...' : '',
+                  images: imageUrl ? [imageUrl] : undefined,
                 },
                 unit_amount: Math.round(item.product.price * 100), // cijena u centima
               },
