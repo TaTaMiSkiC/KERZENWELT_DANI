@@ -95,9 +95,13 @@ export async function createCheckoutSession(req: Request, res: Response) {
         'eps',          // EPS (Austrian Online Banking)
         'sofort',       // Sofort (Online Banking)
         'sepa_debit',   // SEPA bankovna transakcija
-        'giropay',      // Još jedna metoda online bankarstva
-        'ideal'         // iDEAL (online banking)
       ],
+      // Ove metode plaćanja su aktivirane u vašem Stripe računu
+      
+      allow_promotion_codes: true, // Dozvoljavamo promo kodove
+      shipping_address_collection: {
+        allowed_countries: ['AT', 'DE', 'HR', 'SI', 'IT'],
+      },
       line_items: [
         {
           price_data: {
