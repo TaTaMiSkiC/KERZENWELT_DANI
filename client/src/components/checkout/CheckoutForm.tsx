@@ -33,6 +33,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, CheckCircle, Building, LoaderCircle } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
+// Define a type for translation function
+type TFunction = (key: string) => string;
+
 const checkoutSchema = (t: TFunction) =>
   z.object({
     firstName: z.string().min(2, t("checkout.firstNameRequired")),

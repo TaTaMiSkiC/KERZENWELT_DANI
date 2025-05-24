@@ -1858,6 +1858,16 @@ export const translations: Record<Language, Record<string, string>> = {
   },
 
   hr: {
+    // Payment Methods
+    "checkout.paymentMethods.stripe.title": "Kreditna kartica",
+    "checkout.paymentMethods.stripe.description": "Visa, Mastercard, American Express",
+    "checkout.paymentMethods.cash.title": "Plaćanje pouzećem",
+    "checkout.paymentMethods.cash.description": "Plaćanje dostavljaču prilikom isporuke",
+    "checkout.paymentMethods.pickup.title": "Osobno preuzimanje",
+    "checkout.paymentMethods.pickup.description": "Preuzimanje i plaćanje u našoj trgovini",
+    "checkout.paymentMethods.bank.title": "Bankovna uplata",
+    "checkout.paymentMethods.bank.description": "Podaci za uplatu bit će poslani na vaš email",
+    
     // Auth Success/Error Messages
     "auth.loginSuccessTitle": "Prijava uspješna",
     "auth.loginSuccessMessage": "Dobrodošli natrag, {username}!",
@@ -3580,6 +3590,16 @@ export const translations: Record<Language, Record<string, string>> = {
   en: {
     // Home Page
     "home.exploreCollection": "Explore Collection →",
+    
+    // Payment Methods
+    "checkout.paymentMethods.stripe.title": "Credit Card",
+    "checkout.paymentMethods.stripe.description": "Visa, Mastercard, American Express",
+    "checkout.paymentMethods.cash.title": "Cash on Delivery",
+    "checkout.paymentMethods.cash.description": "Pay the delivery person upon receipt",
+    "checkout.paymentMethods.pickup.title": "In-Store Pickup",
+    "checkout.paymentMethods.pickup.description": "Pick up and pay at our store",
+    "checkout.paymentMethods.bank.title": "Bank Transfer",
+    "checkout.paymentMethods.bank.description": "Payment details will be sent to your email",
 
     // Auth Success/Error Messages
     "auth.loginSuccessTitle": "Login successful",
@@ -4741,6 +4761,16 @@ export const translations: Record<Language, Record<string, string>> = {
   it: {
     // Home Page
     "home.exploreCollection": "Esplora la collezione →",
+    
+    // Payment Methods
+    "checkout.paymentMethods.stripe.title": "Carta di Credito",
+    "checkout.paymentMethods.stripe.description": "Visa, Mastercard, American Express",
+    "checkout.paymentMethods.cash.title": "Contrassegno",
+    "checkout.paymentMethods.cash.description": "Paga alla consegna al corriere",
+    "checkout.paymentMethods.pickup.title": "Ritiro in Negozio",
+    "checkout.paymentMethods.pickup.description": "Ritira e paga nel nostro negozio",
+    "checkout.paymentMethods.bank.title": "Bonifico Bancario",
+    "checkout.paymentMethods.bank.description": "I dettagli per il pagamento saranno inviati via email",
 
     // Search
     "search.title": "Cerca prodotti",
@@ -6085,6 +6115,16 @@ export const translations: Record<Language, Record<string, string>> = {
   sl: {
     // Home Page
     "home.exploreCollection": "Razišči kolekcijo →",
+    
+    // Payment Methods
+    "checkout.paymentMethods.stripe.title": "Kreditna kartica",
+    "checkout.paymentMethods.stripe.description": "Visa, Mastercard, American Express",
+    "checkout.paymentMethods.cash.title": "Plačilo po povzetju",
+    "checkout.paymentMethods.cash.description": "Plačilo dostavljavcu ob prevzemu",
+    "checkout.paymentMethods.pickup.title": "Osebni prevzem",
+    "checkout.paymentMethods.pickup.description": "Prevzem in plačilo v naši trgovini",
+    "checkout.paymentMethods.bank.title": "Bančno nakazilo",
+    "checkout.paymentMethods.bank.description": "Podatki za plačilo bodo poslani na vaš e-naslov",
 
     // Search
     "search.title": "Išči izdelke",
