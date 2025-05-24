@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { CreditCard, Wallet, BanknoteIcon, CreditCardIcon } from "lucide-react";
+import { CreditCard, Wallet, BanknoteIcon, CreditCardIcon, PackageCheck, Store, Building } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
 interface PaymentSetting {
@@ -221,13 +221,13 @@ export default function PaymentsPage() {
               </CardContent>
             </Card>
             
-            {/* Bankovna doznaka */}
+            {/* Bankovna doznaka (Banküberweisung) */}
             <Card>
               <CardHeader className="flex flex-row items-center space-x-4">
-                <BanknoteIcon className="h-6 w-6" />
+                <Building className="h-6 w-6" />
                 <div>
-                  <CardTitle>Bankovna doznaka</CardTitle>
-                  <CardDescription>Plaćanje direktno na bankovni račun</CardDescription>
+                  <CardTitle>Banküberweisung</CardTitle>
+                  <CardDescription>Zahlen Sie per Überweisung</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
@@ -235,8 +235,50 @@ export default function PaymentsPage() {
                   <Label htmlFor="bank-toggle">Omogućeno</Label>
                   <Switch 
                     id="bank-toggle" 
-                    checked={localSettings["payment_bank_transfer_enabled"] || false}
-                    onCheckedChange={() => handleToggleChange("payment_bank_transfer_enabled", localSettings["payment_bank_transfer_enabled"] || false)}
+                    checked={localSettings["payment_bank_enabled"] || false}
+                    onCheckedChange={() => handleToggleChange("payment_bank_enabled", localSettings["payment_bank_enabled"] || false)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Pouzeće (Nachnahme) */}
+            <Card>
+              <CardHeader className="flex flex-row items-center space-x-4">
+                <PackageCheck className="h-6 w-6" />
+                <div>
+                  <CardTitle>Nachnahme</CardTitle>
+                  <CardDescription>Bezahlung bei Lieferung an den Paketboten</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="cash-toggle">Omogućeno</Label>
+                  <Switch 
+                    id="cash-toggle" 
+                    checked={localSettings["payment_cash_enabled"] || false}
+                    onCheckedChange={() => handleToggleChange("payment_cash_enabled", localSettings["payment_cash_enabled"] || false)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Osobno preuzimanje (Selbstabholung) */}
+            <Card>
+              <CardHeader className="flex flex-row items-center space-x-4">
+                <Store className="h-6 w-6" />
+                <div>
+                  <CardTitle>Selbstabholung</CardTitle>
+                  <CardDescription>Abholung und Bezahlung in unserem Geschäft</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="pickup-toggle">Omogućeno</Label>
+                  <Switch 
+                    id="pickup-toggle" 
+                    checked={localSettings["payment_pickup_enabled"] || false}
+                    onCheckedChange={() => handleToggleChange("payment_pickup_enabled", localSettings["payment_pickup_enabled"] || false)}
                   />
                 </div>
               </CardContent>

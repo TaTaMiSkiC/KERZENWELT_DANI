@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +71,48 @@ export default function CheckoutForm() {
   const [stripePaymentComplete, setStripePaymentComplete] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>("");
   const [showStripeForm, setShowStripeForm] = useState(false);
+  
+  // Dohvaćanje postavki načina plaćanja
+  const { data: paymentSettings } = useQuery({
+    queryKey: ['/api/settings/payment'],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/settings/payment");
+      const data = await response.json();
+      return data;
+    }
+  });
+  
+  // Pretvaranje postavki u jednostavan objekt s ključevima i vrijednostima
+  const [paymentMethods, setPaymentMethods] = useState<Record<string, boolean>>({
+    stripe: true,
+    paypal: false,
+    klarna: false,
+    eps: false,
+    bank: true,
+    cash: true,
+    pickup: true,
+  });
+  
+  // Učitavanje postavki načina plaćanja iz API-ja
+  useEffect(() => {
+    if (paymentSettings) {
+      const methods: Record<string, boolean> = {};
+      paymentSettings.forEach((setting: any) => {
+        // Pretvaramo nazive postavki u jednostavne ključeve (npr. payment_stripe_enabled -> stripe)
+        const methodKey = setting.key.replace('payment_', '').replace('_enabled', '');
+        methods[methodKey] = setting.value === "true";
+      });
+      setPaymentMethods(methods);
+      
+      // Ako trenutno odabrani način plaćanja nije omogućen, postavimo prvi dostupni
+      if (!methods[selectedPaymentMethod]) {
+        const firstEnabled = Object.keys(methods).find(key => methods[key]);
+        if (firstEnabled) {
+          setSelectedPaymentMethod(firstEnabled);
+        }
+      }
+    }
+  }, [paymentSettings, selectedPaymentMethod]);
 
   // Dohvati postavke za dostavu
   const { data: freeShippingThresholdSetting } = getSetting(
