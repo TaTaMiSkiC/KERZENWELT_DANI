@@ -34,6 +34,7 @@ import AdminSettings from "@/pages/admin/settings-page";
 import PageSettingsPage from "@/pages/admin/page-settings";
 import ContactSettingsPage from "@/pages/admin/contact-settings";
 import DocumentManagementPage from "@/pages/admin/document-management";
+import PaymentsPage from "@/pages/admin/payments";
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
@@ -148,6 +149,12 @@ function Router() {
         <ProtectedRoute
           path="/admin/subscribers"
           component={AdminSubscribers}
+        />
+      </Route>
+      <Route path="/admin/payments">
+        <ProtectedRoute
+          path="/admin/payments"
+          component={PaymentsPage}
         />
       </Route>
       <Route path="/admin/documents">

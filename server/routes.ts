@@ -1862,6 +1862,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch settings" });
     }
   });
+  
+  // Dohvati postavke načina plaćanja
+  app.get("/api/settings/payment", async (req, res) => {
+    try {
+      const allSettings = await storage.getAllSettings();
+      const paymentSettings = allSettings.filter(setting => 
+        setting.key.startsWith("payment_") && setting.key.endsWith("_enabled")
+      );
+      res.json(paymentSettings);
+    } catch (error) {
+      console.error("Greška pri dohvaćanju postavki plaćanja:", error);
+      res.status(500).json({ error: "Greška pri dohvaćanju postavki plaćanja" });
+    }
+  });
 
   // Opće postavke - moraju biti prije generičke rute za :key
 

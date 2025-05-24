@@ -953,27 +953,30 @@ export default function CheckoutForm() {
             />
           </div>
 
-          <Button
-            type="submit"
-            className="w-full mt-6"
-            size="lg"
-            disabled={
-              isSubmitting ||
-              !form.getValues("sameAsBilling")
-            }
-          >
-            {isSubmitting ? (
-              <>
-                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                Obrada...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="mr-2 h-5 w-5" />
-                Potvrdi narudžbu
-              </>
-            )}
-          </Button>
+          {/* Prikaži gumb samo za gotovinu, preuzimanje i bankovnu doznaku */}
+          {(watchPaymentMethod === 'cash' || watchPaymentMethod === 'pickup' || watchPaymentMethod === 'bank') && (
+            <Button
+              type="submit"
+              className="w-full mt-6"
+              size="lg"
+              disabled={
+                isSubmitting ||
+                !form.getValues("sameAsBilling")
+              }
+            >
+              {isSubmitting ? (
+                <>
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Obrada...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-5 w-5" />
+                  Potvrdi narudžbu
+                </>
+              )}
+            </Button>
+          )}
 
           <p className="text-sm text-gray-500 text-center mt-4">
             Vaši podaci su sigurni i šifrirani. Nikada nećemo dijeliti vaše
