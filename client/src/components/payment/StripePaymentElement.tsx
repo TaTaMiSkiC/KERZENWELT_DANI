@@ -56,10 +56,10 @@ const StripeCheckoutForm = ({ onSuccess, onError }: StripeCheckoutFormProps) => 
         console.log('Payment succeeded:', paymentIntent);
         
         // Get the pending order data from session storage
-        const pendingOrderData = sessionStorage.getItem('pendingOrderData');
+        const pendingOrderData = window.sessionStorage.getItem('pendingOrderData');
         if (pendingOrderData) {
           // Clear the stored data
-          sessionStorage.removeItem('pendingOrderData');
+          window.sessionStorage.removeItem('pendingOrderData');
           
           // Let the parent component know payment was successful
           onSuccess(paymentIntent);
@@ -79,7 +79,14 @@ const StripeCheckoutForm = ({ onSuccess, onError }: StripeCheckoutFormProps) => 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
+      <PaymentElement options={{
+        layout: 'tabs',
+        defaultValues: {
+          billingDetails: {
+            name: 'Kerzenwelt by Dani Kunde',
+          }
+        }
+      }} />
       
       {errorMessage && (
         <div className="text-red-500 text-sm mt-2">{errorMessage}</div>

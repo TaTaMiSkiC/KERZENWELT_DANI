@@ -152,7 +152,7 @@ export default function CheckoutForm() {
         const orderTotal = cartTotal - discountAmount + shippingCost;
         
         // Store the order data in session to use later
-        sessionStorage.setItem('pendingOrderData', JSON.stringify({
+        window.sessionStorage.setItem('pendingOrderData', JSON.stringify({
           data,
           orderItems,
           cartTotal,
