@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings-api";
-import StripePaymentForm from "@/components/StripePaymentForm";
+import StripePaymentElement from "@/components/payment/StripePaymentElement";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
@@ -149,15 +149,16 @@ export default function CheckoutForm() {
           description: t("checkout.stripeErrorDescription"),
           variant: "destructive",
         });
-      setIsSubmitting(false);
-      return;
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     try {
       // Create order items from cart items
-      const orderItems = cartItems.map((item) => ({
+      const orderItems = cartItems?.map((item) => ({
         productId: item.productId,
         productName: item.product.name, // Dodajemo ime proizvoda
         quantity: item.quantity,
@@ -653,6 +654,26 @@ export default function CheckoutForm() {
                     </p>
                   </div>
                 </div>
+                
+                {showStripeForm && clientSecret && (
+                  <div className="mt-4">
+                    <StripePaymentElement 
+                      clientSecret={clientSecret}
+                      onSuccess={(paymentIntent) => {
+                        setStripePaymentComplete(true);
+                        // Continue with checkout form submission
+                        form.handleSubmit(onSubmit)();
+                      }}
+                      onError={(error) => {
+                        toast({
+                          title: t("checkout.paymentError"),
+                          description: error.message,
+                          variant: "destructive",
+                        });
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
