@@ -88,13 +88,16 @@ export async function createCheckoutSession(req: Request, res: Response) {
     
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
-      // Koristimo samo kartično plaćanje koje sigurno radi
-      payment_method_types: ['card'],
-      
-      allow_promotion_codes: true, // Dozvoljavamo promo kodove
-      shipping_address_collection: {
-        allowed_countries: ['AT', 'DE', 'HR', 'SI', 'IT'],
-      },
+      payment_method_types: [
+        'card',         // Kreditkarte
+        'klarna',       // Klarna
+        'paypal',       // PayPal
+        'eps',          // EPS (Austrian Online Banking)
+        'sofort',       // Sofort (Online Banking)
+        'sepa_debit',   // SEPA bankovna transakcija
+        'giropay',      // Još jedna metoda online bankarstva
+        'ideal'         // iDEAL (online banking)
+      ],
       line_items: [
         {
           price_data: {
