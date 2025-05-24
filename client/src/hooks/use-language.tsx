@@ -21,6 +21,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "product.recenzijekupca": "Kundenrezensionen",
     "product.recenzijebrisanje":
       "Diese Aktion ist irreversibel. Die Bewertung wird dauerhaft aus dem System gelöscht.",
+      
+    // Payment Methods
+    "checkout.paymentMethods.stripe.title": "Kreditkarte",
+    "checkout.paymentMethods.stripe.description": "Visa, Mastercard, American Express",
+    "checkout.paymentMethods.cash.title": "Nachnahme",
+    "checkout.paymentMethods.cash.description": "Bezahlung bei Lieferung an den Paketboten",
+    "checkout.paymentMethods.pickup.title": "Selbstabholung",
+    "checkout.paymentMethods.pickup.description": "Abholung und Bezahlung in unserem Geschäft",
+    "checkout.paymentMethods.bank.title": "Banküberweisung",
+    "checkout.paymentMethods.bank.description": "Zahlungsdaten werden per E-Mail zugeschickt",
 
     // Auth Success/Error Messages
     "auth.loginSuccessTitle": "Anmeldung erfolgreich",

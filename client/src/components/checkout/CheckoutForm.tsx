@@ -529,18 +529,18 @@ export default function CheckoutForm() {
                     className="flex flex-col space-y-2"
                   >
                     <div
-                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "credit_card" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "stripe" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
-                      <RadioGroupItem value="credit_card" id="credit_card" />
+                      <RadioGroupItem value="stripe" id="stripe" />
                       <label
-                        htmlFor="credit_card"
+                        htmlFor="stripe"
                         className="flex items-center cursor-pointer w-full"
                       >
                         <CreditCard className="mr-2 h-5 w-5 text-primary" />
                         <div className="flex-1">
-                          <span className="font-medium">Kreditna kartica</span>
+                          <span className="font-medium">{t('checkout.paymentMethods.stripe.title')}</span>
                           <p className="text-sm text-gray-500">
-                            Visa, Mastercard, American Express
+                            {t('checkout.paymentMethods.stripe.description')}
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -559,44 +559,56 @@ export default function CheckoutForm() {
                     </div>
 
                     <div
-                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "paypal" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "cash" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
-                      <RadioGroupItem value="paypal" id="paypal" />
+                      <RadioGroupItem value="cash" id="cash" />
                       <label
-                        htmlFor="paypal"
+                        htmlFor="cash"
                         className="flex items-center cursor-pointer w-full"
                       >
-                        <div className="mr-2 h-5 w-5 flex items-center justify-center">
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
-                            alt="PayPal"
-                            className="h-5"
-                          />
-                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><circle cx="12" cy="12" r="8"/><path d="M12 6v6l4 2"/></svg>
                         <div className="flex-1">
-                          <span className="font-medium">PayPal</span>
+                          <span className="font-medium">{t('checkout.paymentMethods.cash.title')}</span>
                           <p className="text-sm text-gray-500">
-                            Sigurno i brzo plaćanje putem PayPal-a
+                            {t('checkout.paymentMethods.cash.description')}
                           </p>
                         </div>
                       </label>
                     </div>
 
                     <div
-                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "bank_transfer" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "pickup" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
+                    >
+                      <RadioGroupItem value="pickup" id="pickup" />
+                      <label
+                        htmlFor="pickup"
+                        className="flex items-center cursor-pointer w-full"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>
+                        <div className="flex-1">
+                          <span className="font-medium">{t('checkout.paymentMethods.pickup.title')}</span>
+                          <p className="text-sm text-gray-500">
+                            {t('checkout.paymentMethods.pickup.description')}
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div
+                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "bank" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
                       <RadioGroupItem
-                        value="bank_transfer"
-                        id="bank_transfer"
+                        value="bank"
+                        id="bank"
                       />
                       <label
-                        htmlFor="bank_transfer"
+                        htmlFor="bank"
                         className="flex items-center cursor-pointer w-full"
                       >
                         <Building className="mr-2 h-5 w-5 text-primary" />
                         <div className="flex-1">
                           <span className="font-medium">
-                            Virmansko plaćanje
+                            {t('checkout.paymentMethods.bank.title')}
                           </span>
                           <p className="text-sm text-gray-500">
                             Podaci za plaćanje bit će poslani na vaš email
