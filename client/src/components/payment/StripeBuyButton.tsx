@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from 'react-router-dom';
 
 interface StripeBuyButtonProps {
   amount: number;
@@ -11,7 +10,7 @@ interface StripeBuyButtonProps {
 const StripeBuyButton = ({ amount, userId, language }: StripeBuyButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  // Entfernt navigate, da es Probleme verursacht
   // Bestimmen der Sprache für die Checkout-Session
   const sessionLanguage = language || 'de';
 
