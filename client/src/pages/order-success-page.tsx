@@ -237,6 +237,28 @@ export default function OrderSuccessPage() {
                   </div>
                 </div>
               )}
+              {/* Dodajte detalje za Stripe plaćanja */}
+              {order && order.paymentMethod === "stripe" && (
+                <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-lg">
+                  <h3 className="text-xl font-semibold text-green-800 mb-3 flex items-center">
+                    <CheckCircle className="h-6 w-6 mr-2" />
+                    {t("orderSuccessPage.stripePaymentSuccess")}
+                  </h3>
+                  <p className="text-green-700 mb-4">
+                    {t("orderSuccessPage.stripeThankYou")}
+                  </p>
+                  <div className="space-y-2 text-green-700">
+                    <p>• {t("orderSuccessPage.stripeConfirmation")}</p>
+                    <p>• {t("orderSuccessPage.stripeProcessing")}</p>
+                    <p>• {t("orderSuccessPage.stripeContact")}</p>
+                  </div>
+                  <div className="mt-4 p-3 bg-green-100 rounded-md">
+                    <p className="text-sm text-green-800 font-medium">
+                      {t("orderSuccessPage.stripeNextSteps")}
+                    </p>
+                  </div>
+                </div>
+              )}
               {/* Dodajte detalje za "Selbstabholung" ako je to plaćanje */}
               {order && order.paymentMethod === "pickup" && (
                 <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
