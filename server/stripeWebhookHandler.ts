@@ -51,7 +51,6 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             console.log(`[Webhook] Kreiram jednostavnu narudžbu za korisnika ${userId}`);
             
             // Kreiraj osnovnu narudžbu
-            res.status(200).json({ received: true });
             console.log(`[Webhook SUCCESS] Stripe webhook obrađen`);
 
           } catch (error: any) {
@@ -59,13 +58,11 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               `[Webhook ERROR] Greška pri obradi webhook-a:`,
               error.message || error,
             );
-            res.status(500).json({ error: "Webhook processing failed" });
           }
         } else {
           console.warn(
             "[Webhook WARN] Nedostaje userId u metadata.",
           );
-          res.status(400).json({ error: "Missing userId" });
         }
       } else {
         console.warn(
