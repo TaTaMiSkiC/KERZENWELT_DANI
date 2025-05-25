@@ -65,6 +65,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Nova ruta za procesiranje Stripe sesije nakon uspješnog plaćanja
   app.post("/api/process-stripe-session", async (req, res) => {
+    // Explicitly set Content-Type header to application/json
+    res.setHeader('Content-Type', 'application/json');
+    
     try {
       console.log("Primljen zahtjev za obradu Stripe sesije, body:", req.body);
       

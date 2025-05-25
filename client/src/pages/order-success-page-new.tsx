@@ -293,48 +293,49 @@ export default function OrderSuccessPageNew() {
           let newOrderData;
           try {
             console.log("Šaljem zahtjev za obradu Stripe sesije:", requestData);
+            
+            // Koristimo apsolutni URL da izbjegnemo probleme s relativnim putanjama
+            const apiUrl = window.location.origin + "/api/process-stripe-session";
+            console.log("API URL:", apiUrl);
+            
             // Direktno koristimo fetch umjesto apiRequest da bismo imali više kontrole
-            const createOrderResponse = await fetch("/api/process-stripe-session", {
+            const createOrderResponse = await fetch(apiUrl, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json" // Explicitly request JSON response
               },
+              credentials: "include", // Include cookies for session authentication
               body: JSON.stringify(requestData)
             });
             
+            console.log("Status odgovora:", createOrderResponse.status);
+            console.log("Content-Type:", createOrderResponse.headers.get("Content-Type"));
+            
             if (!createOrderResponse.ok) {
-              try {
-                const errorText = await createOrderResponse.text();
-                console.error("Server odgovorio s greškom:", errorText);
-                setError("Neuspješno stvaranje narudžbe iz Stripe sesije: " + createOrderResponse.status);
-              } catch (e) {
-                console.error("Greška pri čitanju odgovora:", e);
-                setError("Neuspješno stvaranje narudžbe iz Stripe sesije: " + createOrderResponse.status);
-              }
+              const errorText = await createOrderResponse.text();
+              console.error("Server odgovorio s greškom:", errorText);
+              setError(`Fehler beim Verarbeiten der Bestellung: ${createOrderResponse.status}`);
               setLoading(false);
               return;
             }
             
+            // Pokušaj dohvatiti JSON iz odgovora
             try {
-              const responseText = await createOrderResponse.text();
-              if (!responseText) {
-                console.log("Prazan odgovor od servera");
-                setError("Prazan odgovor od servera");
-                setLoading(false);
-                return;
+              newOrderData = await createOrderResponse.json();
+              console.log("Uspješno dohvaćeni podaci narudžbe:", newOrderData);
+            } catch (jsonError) {
+              console.error("Fehler beim Verarbeiten der Antwort:", jsonError);
+              
+              // Pokušajmo dohvatiti tekstualni sadržaj za bolju dijagnostiku
+              try {
+                const responseText = await createOrderResponse.text();
+                console.error("Serverantwort (Text):", responseText);
+              } catch (textError) {
+                console.error("Fehler beim Lesen der Serverantwort:", textError);
               }
               
-              try {
-                newOrderData = JSON.parse(responseText);
-              } catch (parseError) {
-                console.error("Greška pri parsiranju JSON-a:", parseError, "Tekst:", responseText);
-                setError("Greška pri obradi odgovora servera");
-                setLoading(false);
-                return;
-              }
-            } catch (textError) {
-              console.error("Greška pri čitanju teksta odgovora:", textError);
-              setError("Greška pri čitanju odgovora servera");
+              setError("Fehler bei der Verarbeitung der Serverantwort");
               setLoading(false);
               return;
             }

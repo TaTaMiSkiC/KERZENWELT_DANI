@@ -1,0 +1,158 @@
+order-success-page-new.tsx:49 URL parametri: {orderId: null, sessionId: 'cs_live_a1WDfUMQR7boldXW0mHgXGr19gMlDKjZ35PKTefyfiHoeC9ZP4bgF3etzc', userId: '4', urlLang: 'de', language: 'de', …}
+order-success-page-new.tsx:44 Postavljanje jezika iz URL-a: de
+order-success-page-new.tsx:277 Obrađujem Stripe sesiju: cs_live_a1WDfUMQR7boldXW0mHgXGr19gMlDKjZ35PKTefyfiHoeC9ZP4bgF3etzc
+order-success-page-new.tsx:295 Šaljem zahtjev za obradu Stripe sesije: {sessionId: 'cs_live_a1WDfUMQR7boldXW0mHgXGr19gMlDKjZ35PKTefyfiHoeC9ZP4bgF3etzc', language: 'de', userId: '4'}
+order-success-page-new.tsx:330 Greška pri parsiranju JSON-a: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+    at JSON.parse (<anonymous>)
+    at processPayment (order-success-page-new.tsx:328:37) Tekst: <!doctype html>
+<html lang="de">
+  <head>
+    <script type="module">
+import { createHotContext } from "/@vite/client";
+const hot = createHotContext("/__dummy__runtime-error-plugin");
+
+function sendError(error) {
+  if (!(error instanceof Error)) {
+    error = new Error("(unknown runtime error)");
+  }
+  const serialized = {
+    message: error.message,
+    stack: error.stack,
+  };
+  hot.send("runtime-error-plugin:error", serialized);
+}
+
+window.addEventListener("error", (evt) => {
+  sendError(evt.error);
+});
+
+window.addEventListener("unhandledrejection", (evt) => {
+  sendError(evt.reason);
+});
+</script>
+
+    <script type="module">
+import RefreshRuntime from "/@react-refresh"
+RefreshRuntime.injectIntoGlobalHook(window)
+window.$RefreshReg$ = () => {}
+window.$RefreshSig$ = () => (type) => type
+window.__vite_plugin_react_preamble_installed__ = true
+</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Kerzenwelt by Dani | Handgemachte Kerzen</title>
+    <meta
+      name="description"
+      content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause."
+    />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/webp" href="/logo.webp" />
+    <link rel="apple-touch-icon" href="/logo.webp" />
+    <!-- Fallback za starije preglednike -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+
+    <!-- Cache Control -->
+    <meta http-equiv="Cache-Control" content="max-age=31536000" />
+    
+    <!-- Performance Optimizations -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- SEO Improvements -->
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Kerzenwelt by Dani" />
+    <meta name="keywords" content="Kerzen, handgemacht, Duftkerzen, Geschenk, natürlich, Dekoration, Villach" />
+    
+    <!-- Mobile Optimization -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://kerzenweltbydani.com/" />
+    <meta
+      property="og:title"
+      content="Kerzenwelt by Dani | Handgemachte Kerzen"
+    />
+    <meta
+      property="og:description"
+      content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause."
+    />
+    <meta property="og:image" content="/logo.webp" />
+
+    <!-- Twitter Card data -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Kerzenwelt by Dani | Handgemachte Kerzen">
+    <meta name="twitter:description" content="Entdecken Sie unsere Kollektion handgefertigter Kerzen aus natürlichen Inhaltsstoffen. Premium Duft- und Dekorationskerzen für jedes Zuhause.">
+    <meta name="twitter:image" content="/logo.webp">
+    <link rel="dns-prefetch" href="https://kerzenweltbydani.com" />
+
+    <!-- Preload ključnih fontova -->
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      as="style"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+    />
+
+    <!-- Preload ključnih slika -->
+    <link rel="preload" href="/logo.webp" as="image" fetchpriority="high" type="image/webp" />
+    <link rel="preload" href="/logo.png" as="image" fetchpriority="high" type="image/png" />
+    
+    <!-- Optimizacija za mobilne uređaje -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Dodatne optimizacije za brže učitavanje -->
+    <link rel="preload" as="font" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" crossorigin="anonymous" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- Skripta za inicijalizaciju teme i jezika -->
+    <script>
+      (function () {
+        // Dohvaćanje teme iz lokalnog spremnika
+        const storedTheme = localStorage.getItem("theme");
+        const theme = storedTheme ? storedTheme : "light";
+
+        // Dohvati jezik iz lokalnog spremnika
+        const storedLang = localStorage.getItem("language");
+        const lang = storedLang ? storedLang : "hr";
+
+        // Postavi jezik
+        document.document
+overrideMethod @ hook.js:608
+processPayment @ order-success-page-new.tsx:330
+await in processPayment
+(anonymous) @ order-success-page-new.tsx:417
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=d2a93789:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=d2a93789:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=d2a93789:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=d2a93789:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=d2a93789:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=d2a93789:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=d2a93789:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=d2a93789:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=d2a93789:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=d2a93789:19432
+commitRoot @ chunk-RPCDYKBN.js?v=d2a93789:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=d2a93789:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=d2a93789:18718
+workLoop @ chunk-RPCDYKBN.js?v=d2a93789:197
+flushWork @ chunk-RPCDYKBN.js?v=d2a93789:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=d2a93789:384
+order-success-page-new.tsx:49 URL parametri: {orderId: null, sessionId: 'cs_live_a1WDfUMQR7boldXW0mHgXGr19gMlDKjZ35PKTefyfiHoeC9ZP4bgF3etzc', userId: '4', urlLang: 'de', language: 'de', …}language: "de"location: "/order-success-new"orderId: nullsessionId: "cs_live_a1WDfUMQR7boldXW0mHgXGr19gMlDKjZ35PKTefyfiHoeC9ZP4bgF3etzc"urlLang: "de"userId: "4"[[Prototype]]: Object
+order-success-new:1 The resource https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+order-success-new:1 The resource https://35972460-91c6-42dd-92bc-da912b0e3609-00-1drcd7m558rz7.worf.replit.dev/logo.webp was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.

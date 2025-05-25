@@ -176,7 +176,7 @@ export async function processStripeSession(sessionId: string, userId: number, la
 
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
-    const { amount, orderId, userId, language, paymentMethod, successUrl, cancelUrl } = req.body;
+    const { amount, orderId, language, paymentMethod, successUrl, cancelUrl } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
@@ -191,11 +191,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
     }
 
     // Get user information if logged in
-    const userId = req.user?.id;
+    const userIdFromReq = req.user?.id;
     let customerEmail = "";
 
-    if (userId) {
-      const user = await storage.getUser(userId);
+    if (userIdFromReq) {
+      const user = await storage.getUser(userIdFromReq);
       if (user?.email) {
         customerEmail = user.email;
       }
@@ -208,8 +208,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
     }
     
     // Dodajemo ID korisnika u metapodatke
-    if (userId) {
-      metadata.userId = userId.toString();
+    if (userIdFromReq) {
+      metadata.userId = userIdFromReq.toString();
     }
     
     // Dodajemo informaciju o jeziku u metapodatke
@@ -248,9 +248,9 @@ export async function createCheckoutSession(req: Request, res: Response) {
     let userCartItems: any[] = [];
     
     // Ako je korisnik prijavljen, dohvaćamo podatke o košarici
-    if (userId) {
+    if (userIdFromReq) {
       try {
-        userCartItems = await storage.getCartItems(userId);
+        userCartItems = await storage.getCartItems(userIdFromReq);
         console.log("Dohvaćene stavke košarice:", userCartItems);
         
         // Ako imamo stavke u košarici, kreiramo line items
