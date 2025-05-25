@@ -38,74 +38,86 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       console.log("[Webhook] Stripe Session Metadata:", session.metadata);
 
       if (session.payment_status === "paid") {
-        const orderId = session.metadata?.order_id;
         const userId = session.metadata?.userId;
+        const orderDataString = session.metadata?.orderData;
 
         console.log(
-          `[Webhook] Primljen orderId iz metadate: ${orderId}, userId: ${userId}`,
+          `[Webhook] Stripe plaćanje uspješno! UserId: ${userId}`,
         );
 
-        if (orderId) {
+        if (userId && orderDataString) {
           try {
-            console.log(
-              `[Webhook] Pokušavam pronaći narudžbu ID: ${orderId} za ažuriranje.`,
-            );
-            const orderToUpdate = await db.query.orders.findFirst({
-              where: eq(orders.id, parseInt(orderId)),
-            });
+            // Parsiraj podatke o narudžbi iz metadata
+            const orderData = JSON.parse(orderDataString);
+            console.log(`[Webhook] Podaci o narudžbi:`, orderData);
 
-            if (orderToUpdate) {
-              console.log(
-                `[Webhook] Pronađena narudžba ID: ${orderToUpdate.id}. Trenutni status: ${orderToUpdate.status}`,
-              );
+            // Kreiraj narudžbu tek sada kada je plaćanje potvrđeno
+            const newOrder = await db.insert(orders).values({
+              userId: parseInt(userId),
+              total: orderData.total,
+              subtotal: orderData.subtotal,
+              discountAmount: orderData.discountAmount,
+              shippingCost: orderData.shippingCost,
+              paymentMethod: orderData.paymentMethod,
+              status: "completed", // Odmah postaviti na completed jer je plaćanje potvrđeno
+              paymentStatus: "paid",
+              shippingAddress: orderData.shippingAddress,
+              shippingCity: orderData.shippingCity,
+              shippingPostalCode: orderData.shippingPostalCode,
+              shippingCountry: orderData.shippingCountry,
+              customerNote: orderData.customerNote,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }).returning();
 
-              await db
-                .update(orders)
-                .set({
-                  status: "completed", // Ažurira status
-                  paymentIntentId: session.payment_intent?.id as string, // Sprema Payment Intent ID
-                  updatedAt: new Date(), // Ažurira datum
-                })
-                .where(eq(orders.id, parseInt(orderId)));
+            const orderId = newOrder[0].id;
+            console.log(`[Webhook] Nova narudžba kreirana sa ID: ${orderId}`);
 
-              console.log(
-                `[Webhook SUCCESS] Narudžba ${orderId} uspješno ažurirana na 'completed' status.`,
-              );
-
-              if (userId) {
-                console.log(
-                  `[Webhook] Pokušavam obrisati košaricu za korisnika ID: ${userId}.`,
-                );
-                await db
-                  .delete(cartItems)
-                  .where(eq(cartItems.userId, parseInt(userId)));
-                console.log(
-                  `[Webhook SUCCESS] Košarica očišćena za korisnika ${userId}.`,
-                );
-              } else {
-                console.warn(
-                  "[Webhook WARN] Nedostaje userId u metadata, ne mogu obrisati košaricu.",
-                );
+            // Dodaj stavke narudžbe
+            if (orderData.items && orderData.items.length > 0) {
+              const { orderItems } = await import('./dbStorage');
+              for (const item of orderData.items) {
+                await orderItems.addOrderItem({
+                  orderId: orderId,
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  price: item.price,
+                  productName: item.productName,
+                  scentId: item.scentId,
+                  colorId: item.colorId,
+                  colorIds: item.colorIds,
+                  colorName: item.colorName,
+                  hasMultipleColors: item.hasMultipleColors,
+                  scentName: item.scentName,
+                });
               }
+              console.log(`[Webhook] Dodane stavke narudžbe za narudžbu ${orderId}`);
+            }
 
-              // Ovdje možete poslati potvrdu e-poštom korisniku
-              // if (sendNewOrderNotification) {
-              //   await sendNewOrderNotification(orderToUpdate.id);
-              // }
-            } else {
-              console.error(
-                `[Webhook ERROR] Narudžba s ID-om ${orderId} NIJE pronađena za ažuriranje.`,
+            // Obriši košaricu
+            if (userId) {
+              console.log(
+                `[Webhook] Pokušavam obrisati košaricu za korisnika ID: ${userId}.`,
+              );
+              await db
+                .delete(cartItems)
+                .where(eq(cartItems.userId, parseInt(userId)));
+              console.log(
+                `[Webhook SUCCESS] Košarica očišćena za korisnika ${userId}.`,
               );
             }
-          } catch (updateError: any) {
+
+            console.log(`[Webhook SUCCESS] Narudžba ${orderId} uspješno kreirana i obrađena.`);
+
+          } catch (error: any) {
             console.error(
-              `[Webhook ERROR] Greška pri ažuriranju narudžbe ili brisanju košarice:`,
-              updateError.message || updateError,
+              `[Webhook ERROR] Greška pri kreiranju narudžbe:`,
+              error.message || error,
             );
           }
         } else {
           console.warn(
-            "[Webhook WARN] Nedostaje 'order_id' u metadata Stripe sesije. Ne mogu ažurirati narudžbu.",
+            "[Webhook WARN] Nedostaju podaci o narudžbi u metadata Stripe sesije.",
           );
         }
       } else {

@@ -39,16 +39,21 @@ export async function initiateStripeCheckout(
       console.warn("Nije moguće dohvatiti podatke o korisniku:", error);
     }
 
+    // Dohvati podatke o narudžbi iz sessionStorage
+    const orderDataString = window.sessionStorage.getItem('stripeOrderData');
+    if (!orderDataString) {
+      throw new Error('Nema podataka o narudžbi za Stripe plaćanje');
+    }
+
     // Kreiraj Checkout sesiju
-    // Dohvaćamo trenutni odabrani jezik
     const currentLanguage = document.documentElement.lang || "de";
 
     const response = await apiRequest("POST", "/api/create-checkout-session", {
       amount,
-      orderId,
       userId,
       language: currentLanguage,
       paymentMethod: stripePaymentMethod,
+      orderData: orderDataString, // Pošalji podatke o narudžbi umjesto orderId
       successUrl: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${origin}/checkout?canceled=true`,
     });

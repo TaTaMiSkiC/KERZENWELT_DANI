@@ -273,59 +273,27 @@ export default function CheckoutForm() {
       const shippingCost = isFreeShipping ? 0 : standardShippingRate;
       const orderTotal = Math.max(0, cartTotal + shippingCost - discountAmount);
 
-      const preliminaryOrderData = {
+      const orderData = {
         total: orderTotal.toString(),
         subtotal: cartTotal.toString(),
         discountAmount: discountAmount.toString(),
         shippingCost: shippingCost.toString(),
-        paymentMethod: data.paymentMethod, // ovo će biti "stripe", "paypal", "klarna" itd.
-        paymentStatus: "pending", // Status narudžbe prije Stripe plaćanja
+        paymentMethod: data.paymentMethod,
+        paymentStatus: "pending",
         shippingAddress: data.address,
         shippingCity: data.city,
         shippingPostalCode: data.postalCode,
         shippingCountry: data.country,
         customerNote: data.customerNote,
         items: orderItems,
-        // NE šaljemo stripePaymentIntentId ovdje, on će biti postavljen nakon što Stripe potvrdi
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        saveAddress: data.saveAddress,
       };
 
-      console.log("Kreiram preliminarnu narudžbu:", preliminaryOrderData);
-      const preliminaryOrderResponse = await apiRequest(
-        "POST",
-        "/api/orders",
-        preliminaryOrderData,
-      );
-      const preliminaryOrder = await preliminaryOrderResponse.json();
-
-      if (!preliminaryOrder.id) {
-        throw new Error("Nije uspjelo kreiranje preliminarne narudžbe.");
-      }
-
-      console.log("Preliminarna narudžba kreirana sa ID:", preliminaryOrder.id);
-
-      window.sessionStorage.setItem(
-        "lastProcessedOrderId",
-        preliminaryOrder.id.toString(),
-      );
-
-      // 2. Očisti košaricu NAKON što je narudžba spremljena u bazu
-      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-
-      // 3. Ažuriraj korisnikovu adresu ako je 'saveAddress' označeno (ovo može ići nakon uspješne narudžbe, ali ovdje je OK)
-      if (data.saveAddress && user) {
-        await apiRequest("PUT", "/api/user", {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          address: data.address,
-          city: data.city,
-          postalCode: data.postalCode,
-          country: data.country,
-          phone: data.phone,
-        });
-        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      }
-
-      // 4. Iniciraj Stripe Checkout ili obradi druge metode plaćanja
+      // Obradi metode plaćanja
       if (
         data.paymentMethod === "stripe" ||
         data.paymentMethod === "paypal" ||
@@ -333,19 +301,45 @@ export default function CheckoutForm() {
         data.paymentMethod === "eps" ||
         data.paymentMethod === "sofort"
       ) {
+        // Za Stripe plaćanje - NE kreiraj narudžbu odmah!
+        // Pohrani podatke u sessionStorage za Stripe webhook
+        window.sessionStorage.setItem('stripeOrderData', JSON.stringify(orderData));
+        
+        // Iniciraj Stripe checkout bez kreiranja narudžbe
         await initiateStripeCheckout(
           total,
           data.paymentMethod,
-          preliminaryOrder.id, // Proslijedi orderId Stripeu
+          undefined, // Nema orderId jer narudžba još nije kreirana
         );
-        // Ovdje nećete biti preusmjereni direktno, nego Stripe radi preusmjeravanje.
-        // NAKON ŠTO VAS STRIPE VRATI, ORDER-SUCCESS-PAGE ĆE SAMO PRIKAZATI INFO
-        // Jer webhook će ažurirati narudžbu
-        return; // Važno: Prekini izvršavanje, Stripe preuzima kontrolu
+        return; // Stripe preuzima kontrolu
       } else {
-        // Za metode plaćanja koje ne zahtijevaju preusmjeravanje (cash, pickup, bankTransfer)
-        // Redirekcija se dešava odmah jer je narudžba već kreirana sa "pending" statusom
-        navigate(`/order-success?orderId=${preliminaryOrder.id}`);
+        // Za ostale metode plaćanja - kreiraj narudžbu odmah
+        console.log("Kreiram narudžbu za metodu plaćanja:", data.paymentMethod);
+        const orderResponse = await apiRequest("POST", "/api/orders", orderData);
+        const order = await orderResponse.json();
+
+        if (!order.id) {
+          throw new Error("Nije uspjelo kreiranje narudžbe.");
+        }
+
+        // Očisti košaricu
+        await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+
+        // Ažuriraj korisnikovu adresu ako je potrebno
+        if (data.saveAddress && user) {
+          await apiRequest("PUT", "/api/user", {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            address: data.address,
+            city: data.city,
+            postalCode: data.postalCode,
+            country: data.country,
+            phone: data.phone,
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        }
+
+        navigate(`/order-success?orderId=${order.id}`);
       }
     } catch (error) {
       console.error(
