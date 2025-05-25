@@ -68,6 +68,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { sessionId, userId: providedUserId, language } = req.body;
       
+      console.log("Primljeni zahtjev za obradu Stripe sesije:", {
+        sessionId,
+        providedUserId,
+        language,
+        isAuthenticated: !!req.user
+      });
+      
       if (!sessionId) {
         return res.status(400).json({ error: "Nedostaje ID sesije" });
       }
@@ -103,6 +110,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Ako i dalje nemamo korisnika, provjeravamo imamo li email u Stripe sesiji
+      if (!userId) {
+        try {
+          const { stripe } = await import('./stripe');
+          const stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ['line_items', 'payment_intent', 'customer', 'customer_details']
+          });
+          
+          // Pokušavamo pronaći korisnika po emailu iz Stripe sesije
+          if (stripeSession.customer_details?.email) {
+            const userByEmail = await storage.getUserByEmail(stripeSession.customer_details.email);
+            if (userByEmail) {
+              userId = userByEmail.id;
+              console.log(`Pronađen korisnik po emailu: ${userByEmail.email}, ID: ${userId}`);
+            }
+          }
+        } catch (err) {
+          console.error("Greška pri traženju korisnika po emailu:", err);
+        }
+      }
+      
+      // Vraćamo grešku samo ako definitivno ne možemo pronaći korisnika
       if (!userId) {
         return res.status(400).json({ 
           error: "Nije pronađen ID korisnika za kreiranje narudžbe",

@@ -260,6 +260,13 @@ export default function OrderSuccessPageNew() {
   useEffect(() => {
     const processPayment = async () => {
       try {
+        // Ako nemamo niti sessionId niti orderId, prikazat ćemo pogrešku
+        if (!sessionId && !orderId) {
+          setError("Nedostaje ID narudžbe ili sesije");
+          setLoading(false);
+          return;
+        }
+        
         // Ako imamo Stripe session ID, prvo pokušavamo procesirati plaćanje
         if (sessionId) {
           console.log("Obrađujem Stripe sesiju:", sessionId);
@@ -276,17 +283,26 @@ export default function OrderSuccessPageNew() {
           }
           
           // Poziv API-ja za procesiranje Stripe sesije i stvaranje narudžbe
-          const createOrderResponse = await apiRequest("POST", "/api/process-stripe-session", requestData);
-          
-          if (!createOrderResponse.ok) {
-            const errorData = await createOrderResponse.json();
-            console.error("Server odgovorio s greškom:", errorData);
-            setError(errorData.error || "Neuspješno stvaranje narudžbe iz Stripe sesije");
+          let newOrderData;
+          try {
+            console.log("Šaljem zahtjev za obradu Stripe sesije:", requestData);
+            const createOrderResponse = await apiRequest("POST", "/api/process-stripe-session", requestData);
+            
+            if (!createOrderResponse.ok) {
+              const errorData = await createOrderResponse.json();
+              console.error("Server odgovorio s greškom:", errorData);
+              setError(errorData.error || "Neuspješno stvaranje narudžbe iz Stripe sesije");
+              setLoading(false);
+              return;
+            }
+            
+            newOrderData = await createOrderResponse.json();
+          } catch (apiError) {
+            console.error("Greška pri pozivu API-ja:", apiError);
+            setError("Neuspješna komunikacija sa serverom. Molimo pokušajte ponovno.");
             setLoading(false);
             return;
           }
-          
-          const newOrderData = await createOrderResponse.json();
           console.log("Dobiveni podaci o narudžbi:", newOrderData);
           
           // Postavljamo ID nove narudžbe
