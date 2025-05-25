@@ -53,6 +53,126 @@ export async function createPaymentIntent(req: Request, res: Response) {
  * Create a Stripe Checkout Session for a cart
  * With product information and images
  */
+/**
+ * Process a Stripe session and create an order
+ * @param sessionId Stripe session ID
+ * @param userId User ID
+ * @returns Created order and order items
+ */
+export async function processStripeSession(sessionId: string, userId: number) {
+  try {
+    // Retrieve the session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['line_items', 'payment_intent', 'customer']
+    });
+    
+    // Check if the session is complete and paid
+    if (session.status !== 'complete' || session.payment_status !== 'paid') {
+      throw new Error(`Plaćanje nije uspješno završeno. Status: ${session.status}, Payment status: ${session.payment_status}`);
+    }
+    
+    // Get cart items
+    const cartItems = await storage.getCartItems(userId);
+    
+    if (!cartItems || cartItems.length === 0) {
+      throw new Error("Košarica je prazna");
+    }
+    
+    // Calculate total amount
+    let totalProductAmount = 0;
+    for (const item of cartItems) {
+      totalProductAmount += parseFloat(String(item.product.price)) * item.quantity;
+    }
+    
+    // Add shipping cost if necessary
+    let shippingCost = 0;
+    const freeShippingThresholdSetting = await storage.getSetting("freeShippingThreshold");
+    const standardShippingRateSetting = await storage.getSetting("standardShippingRate");
+    
+    if (freeShippingThresholdSetting && standardShippingRateSetting) {
+      const freeShippingThreshold = parseFloat(freeShippingThresholdSetting.value);
+      const standardShippingRate = parseFloat(standardShippingRateSetting.value);
+      
+      if (totalProductAmount < freeShippingThreshold && standardShippingRate > 0) {
+        shippingCost = standardShippingRate;
+      }
+    }
+    
+    const orderTotal = totalProductAmount + shippingCost;
+
+    // Pripremamo podatke za dostavu iz Stripe sesije - koristimo customer_details umjesto shipping
+    // jer Stripe.js tipovi ne prepoznaju shipping polje u sesiji, iako je dostupno u podacima
+    const shippingData = {
+      address: session.customer_details?.address?.line1 || "",
+      city: session.customer_details?.address?.city || "",
+      postalCode: session.customer_details?.address?.postal_code || "",
+      country: session.customer_details?.address?.country || ""
+    };
+    
+    // Create a new order
+    const newOrder = await storage.createOrder({
+      userId: userId,
+      status: "processing", // Order is paid, so it's already in processing
+      paymentMethod: "stripe", // Payment with Stripe
+      paymentStatus: "paid", // Payment is already complete
+      email: session.customer_details?.email || "",
+      phone: session.customer_details?.phone || "",
+      shippingAddress: shippingData.address,
+      shippingCity: shippingData.city,
+      shippingPostalCode: shippingData.postalCode,
+      shippingCountry: shippingData.country,
+      billingAddress: session.customer_details?.address?.line1 || "",
+      billingCity: session.customer_details?.address?.city || "",
+      billingPostalCode: session.customer_details?.address?.postal_code || "",
+      billingCountry: session.customer_details?.address?.country || "",
+      total: orderTotal.toString(),
+      subtotal: totalProductAmount.toString(),
+      shippingCost: shippingCost.toString(),
+      customerNote: session.metadata?.note || "",
+      discountAmount: "0",
+    });
+    
+    // Add order items
+    const orderItems = [];
+    for (const item of cartItems) {
+      const orderItem = await storage.addOrderItem({
+        orderId: newOrder.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: String(item.product.price),
+        scentId: item.scentId || null,
+        colorId: item.colorId || null,
+        colorIds: item.colorIds || null,
+        colorName: item.colorName || null,
+        hasMultipleColors: Boolean(item.hasMultipleColors),
+        productName: item.product.name,
+        scentName: item.scent?.name || null,
+      });
+      
+      orderItems.push({
+        ...orderItem,
+        product: item.product,
+        scent: item.scent,
+        color: item.color,
+      });
+    }
+    
+    // Clear user's cart
+    await storage.clearCart(userId);
+    
+    // Return order data
+    return {
+      success: true,
+      orderId: newOrder.id,
+      order: newOrder,
+      orderItems
+    };
+  } catch (error) {
+    console.error("Greška pri obradi Stripe sesije:", error);
+    throw error;
+  }
+}
+
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
     const { amount, orderId, paymentMethod, successUrl, cancelUrl } = req.body;

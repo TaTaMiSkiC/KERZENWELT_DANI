@@ -72,119 +72,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Nedostaje ID sesije" });
       }
       
-      // Dohvatimo sesiju iz Stripe-a
-      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-      const session = await stripe.checkout.sessions.retrieve(sessionId, {
-        expand: ['line_items', 'payment_intent', 'customer']
-      });
-      
-      // Provjera je li sesija uspješno završena
-      if (session.status !== 'complete' || session.payment_status !== 'paid') {
-        return res.status(400).json({ 
-          error: "Plaćanje nije uspješno završeno", 
-          status: session.status,
-          payment_status: session.payment_status 
-        });
-      }
-      
       // Dohvatimo korisnika ako je prijavljen
-      const userId = req.user?.id || (session.metadata?.userId ? parseInt(session.metadata.userId) : undefined);
+      const userId = req.user?.id;
       
       if (!userId) {
         return res.status(401).json({ error: "Korisnik nije prijavljen" });
       }
       
-      // Dohvaćamo stavke košarice korisnika
-      const cartItems = await storage.getCartItems(userId);
+      console.log(`Obrađujem Stripe sesiju ${sessionId} za korisnika ${userId}`);
       
-      if (!cartItems || cartItems.length === 0) {
-        return res.status(400).json({ error: "Košarica je prazna" });
-      }
+      // Dohvaćamo modul za Stripe procesiranje
+      const { processStripeSession } = await import('./stripe');
       
-      // Izračunamo ukupan iznos narudžbe
-      let totalProductAmount = 0;
-      for (const item of cartItems) {
-        totalProductAmount += parseFloat(String(item.product.price)) * item.quantity;
-      }
-      
-      // Dodamo troškove dostave ako je potrebno
-      let shippingCost = 0;
-      const freeShippingThresholdSetting = await storage.getSetting("freeShippingThreshold");
-      const standardShippingRateSetting = await storage.getSetting("standardShippingRate");
-      
-      if (freeShippingThresholdSetting && standardShippingRateSetting) {
-        const freeShippingThreshold = parseFloat(freeShippingThresholdSetting.value);
-        const standardShippingRate = parseFloat(standardShippingRateSetting.value);
-        
-        if (totalProductAmount < freeShippingThreshold && standardShippingRate > 0) {
-          shippingCost = standardShippingRate;
-        }
-      }
-      
-      const orderTotal = totalProductAmount + shippingCost;
-      
-      // Kreiramo novu narudžbu
-      const newOrder = await storage.createOrder({
-        userId: userId,
-        status: "processing", // Narudžba je već plaćena, pa odmah ide u obradu
-        paymentMethod: "stripe", // Plaćanje Stripe-om
-        paymentStatus: "paid", // Plaćanje je već izvršeno
-        email: session.customer_details?.email || "",
-        phone: session.customer_details?.phone || "",
-        shippingAddress: session.shipping?.address?.line1 || "",
-        shippingCity: session.shipping?.address?.city || "",
-        shippingPostalCode: session.shipping?.address?.postal_code || "",
-        shippingCountry: session.shipping?.address?.country || "",
-        billingAddress: session.customer_details?.address?.line1 || "",
-        billingCity: session.customer_details?.address?.city || "",
-        billingPostalCode: session.customer_details?.address?.postal_code || "",
-        billingCountry: session.customer_details?.address?.country || "",
-        total: orderTotal.toString(),
-        note: session.metadata?.note || "",
-        stripeSessionId: sessionId,
-        stripePaymentIntentId: typeof session.payment_intent === 'string' 
-          ? session.payment_intent 
-          : session.payment_intent?.id || "",
-      });
-      
-      // Dodajemo stavke u narudžbu
-      const orderItems = [];
-      for (const item of cartItems) {
-        const orderItem = await storage.addOrderItem({
-          orderId: newOrder.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: String(item.product.price),
-          scentId: item.scentId || null,
-          colorId: item.colorId || null,
-          colorIds: item.colorIds || null,
-          colorName: item.colorName || null,
-          hasMultipleColors: item.hasMultipleColors || false,
-          productName: item.product.name
-        });
-        
-        orderItems.push({
-          ...orderItem,
-          product: item.product,
-          scent: item.scent,
-          color: item.color,
-          selectedColors: item.selectedColors
-        });
-      }
-      
-      // Čistimo košaricu korisnika
-      await storage.clearCart(userId);
+      // Obrađujemo Stripe sesiju i kreiramo narudžbu
+      const result = await processStripeSession(sessionId, userId);
       
       // Vraćamo podatke o narudžbi
-      res.json({
-        success: true,
-        orderId: newOrder.id,
-        order: newOrder,
-        orderItems: orderItems
-      });
-    } catch (error) {
+      res.json(result);
+    } catch (error: any) {
       console.error("Greška pri obradi Stripe sesije:", error);
-      res.status(500).json({ error: "Greška pri obradi Stripe sesije", details: String(error) });
+      res.status(500).json({ 
+        error: "Greška pri obradi Stripe sesije", 
+        details: error.message || String(error) 
+      });
     }
   });
 
