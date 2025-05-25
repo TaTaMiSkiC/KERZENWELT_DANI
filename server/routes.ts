@@ -180,6 +180,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enable serving static files from the public directory
   app.use(express.static(path.join(process.cwd(), "public")));
 
+  // PayPal API routes
+  app.get("/api/paypal/setup", async (req, res) => {
+    await loadPaypalDefault(req, res);
+  });
+
+  app.post("/api/paypal/order", async (req, res) => {
+    // Request body should contain: { intent, amount, currency }
+    await createPaypalOrder(req, res);
+  });
+
+  app.post("/api/paypal/order/:orderID/capture", async (req, res) => {
+    await capturePaypalOrder(req, res);
+  });
+
   // Specific handler for uploads directory
   app.use("/uploads", (req, res, next) => {
     const filePath = path.join(

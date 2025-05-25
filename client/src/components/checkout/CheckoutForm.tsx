@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings-api";
 import StripePaymentElement from "@/components/payment/StripePaymentElement";
 import StripeBuyButton from "@/components/payment/StripeBuyButton";
+import PayPalButton from "@/components/PayPalButton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { initiateStripeCheckout } from "@/lib/stripeCheckout";
 import { useLocation } from "wouter";
@@ -132,6 +133,100 @@ export default function CheckoutForm() {
       sameAsBilling: true,
     },
   });
+
+  // Helper function to submit orders from different payment methods
+  const submitOrder = async (data: any, paymentMethod: string = "unknown") => {
+    try {
+      setIsSubmitting(true);
+      
+      // Get the cart items to create order items
+      const orderItems = cartItems.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.product.price,
+        scentId: item.scentId,
+        colorId: item.colorId,
+        colorIds: item.colorIds,
+        hasMultipleColors: item.hasMultipleColors,
+      }));
+
+      // Add shipping cost if necessary
+      const isFreeShipping =
+        standardShippingRate === 0 ||
+        (cartTotal >= freeShippingThreshold && freeShippingThreshold > 0);
+      const shippingCost = isFreeShipping ? 0 : standardShippingRate;
+
+      // Calculate any discounts
+      const hasDiscount =
+        user &&
+        user.discountAmount &&
+        parseFloat(user.discountAmount) > 0 &&
+        user.discountExpiryDate &&
+        new Date(user.discountExpiryDate) > new Date();
+
+      // Check if order meets minimum requirement for discount
+      const meetsMinimumOrder =
+        !user?.discountMinimumOrder ||
+        parseFloat(user.discountMinimumOrder || "0") <= cartTotal;
+
+      // Apply discount if valid
+      const discountAmount =
+        hasDiscount && meetsMinimumOrder
+          ? parseFloat(user.discountAmount || "0")
+          : 0;
+
+      // Create final order data
+      const orderData = {
+        ...data,
+        total: (cartTotal + shippingCost - discountAmount).toString(),
+        subtotal: cartTotal.toString(),
+        discountAmount: discountAmount.toString(),
+        shippingCost: shippingCost.toString(),
+        items: orderItems,
+        paymentMethod: paymentMethod || data.paymentMethod,
+      };
+
+      console.log("Submitting order with payment method:", paymentMethod);
+      console.log("Order data:", orderData);
+
+      // Submit order to API
+      const response = await apiRequest("POST", "/api/orders", orderData);
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${await response.text()}`);
+      }
+      
+      const order = await response.json();
+      
+      // Clear cart after successful order
+      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+
+      // Update user address if saveAddress is checked
+      if (data.saveAddress && user) {
+        await apiRequest("PATCH", `/api/users/${user.id}`, {
+          address: data.address,
+          city: data.city,
+          postalCode: data.postalCode,
+          country: data.country,
+        });
+      }
+
+      // Navigate to success page
+      navigate(`/order-success/${order.id}`);
+      
+      return order;
+    } catch (error) {
+      console.error("Error submitting order:", error);
+      toast({
+        title: "Fehler",
+        description: "Beim Erstellen Ihrer Bestellung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const onSubmit = async (data: CheckoutFormValues) => {
     if (data.paymentMethod === "nachnahme" && data.country !== "Austrija") {
@@ -966,7 +1061,38 @@ export default function CheckoutForm() {
                       />
                     )}
                     
-                    {watchPaymentMethod !== "stripe" && (
+                    {watchPaymentMethod === "paypal" && (
+                      <PayPalButton 
+                        amount={total.toFixed(2)}
+                        currency="EUR"
+                        intent="CAPTURE"
+                        onPaymentSuccess={(data) => {
+                          console.log("PayPal payment successful", data);
+                          toast({
+                            title: "Zahlung erfolgreich",
+                            description: "Ihre Bestellung wurde erfolgreich aufgegeben.",
+                          });
+                          
+                          // Submit order with PayPal payment info
+                          submitOrder({
+                            ...form.getValues(),
+                            paymentMethod: "paypal",
+                            paymentStatus: "paid",
+                            paypalOrderId: data.id
+                          });
+                        }}
+                        onPaymentError={(error) => {
+                          console.error("PayPal payment error", error);
+                          toast({
+                            title: "Fehler",
+                            description: "Bei der Verarbeitung Ihrer PayPal-Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+                            variant: "destructive",
+                          });
+                        }}
+                      />
+                    )}
+                    
+                    {watchPaymentMethod !== "stripe" && watchPaymentMethod !== "paypal" && (
                       <Button
                         type="button"
                         onClick={async () => {
@@ -990,15 +1116,13 @@ export default function CheckoutForm() {
                         }}
                         className="w-full"
                       >
-                        {watchPaymentMethod === "paypal"
-                          ? "Mit PayPal zahlen"
-                          : watchPaymentMethod === "klarna"
-                            ? "Mit Klarna zahlen"
-                            : watchPaymentMethod === "eps"
-                              ? "Mit EPS Online-Banking zahlen"
-                              : watchPaymentMethod === "sofort"
-                                ? "Mit Sofortüberweisung zahlen"
-                                : "Mit Karte zahlen"}{" "}
+                        {watchPaymentMethod === "klarna"
+                          ? "Mit Klarna zahlen"
+                          : watchPaymentMethod === "eps"
+                            ? "Mit EPS Online-Banking zahlen"
+                            : watchPaymentMethod === "sofort"
+                              ? "Mit Sofortüberweisung zahlen"
+                              : "Mit Karte zahlen"}{" "}
                         ({total.toFixed(2)} €)
                       </Button>
                     )}
