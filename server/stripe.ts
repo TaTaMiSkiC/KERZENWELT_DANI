@@ -274,19 +274,22 @@ export async function createCheckoutSession(req: Request, res: Response) {
       }
     }
 
-    // PRIPREMA METADATA OBJEKTA:
-    const metadataForStripeSession: Record<string, string> = {}; // Inicijaliziramo prazan objekt
-
-    if (orderData) {
-      metadataForStripeSession.orderData = orderData; // Podatci o narudžbi
-    }
+    // PRIPREMA METADATA OBJEKTA - samo osnovni podaci zbog Stripe ograničenja od 500 karaktera
+    const metadataForStripeSession: Record<string, string> = {};
 
     if (userId) {
-      metadataForStripeSession.userId = userId.toString(); // ID korisnika
+      metadataForStripeSession.userId = userId.toString();
     }
 
     if (language) {
-      metadataForStripeSession.language = language; // Jezik
+      metadataForStripeSession.language = language;
+    }
+
+    // Dodaj samo osnovne podatke umjesto cijeli orderData
+    if (orderData) {
+      const parsedOrderData = JSON.parse(orderData);
+      metadataForStripeSession.paymentMethod = parsedOrderData.paymentMethod || 'stripe';
+      metadataForStripeSession.total = parsedOrderData.total || '0';
     }
 
     // KRAJ PRIPREME METADATA OBJEKTA. OVDJE SE SVI PODACI SKUPLJAJU.
