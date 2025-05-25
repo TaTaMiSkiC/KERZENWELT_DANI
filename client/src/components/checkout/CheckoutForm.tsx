@@ -946,15 +946,6 @@ export default function CheckoutForm() {
               watchPaymentMethod === "sofort") && (
               <div className="space-y-4">
                 <div className="mt-4">
-                    {watchPaymentMethod === "stripe" && (
-                      <StripeBuyButton
-                        amount={total}
-                        userId={user?.id}
-                        language={t("languageCode") || "de"}
-                        onSuccess={handleStripeSuccess}
-                        onError={handleStripeError}
-                      />
-                    )}
 
                     {watchPaymentMethod === "paypal" && (
                       <PayPalButton
@@ -1002,41 +993,7 @@ export default function CheckoutForm() {
                       />
                     )}
 
-                    {watchPaymentMethod !== "stripe" &&
-                      watchPaymentMethod !== "paypal" && (
-                        <Button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              // Pokreni Stripe Checkout s točnim iznosom
-                              await initiateStripeCheckout(
-                                total,
-                                watchPaymentMethod,
-                              );
 
-                              // Neće se izvršiti ako korisnik bude preusmjeren
-                              setStripePaymentComplete(true);
-                            } catch (error) {
-                              toast({
-                                title: "Fehler",
-                                description:
-                                  "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className="w-full"
-                        >
-                          {watchPaymentMethod === "klarna"
-                            ? "Mit Klarna zahlen"
-                            : watchPaymentMethod === "eps"
-                              ? "Mit EPS Online-Banking zahlen"
-                              : watchPaymentMethod === "sofort"
-                                ? "Mit Sofortüberweisung zahlen"
-                                : "Mit Karte zahlen"}{" "}
-                          ({total.toFixed(2)} €)
-                        </Button>
-                      )}
                 </div>
               </div>
             )}
