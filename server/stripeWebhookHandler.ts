@@ -92,7 +92,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               discountAmount: "0",
               shippingCost: "0",
               paymentMethod: "stripe",
-              status: "completed",
+              status: "pending",
               paymentStatus: "paid",
               shippingAddress: user.address || "",
               shippingCity: user.city || "",
