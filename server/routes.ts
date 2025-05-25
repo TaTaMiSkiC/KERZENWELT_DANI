@@ -72,11 +72,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Nedostaje ID sesije" });
       }
       
-      // Dohvatimo korisnika ako je prijavljen
-      const userId = req.user?.id;
+      // Pokušamo dohvatiti korisnika iz sesije
+      let userId: number | undefined = req.user?.id;
+      
+      // Ako korisnik nije prijavljen, nastavljamo s obradom Stripe sesije
+      // ali s direktnim pristupom u processStripeSession funkciji
+      if (!userId) {
+        console.log("Korisnik nije prijavljen u sesiji, nastavit ćemo s obradom Stripe podataka");
+        
+        // Dohvaćamo korisnika iz baze koristeći metadata u Stripe sesiji
+        try {
+          const { stripe } = await import('./stripe');
+          const stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ['line_items', 'payment_intent', 'customer']
+          });
+          
+          // Pokušamo izvući userID iz metapodataka
+          if (stripeSession.metadata?.userId) {
+            userId = parseInt(stripeSession.metadata.userId);
+            console.log(`Pronađen ID korisnika u Stripe metapodacima: ${userId}`);
+          }
+        } catch (stripeError) {
+          console.error("Greška pri dohvaćanju Stripe sesije:", stripeError);
+        }
+      }
       
       if (!userId) {
-        return res.status(401).json({ error: "Korisnik nije prijavljen" });
+        return res.status(400).json({ 
+          error: "Nije pronađen ID korisnika za kreiranje narudžbe",
+          details: "Korisnik nije prijavljen i metadata ne sadrži userId" 
+        });
       }
       
       console.log(`Obrađujem Stripe sesiju ${sessionId} za korisnika ${userId}`);

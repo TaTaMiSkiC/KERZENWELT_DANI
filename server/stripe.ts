@@ -9,6 +9,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 // Inicijalizacija Stripe sa tajnim ključem
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+export { stripe };
 
 /**
  * Create a payment intent for a checkout transaction
@@ -204,6 +205,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
     const metadata: Record<string, string> = {};
     if (orderId) {
       metadata.order_id = orderId.toString();
+    }
+    
+    // Dodajemo ID korisnika u metapodatke
+    if (userId) {
+      metadata.userId = userId.toString();
     }
 
     // Kreiramo listu podržanih metoda plaćanja
