@@ -27,12 +27,25 @@ export async function initiateStripeCheckout(
     // Dobivamo stripe-ov id metode plaćanja (card, paypal, klarna, itd.)
     const stripePaymentMethod = paymentMethodMapping[paymentMethod] || "card";
 
+    // Dohvaćamo podatke o korisniku
+    let userId = undefined;
+    try {
+      const userResponse = await apiRequest("GET", "/api/user");
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        userId = userData.id;
+      }
+    } catch (error) {
+      console.warn("Nije moguće dohvatiti podatke o korisniku:", error);
+    }
+
     // Kreiraj Checkout sesiju
     const response = await apiRequest("POST", "/api/create-checkout-session", {
       amount,
       orderId,
+      userId, // Dodajemo ID korisnika za praćenje
       paymentMethod: stripePaymentMethod, // Dodajemo metodu plaćanja za Stripe
-      successUrl: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}`,
+      successUrl: `${origin}/order-success-new?session_id={CHECKOUT_SESSION_ID}&user_id=${userId || ''}`,
       cancelUrl: `${origin}/checkout?canceled=true`,
     });
 

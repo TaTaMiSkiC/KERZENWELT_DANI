@@ -11,6 +11,7 @@ import ProductDetailsPage from "@/pages/product-details-page";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
 import OrderSuccessPage from "@/pages/order-success-page";
+import OrderSuccessPageNew from "@/pages/order-success-page-new";
 import AboutPage from "@/pages/about-page";
 import ContactPage from "@/pages/contact-page";
 import BlogPage from "@/pages/blog-page";
@@ -85,6 +86,10 @@ function Router() {
       </Route>
       <Route path="/checkout">
         <ProtectedRoute path="/checkout" component={CheckoutPage} />
+      </Route>
+      <Route path="/order-success-new">
+        {/* Nova stranica za obradu narudžbe koja ne zahtijeva autentifikaciju */}
+        <OrderSuccessPageNew />
       </Route>
       <Route path="/order-success">
         <ProtectedRoute path="/order-success" component={OrderSuccessPage} />
