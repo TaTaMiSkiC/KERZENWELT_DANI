@@ -32,7 +32,7 @@ export async function initiateStripeCheckout(
       amount,
       orderId,
       paymentMethod: stripePaymentMethod, // Dodajemo metodu plaćanja za Stripe
-      successUrl: `${origin}/order-success-page?session_id={CHECKOUT_SESSION_ID}`,
+      successUrl: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${origin}/checkout?canceled=true`,
     });
 
