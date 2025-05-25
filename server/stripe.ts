@@ -274,7 +274,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
       }
     }
 
-    // PRIPREMA METADATA OBJEKTA - samo osnovni podaci zbog Stripe ograničenja od 500 karaktera
+    // PRIPREMA METADATA OBJEKTA - samo najosnovniji podaci zbog Stripe ograničenja od 500 karaktera
     const metadataForStripeSession: Record<string, string> = {};
 
     if (userId) {
@@ -285,12 +285,8 @@ export async function createCheckoutSession(req: Request, res: Response) {
       metadataForStripeSession.language = language;
     }
 
-    // Dodaj samo osnovne podatke umjesto cijeli orderData
-    if (orderData) {
-      const parsedOrderData = JSON.parse(orderData);
-      metadataForStripeSession.paymentMethod = parsedOrderData.paymentMethod || 'stripe';
-      metadataForStripeSession.total = parsedOrderData.total || '0';
-    }
+    // Samo osnovni iznos - bez kompleksnih podataka
+    metadataForStripeSession.amount = amount.toString();
 
     // KRAJ PRIPREME METADATA OBJEKTA. OVDJE SE SVI PODACI SKUPLJAJU.
 
