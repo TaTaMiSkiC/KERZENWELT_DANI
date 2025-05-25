@@ -1,12 +1,13 @@
+// home/runner/workspace/server/stripeWebhookHandler.ts
 import { Request, Response } from "express";
 import Stripe from "stripe";
-import { stripe } from "./stripe";
+import { stripe } from "./stripe"; // Uvezite Stripe instancu
 import { db } from "./db";
 import { orders, cartItems } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import { storage } from "./storage";
 
-// Stripe Webhook Secret (from environment variables)
+// Vaš Stripe Webhook Secret (dobijete ga u Stripe Dashboardu)
+// Postavite ga kao environment varijablu, npr. process.env.STRIPE_WEBHOOK_SECRET
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function handleStripeWebhook(req: Request, res: Response) {
@@ -20,160 +21,116 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       sig as string,
       stripeWebhookSecret as string,
     );
+    console.log(`[Webhook] Event received: ${event.type} - ID: ${event.id}`); // Log uspješnog konstruiranja eventa
   } catch (err: any) {
-    console.error(`⚠️ Webhook Error: ${err.message}`);
+    console.error(
+      `⚠️ [Webhook ERROR] Konstrukcija Webhooka nije uspjela: ${err.message}`,
+    );
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Immediately respond to Stripe to acknowledge receipt of the event
-  // This prevents Stripe from retrying the webhook multiple times
-  res.json({ received: true });
+  // Handle the event
+  switch (event.type) {
+    case "checkout.session.completed":
+      const session = event.data.object as Stripe.Checkout.Session;
 
-  try {
-    // Log all webhook events for debugging
-    console.log(`[Webhook] Received event type: ${event.type}`);
+      console.log(`[Webhook] Checkout Session completed: ${session.id}`);
+      console.log("[Webhook] Stripe Session Metadata:", session.metadata);
 
-    if (event.type === "checkout.session.completed") {
-      await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
-    } else if (event.type === "payment_intent.succeeded") {
-      await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
-    } else if (event.type === "payment_intent.payment_failed") {
-      await handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
-    } else {
-      console.log(`[Webhook] Unhandled event type: ${event.type}`);
-    }
-  } catch (error) {
-    console.error(`[Webhook ERROR] Failed to process webhook:`, error);
-  }
-}
+      if (session.payment_status === "paid") {
+        const orderId = session.metadata?.order_id;
+        const userId = session.metadata?.userId;
 
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  console.log(`[Webhook] Processing checkout.session.completed: ${session.id}`);
-  console.log(`[Webhook] Session metadata:`, session.metadata);
-  console.log(`[Webhook] Payment status: ${session.payment_status}`);
-  
-  if (session.payment_status !== "paid") {
-    console.log(`[Webhook] Payment not yet paid, status: ${session.payment_status}`);
-    return;
-  }
+        console.log(
+          `[Webhook] Primljen orderId iz metadate: ${orderId}, userId: ${userId}`,
+        );
 
-  // Try to get order ID from metadata
-  const orderId = session.metadata?.order_id;
-  const userId = session.metadata?.userId;
+        if (orderId) {
+          try {
+            console.log(
+              `[Webhook] Pokušavam pronaći narudžbu ID: ${orderId} za ažuriranje.`,
+            );
+            const orderToUpdate = await db.query.orders.findFirst({
+              where: eq(orders.id, parseInt(orderId)),
+            });
 
-  if (!orderId) {
-    console.error(`[Webhook ERROR] No order_id found in session metadata`);
-    return;
-  }
+            if (orderToUpdate) {
+              console.log(
+                `[Webhook] Pronađena narudžba ID: ${orderToUpdate.id}. Trenutni status: ${orderToUpdate.status}`,
+              );
 
-  try {
-    console.log(`[Webhook] Looking for order with ID: ${orderId}`);
-    
-    // First try Drizzle ORM query
-    let orderToUpdate = await db.query.orders.findFirst({
-      where: eq(orders.id, parseInt(orderId)),
-    });
+              await db
+                .update(orders)
+                .set({
+                  status: "completed", // Ažurira status
+                  paymentIntentId: session.payment_intent?.id as string, // Sprema Payment Intent ID
+                  updatedAt: new Date(), // Ažurira datum
+                })
+                .where(eq(orders.id, parseInt(orderId)));
 
-    // If order not found with Drizzle, try the storage interface
-    if (!orderToUpdate) {
-      console.log(`[Webhook] Order not found with Drizzle, trying storage interface`);
-      orderToUpdate = await storage.getOrder(parseInt(orderId));
-    }
+              console.log(
+                `[Webhook SUCCESS] Narudžba ${orderId} uspješno ažurirana na 'completed' status.`,
+              );
 
-    if (orderToUpdate) {
-      console.log(`[Webhook] Found order #${orderId}, current status: ${orderToUpdate.status}`);
-      
-      // Update order status
-      await db
-        .update(orders)
-        .set({
-          status: "completed",
-          paymentStatus: "paid",
-          updatedAt: new Date(),
-        })
-        .where(eq(orders.id, parseInt(orderId)));
-      
-      console.log(`[Webhook] Order #${orderId} updated to 'completed' status`);
-      
-      // Update with payment intent if available
-      if (session.payment_intent && typeof session.payment_intent !== 'string') {
-        await db
-          .update(orders)
-          .set({
-            paymentIntentId: session.payment_intent.id,
-          })
-          .where(eq(orders.id, parseInt(orderId)));
-        
-        console.log(`[Webhook] Added payment intent ID: ${session.payment_intent.id}`);
-      }
-      
-      // Clear cart if userId is available
-      if (userId) {
-        try {
-          console.log(`[Webhook] Clearing cart for user #${userId}`);
-          await db
-            .delete(cartItems)
-            .where(eq(cartItems.userId, parseInt(userId)));
-          console.log(`[Webhook] Cart cleared for user #${userId}`);
-        } catch (cartError) {
-          console.error(`[Webhook] Error clearing cart:`, cartError);
+              if (userId) {
+                console.log(
+                  `[Webhook] Pokušavam obrisati košaricu za korisnika ID: ${userId}.`,
+                );
+                await db
+                  .delete(cartItems)
+                  .where(eq(cartItems.userId, parseInt(userId)));
+                console.log(
+                  `[Webhook SUCCESS] Košarica očišćena za korisnika ${userId}.`,
+                );
+              } else {
+                console.warn(
+                  "[Webhook WARN] Nedostaje userId u metadata, ne mogu obrisati košaricu.",
+                );
+              }
+
+              // Ovdje možete poslati potvrdu e-poštom korisniku
+              // if (sendNewOrderNotification) {
+              //   await sendNewOrderNotification(orderToUpdate.id);
+              // }
+            } else {
+              console.error(
+                `[Webhook ERROR] Narudžba s ID-om ${orderId} NIJE pronađena za ažuriranje.`,
+              );
+            }
+          } catch (updateError: any) {
+            console.error(
+              `[Webhook ERROR] Greška pri ažuriranju narudžbe ili brisanju košarice:`,
+              updateError.message || updateError,
+            );
+          }
+        } else {
+          console.warn(
+            "[Webhook WARN] Nedostaje 'order_id' u metadata Stripe sesije. Ne mogu ažurirati narudžbu.",
+          );
         }
+      } else {
+        console.warn(
+          `[Webhook WARN] Plaćanje nije uspješno za sesiju ${session.id}. Status: ${session.payment_status}.`,
+        );
       }
-      
-      console.log(`[Webhook] Successfully processed order #${orderId}`);
-    } else {
-      console.error(`[Webhook ERROR] Order #${orderId} not found`);
-      
-      // Get detailed session info for debugging
-      try {
-        const detailedSession = await stripe.checkout.sessions.retrieve(session.id, {
-          expand: ['line_items', 'customer', 'payment_intent']
-        });
-        
-        console.log(`[Webhook] Detailed session info:`, {
-          id: detailedSession.id,
-          customerId: detailedSession.customer,
-          customerEmail: detailedSession.customer_details?.email,
-          amount: detailedSession.amount_total,
-          metadata: detailedSession.metadata,
-          lineItems: detailedSession.line_items?.data?.length || 0
-        });
-      } catch (sessionError) {
-        console.error(`[Webhook] Failed to retrieve detailed session:`, sessionError);
-      }
-    }
-  } catch (error) {
-    console.error(`[Webhook ERROR] Failed to process checkout session:`, error);
-  }
-}
+      break;
 
-async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  console.log(`[Webhook] PaymentIntent ${paymentIntent.id} succeeded`);
-  
-  // Add additional handling if needed, but checkout.session.completed
-  // usually handles the order update
-}
+    case "payment_intent.succeeded":
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      console.log(`[Webhook] PaymentIntent ${paymentIntent.id} succeeded!`);
+      // Ovdje možete dodati logiku za praćenje, ali checkout.session.completed je primaran
+      break;
 
-async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
-  console.log(`[Webhook] PaymentIntent ${paymentIntent.id} failed`);
-  
-  // Handle failed payment if you need to update an order
-  const orderId = paymentIntent.metadata?.order_id;
-  
-  if (orderId) {
-    try {
-      await db
-        .update(orders)
-        .set({
-          status: "failed",
-          paymentStatus: "failed",
-          updatedAt: new Date(),
-        })
-        .where(eq(orders.id, parseInt(orderId)));
-      
-      console.log(`[Webhook] Order #${orderId} marked as failed`);
-    } catch (error) {
-      console.error(`[Webhook] Error updating order after payment failure:`, error);
-    }
+    case "payment_intent.payment_failed":
+      const failedPaymentIntent = event.data.object as Stripe.PaymentIntent;
+      console.log(`[Webhook] PaymentIntent ${failedPaymentIntent.id} failed.`);
+      // Ažurirajte status narudžbe na 'failed' ili 'canceled'
+      break;
+
+    default:
+      console.log(`[Webhook] Neprepoznat event tip: ${event.type}`);
   }
+
+  // Return a 200 response to acknowledge receipt of the event
+  res.json({ received: true });
 }

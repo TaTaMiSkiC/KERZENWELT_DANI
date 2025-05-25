@@ -945,49 +945,6 @@ export default function CheckoutForm() {
               watchPaymentMethod === "eps" ||
               watchPaymentMethod === "sofort") && (
               <div className="space-y-4">
-                <div className="border rounded-lg p-4 bg-neutral">
-                  <div className="flex flex-wrap items-center gap-3 mb-4">
-                    <img
-                      src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png"
-                      alt="Visa"
-                      className="h-8 object-contain"
-                    />
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg"
-                      alt="Mastercard"
-                      className="h-8 object-contain"
-                    />
-                    <img
-                      src="https://cdn.freebiesupply.com/logos/large/2x/american-express-logo-png-transparent.png"
-                      alt="American Express"
-                      className="h-8 object-contain"
-                    />
-                    <img
-                      src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg"
-                      alt="PayPal"
-                      className="h-8 object-contain"
-                    />
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/4/40/Klarna_Payment_Badge.svg"
-                      alt="Klarna"
-                      className="h-8 object-contain"
-                    />
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Eps-%C3%9Cberweisung_Logo.svg/1200px-Eps-%C3%9Cberweisung_Logo.svg.png"
-                      alt="EPS"
-                      className="h-8 object-contain"
-                    />
-                  </div>
-
-                  <p className="text-sm mb-3">
-                    Zahlen Sie sicher und einfach mit Online-Zahlungsmethoden:
-                  </p>
-                  <div className="bg-background rounded-md p-4 mt-4 mb-4">
-                    <p className="text-sm">
-                      Alle Zahlungsdaten werden sicher über eine verschlüsselte
-                      Verbindung übertragen.
-                    </p>
-                  </div>
 
                   <div className="mt-4">
                     {watchPaymentMethod === "stripe" && (

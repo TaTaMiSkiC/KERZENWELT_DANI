@@ -47,7 +47,8 @@ import {
   subscribers,
 } from "@shared/schema";
 import { authMiddleware, adminMiddleware } from "./auth"; // <-- Promijenjeno!
-import { handleStripeWebhook } from "./stripeWebhookHandler"; //
+import express from "express";
+import { handleStripeWebhook } from "./stripeWebhookHandler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -64,6 +65,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await handleStripeWebhook(req, res);
     },
   );
+
+  app.use(express.json()); // <-- Provjerite da su OVI ILI SLIČNI pozivi NAKON webhook rute
+  app.use(express.urlencoded({ extended: true }));
 
   app.post("/api/orders/stripe-success", authMiddleware, async (req, res) => {
     try {

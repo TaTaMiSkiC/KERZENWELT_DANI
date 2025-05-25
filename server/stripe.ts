@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Stripe from "stripe";
-import { storage } from "./storage";
+import { storage } from "./storage"; // Pretpostavljam da je ovo putanja do vašeg storage modula
 
 // Initialize Stripe with the secret key from environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -50,16 +50,6 @@ export async function createPaymentIntent(req: Request, res: Response) {
   }
 }
 
-/**
- * Create a Stripe Checkout Session for a cart
- * With product information and images
- */
-/**
- * Process a Stripe session and create an order
- * @param sessionId Stripe session ID
- * @param userId User ID
- * @returns Created order and order items
- */
 export async function processStripeSession(
   sessionId: string,
   userId: number,
@@ -257,8 +247,9 @@ export async function processStripeSession(
 
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
+    // Provjerite da 'orderId' dolazi u req.body
     const { amount, orderId, language, paymentMethod, successUrl, cancelUrl } =
-      req.body; // orderId je ovdje primljen
+      req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
@@ -273,7 +264,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
     }
 
     // Get user information if logged in
-    const userIdFromReq = req.user?.id;
+    const userIdFromReq = req.user?.id; // Pretpostavljam da req.user postoji iz auth middlewarea
     let customerEmail = "";
 
     if (userIdFromReq) {
@@ -282,28 +273,28 @@ export async function createCheckoutSession(req: Request, res: Response) {
         customerEmail = user.email;
       }
     }
-    // Prepare metadata
-    const metadataForStripeSession: Record<string, string> = {}; // <-- Ova linija
+
+    // PRIPREMA METADATA OBJEKTA:
+    const metadataForStripeSession: Record<string, string> = {}; // Inicijaliziramo prazan objekt
+
     if (orderId) {
-      // <--- OVAJ UVJET JE KLJUČAN!
-      metadataForStripeSession.order_id = orderId.toString(); // <--- OVO JE LINIJA KOJU TREBATE DODATI/PROVJERITI
-      console.log(`📝 Dodajem order_id ${orderId} u Stripe metapodatke`);
-    } else {
-      console.warn('⚠️ Nije proslijeđen orderId pri kreiranju Stripe sesije!');
+      // AKO IMAMO orderId (trebali bismo ga uvijek imati iz CheckoutForm.tsx)
+      metadataForStripeSession.order_id = orderId.toString(); // <--- OVDJE DODAJEMO order_id!
     }
-    // Dodajemo ID korisnika u metapodatke
     if (userIdFromReq) {
+      // Dodajemo userId ako postoji
       metadataForStripeSession.userId = userIdFromReq.toString();
-      console.log(`📝 Dodajem userId ${userIdFromReq} u Stripe metapodatke`);
     }
-    // Dodajemo informaciju o jeziku u metapodatke
     if (language) {
+      // Dodajemo jezik ako postoji
       metadataForStripeSession.language = language;
     }
 
+    // KRAJ PRIPREME METADATA OBJEKTA. OVDJE SE SVI PODACI SKUPLJAJU.
+
+    // --- OSTATAK KODA ZA LINE ITEMS I DOSTAVU ---
+
     // Kreiramo listu podržanih metoda plaćanja
-    // VAŽNO: Ove metode moraju biti aktivirane u Stripe Dashboard-u
-    // (https://dashboard.stripe.com/account/payments/settings)
     const supportedMethods = ["card", "paypal", "klarna", "eps"];
 
     // 🎯 Odredi koje metode koristiti u ovom checkoutu
@@ -374,14 +365,33 @@ export async function createCheckoutSession(req: Request, res: Response) {
               }
             }
 
-            // Pripremamo URL slike
-            const baseUrl = `${req.protocol}://${req.get("host")}`; // <-- Ovdje je baseUrl
+            // Pripremamo URL slike - ISPRAVLJENO RJEŠENJE ZA APSOLUTNU PUTANJU
             let imageUrl = null;
+            const currentHost = req.get("host"); // Dohvaća host (npr. your-replit-name.repl.co)
+            const currentProtocol = req.protocol; // Dohvaća protokol (http ili https)
+            const baseUrl = `${currentProtocol}://${currentHost}`; // Konstruira bazni URL
 
             if (item.product.imageUrl) {
-              imageUrl = item.product.imageUrl.startsWith("http")
-                ? item.product.imageUrl
-                : `${baseUrl}${item.product.imageUrl}`; // <-- OVDJE JE KLJUČNO!
+              console.log(`Original image URL: ${item.product.imageUrl}`);
+              console.log(`Base URL: ${baseUrl}`);
+
+              if (
+                item.product.imageUrl.startsWith("http://") ||
+                item.product.imageUrl.startsWith("https://")
+              ) {
+                imageUrl = item.product.imageUrl;
+                console.log(`Image URL is already absolute: ${imageUrl}`);
+              } else {
+                // Provjerite da li URL počinje sa '/'
+                const relativePath = item.product.imageUrl.startsWith("/")
+                  ? item.product.imageUrl
+                  : `/${item.product.imageUrl}`;
+                // Ovdje je ključna ispravka: koristite BACKTICKOVE za template literal string
+                imageUrl = `${baseUrl}${relativePath}`; // <<-- ISPRAVLJENO! Bez span tagova!
+                console.log(`Constructed absolute image URL: ${imageUrl}`);
+              }
+            } else {
+              console.log("Product image URL is null or empty.");
             }
 
             // Kreiramo Stripe line item za ovu stavku
@@ -395,7 +405,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
                       ? item.product.description.substring(0, 97) + "..."
                       : item.product.description
                     : "",
-                  images: imageUrl ? [imageUrl] : undefined, // <-- Ovdje se šalje image_url
+                  images: imageUrl ? [imageUrl] : undefined,
                 },
                 unit_amount: Math.round(
                   parseFloat(String(item.product.price)) * 100,
@@ -412,7 +422,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     // Ako nismo uspjeli dohvatiti stavke iz košarice, koristimo generički line item
     if (lineItems.length === 0) {
-      totalProductAmount = parseFloat(amount);
+      totalProductAmount = parseFloat(amount); // Koristi se količina iz req.body.amount ako nema stavki u košarici
 
       lineItems = [
         {
@@ -480,24 +490,23 @@ export async function createCheckoutSession(req: Request, res: Response) {
       console.error("Greška pri dohvaćanju postavki za dostavu:", error);
     }
 
-    /// Kreiramo sesiju za naplatu s detaljima za prikaz
+    // KREIRANJE STRIPE SESIJE:
     const session = await stripe.checkout.sessions.create({
       payment_method_types: paymentMethodTypes as any,
       line_items: lineItems,
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
-      // OVDJE JE KLJUČNO: PROŠIRITE metadataForStripeSession
+      // OVDJE SE ŠALJU SVI SKUPLJENI METADATA PODACI:
       metadata: {
-        // <--- OVAJ OBJEKT SE ŠALJE STRIPEU
-        ...metadataForStripeSession, // <--- OVAKO SE PROŠIRUJU SVI VAŠI PRETHODNO DEFINIRANI METADATA (uklj. order_id)
-        subtotal: `${totalProductAmount.toFixed(2)} €`, // Ovo su dodatni podaci
+        ...metadataForStripeSession, // <-- OVO ĆE UKLJUČITI 'order_id', 'userId', 'language'
+        subtotal: `${totalProductAmount.toFixed(2)} €`,
         shipping:
           shippingCost > 0 ? `${shippingCost.toFixed(2)} €` : "Kostenlos",
         total: `${totalAmount.toFixed(2)} €`,
       },
       customer_email: customerEmail || undefined,
-      locale: "de",
+      locale: "de", // Jezik Checkout stranice
       billing_address_collection: "required" as any,
       phone_number_collection: {
         enabled: true,
@@ -507,7 +516,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
     // Return the session ID to the client
     res.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
-    console.error("Error creating checkout session:", error);
+    console.error("Error creating checkout session:", error); // Log greške
     res.status(500).json({
       error: "Failed to create checkout session",
       message: error.message,

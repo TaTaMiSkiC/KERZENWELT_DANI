@@ -1697,7 +1697,6 @@ export const translations: Record<Language, Record<string, string>> = {
     //
     //
     //
-    //
 
     // Document Management
     "admin.uploadDocument": "Dokument hochladen",
