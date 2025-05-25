@@ -41,16 +41,15 @@ export async function initiateStripeCheckout(
 
     // Kreiraj Checkout sesiju
     // Dohvaćamo trenutni odabrani jezik
-    const currentLanguage = document.documentElement.lang || 'de';
-    
+    const currentLanguage = document.documentElement.lang || "de";
+
     const response = await apiRequest("POST", "/api/create-checkout-session", {
       amount,
       orderId,
-      userId, // Dodajemo ID korisnika za praćenje
-      language: currentLanguage, // Dodajemo informaciju o jeziku
-      paymentMethod: stripePaymentMethod, // Dodajemo metodu plaćanja za Stripe
-      // Wir stellen sicher, dass alle wichtigen Parameter in der Erfolgs-URL enthalten sind
-      successUrl: `${origin}/order-success-new?session_id={CHECKOUT_SESSION_ID}&user_id=${userId || ''}&lang=${currentLanguage || 'de'}`,
+      userId,
+      language: currentLanguage,
+      paymentMethod: stripePaymentMethod,
+      successUrl: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${origin}/checkout?canceled=true`,
     });
 

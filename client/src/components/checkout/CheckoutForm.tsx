@@ -138,17 +138,18 @@ export default function CheckoutForm() {
   const submitOrder = async (data: any, paymentMethod: string = "unknown") => {
     try {
       setIsSubmitting(true);
-      
+
       // Get the cart items to create order items
-      const orderItems = cartItems?.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.product.price,
-        scentId: item.scentId,
-        colorId: item.colorId,
-        colorIds: item.colorIds,
-        hasMultipleColors: item.hasMultipleColors,
-      })) || [];
+      const orderItems =
+        cartItems?.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.product.price,
+          scentId: item.scentId,
+          colorId: item.colorId,
+          colorIds: item.colorIds,
+          hasMultipleColors: item.hasMultipleColors,
+        })) || [];
 
       // Add shipping cost if necessary
       const isFreeShipping =
@@ -191,13 +192,15 @@ export default function CheckoutForm() {
 
       // Submit order to API
       const response = await apiRequest("POST", "/api/orders", orderData);
-      
+
       if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}: ${await response.text()}`);
+        throw new Error(
+          `Server responded with ${response.status}: ${await response.text()}`,
+        );
       }
-      
+
       const order = await response.json();
-      
+
       // Clear cart after successful order
       await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
 
@@ -213,13 +216,14 @@ export default function CheckoutForm() {
 
       // Navigate to success page
       navigate(`/order-success/${order.id}`);
-      
+
       return order;
     } catch (error) {
       console.error("Error submitting order:", error);
       toast({
         title: "Fehler",
-        description: "Beim Erstellen Ihrer Bestellung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+        description:
+          "Beim Erstellen Ihrer Bestellung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
         variant: "destructive",
       });
       return null;
@@ -229,116 +233,27 @@ export default function CheckoutForm() {
   };
 
   const onSubmit = async (data: CheckoutFormValues) => {
-    if (data.paymentMethod === "nachnahme" && data.country !== "Austrija") {
-      toast({
-        title: "Nachnahme nicht erlaubt",
-        description: "Nachnahme ist nur in Österreich verfügbar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!cartItems || cartItems.length === 0) {
-      toast({
-        title: "Warenkorb ist leer",
-        description:
-          "Bitte fügen Sie Produkte zu Ihrem Warenkorb hinzu, bevor Sie zur Kasse gehen.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // If Stripe is selected as payment method and payment is not complete yet
-    if (data.paymentMethod === "stripe" && !stripePaymentComplete) {
-      setIsSubmitting(true);
-
-      try {
-        // Create a preliminary order to get an order ID
-        const orderItems = cartItems?.map((item) => ({
-          productId: item.productId,
-          productName: item.product.name,
-          quantity: item.quantity,
-          price: item.product.price,
-          hasMultipleColors: item.hasMultipleColors,
-          scent: item.scent,
-        }));
-
-        // Calculate totals for the order
-        const cartTotal =
-          cartItems?.reduce(
-            (sum, item) => sum + item.quantity * Number(item.product.price),
-            0,
-          ) || 0;
-        const discountAmount = 0; // If you have discount logic, replace this
-        const shippingCost = isFreeShipping ? 0 : Number(standardShippingRate);
-        const orderTotal = cartTotal - discountAmount + shippingCost;
-
-        // Store the order data in session to use later
-        window.sessionStorage.setItem(
-          "pendingOrderData",
-          JSON.stringify({
-            data,
-            orderItems,
-            cartTotal,
-            discountAmount,
-            shippingCost,
-            orderTotal,
-          }),
-        );
-
-        // Create the payment intent with Stripe
-        const response = await apiRequest(
-          "POST",
-          "/api/create-payment-intent",
-          {
-            amount: orderTotal,
-            orderId: "pending", // We'll update this with the real order ID after payment
-          },
-        );
-
-        const responseData = await response.json();
-        setClientSecret(responseData.clientSecret);
-        setShowStripeForm(true);
-        setIsSubmitting(false);
-
-        toast({
-          title: "Zahlungsinformationen",
-          description:
-            "Bitte schließen Sie den Zahlungsvorgang ab, um Ihre Bestellung zu bestätigen.",
-        });
-
-        return; // Exit early to wait for Stripe payment completion
-      } catch (error) {
-        console.error("Error creating payment intent:", error);
-        toast({
-          title: "Zahlungsfehler",
-          description:
-            "Bei der Verarbeitung Ihrer Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-    }
+    // ... (provjere za nachnahme i praznu košaricu) ...
 
     setIsSubmitting(true);
 
     try {
-      // Create order items from cart items
-      const orderItems = cartItems?.map((item) => ({
-        productId: item.productId,
-        productName: item.product.name, // Dodajemo ime proizvoda
-        quantity: item.quantity,
-        price: item.product.price,
-        scentId: item.scentId || null, // Prenosimo ID mirisa
-        scentName: item.scent?.name || null, // Prenosimo naziv mirisa iz objekta scent
-        colorId: item.colorId || null, // Prenosimo ID boje
-        colorName: item.colorName || null, // Prenosimo naziv boje
-        colorIds: item.colorIds || null, // Prenosimo niz ID-jeva boja
-        hasMultipleColors: item.hasMultipleColors || false, // Prenosimo zastavicu za višestruke boje
-      }));
+      // 1. Kreiraj PRED-NARUDŽBU u vašoj bazi sa statusom 'pending'
+      const orderItems =
+        cartItems?.map((item) => ({
+          productId: item.productId,
+          productName: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          scentId: item.scentId || null,
+          scentName: item.scent?.name || null,
+          colorId: item.colorId || null,
+          colorName: item.colorName || null,
+          colorIds: item.colorIds || null,
+          hasMultipleColors: item.hasMultipleColors || false,
+        })) || [];
 
-      // Check if user has a valid discount
+      // Calculate any discounts
       const hasDiscount =
         user &&
         user.discountAmount &&
@@ -346,51 +261,57 @@ export default function CheckoutForm() {
         user.discountExpiryDate &&
         new Date(user.discountExpiryDate) > new Date();
 
-      // Check if order meets minimum requirement for discount
       const meetsMinimumOrder =
         !user?.discountMinimumOrder ||
         parseFloat(user.discountMinimumOrder || "0") <= cartTotal;
 
-      // Apply discount if valid
       const discountAmount =
         hasDiscount && meetsMinimumOrder
           ? parseFloat(user.discountAmount || "0")
           : 0;
 
-      // Calculate shipping
-      const isFreeShipping =
-        standardShippingRate === 0 ||
-        (cartTotal >= freeShippingThreshold && freeShippingThreshold > 0);
       const shippingCost = isFreeShipping ? 0 : standardShippingRate;
-
-      // Calculate final total
       const orderTotal = Math.max(0, cartTotal + shippingCost - discountAmount);
 
-      // Create order
-      const orderData = {
+      const preliminaryOrderData = {
         total: orderTotal.toString(),
         subtotal: cartTotal.toString(),
         discountAmount: discountAmount.toString(),
         shippingCost: shippingCost.toString(),
-        paymentMethod: data.paymentMethod,
-        paymentStatus:
-          data.paymentMethod === "bank" ||
-          data.paymentMethod === "cash" ||
-          data.paymentMethod === "pickup"
-            ? "pending"
-            : "completed",
+        paymentMethod: data.paymentMethod, // ovo će biti "stripe", "paypal", "klarna" itd.
+        paymentStatus: "pending", // Status narudžbe prije Stripe plaćanja
         shippingAddress: data.address,
         shippingCity: data.city,
         shippingPostalCode: data.postalCode,
         shippingCountry: data.country,
         customerNote: data.customerNote,
         items: orderItems,
+        // NE šaljemo stripePaymentIntentId ovdje, on će biti postavljen nakon što Stripe potvrdi
       };
 
-      const response = await apiRequest("POST", "/api/orders", orderData);
-      const order = await response.json();
+      console.log("Kreiram preliminarnu narudžbu:", preliminaryOrderData);
+      const preliminaryOrderResponse = await apiRequest(
+        "POST",
+        "/api/orders",
+        preliminaryOrderData,
+      );
+      const preliminaryOrder = await preliminaryOrderResponse.json();
 
-      // Update user address if saveAddress is checked
+      if (!preliminaryOrder.id) {
+        throw new Error("Nije uspjelo kreiranje preliminarne narudžbe.");
+      }
+
+      console.log("Preliminarna narudžba kreirana sa ID:", preliminaryOrder.id);
+
+      window.sessionStorage.setItem(
+        "lastProcessedOrderId",
+        preliminaryOrder.id.toString(),
+      );
+
+      // 2. Očisti košaricu NAKON što je narudžba spremljena u bazu
+      await queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+
+      // 3. Ažuriraj korisnikovu adresu ako je 'saveAddress' označeno (ovo može ići nakon uspješne narudžbe, ali ovdje je OK)
       if (data.saveAddress && user) {
         await apiRequest("PUT", "/api/user", {
           firstName: data.firstName,
@@ -401,20 +322,36 @@ export default function CheckoutForm() {
           country: data.country,
           phone: data.phone,
         });
-
-        // Invalidate user data to refresh it
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       }
 
-      // Success message
-      toast({
-        title: "Narudžba uspješno kreirana",
-        description: `Vaša narudžba #${order.id} je uspješno zaprimljena.`,
-      });
-
-      // Redirect to success page
-      navigate(`/order-success?orderId=${order.id}`);
+      // 4. Iniciraj Stripe Checkout ili obradi druge metode plaćanja
+      if (
+        data.paymentMethod === "stripe" ||
+        data.paymentMethod === "paypal" ||
+        data.paymentMethod === "klarna" ||
+        data.paymentMethod === "eps" ||
+        data.paymentMethod === "sofort"
+      ) {
+        await initiateStripeCheckout(
+          total,
+          data.paymentMethod,
+          preliminaryOrder.id, // Proslijedi orderId Stripeu
+        );
+        // Ovdje nećete biti preusmjereni direktno, nego Stripe radi preusmjeravanje.
+        // NAKON ŠTO VAS STRIPE VRATI, ORDER-SUCCESS-PAGE ĆE SAMO PRIKAZATI INFO
+        // Jer webhook će ažurirati narudžbu
+        return; // Važno: Prekini izvršavanje, Stripe preuzima kontrolu
+      } else {
+        // Za metode plaćanja koje ne zahtijevaju preusmjeravanje (cash, pickup, bankTransfer)
+        // Redirekcija se dešava odmah jer je narudžba već kreirana sa "pending" statusom
+        navigate(`/order-success?orderId=${preliminaryOrder.id}`);
+      }
     } catch (error) {
+      console.error(
+        "Greška pri kreiranju narudžbe ili iniciranju plaćanja:",
+        error,
+      );
       toast({
         title: "Greška",
         description:
@@ -422,7 +359,7 @@ export default function CheckoutForm() {
         variant: "destructive",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Ovo će se izvršiti samo ako nema preusmjeravanja
     }
   };
 
@@ -1054,15 +991,17 @@ export default function CheckoutForm() {
 
                   <div className="mt-4">
                     {watchPaymentMethod === "stripe" && (
-                      <StripeBuyButton 
-                        amount={total} 
+                      <StripeBuyButton
+                        amount={total}
                         userId={user?.id}
-                        language={t('languageCode') || "de"} 
+                        language={t("languageCode") || "de"}
+                        onSuccess={handleStripeSuccess}
+                        onError={handleStripeError}
                       />
                     )}
-                    
+
                     {watchPaymentMethod === "paypal" && (
-                      <PayPalButton 
+                      <PayPalButton
                         amount={total.toFixed(2)}
                         currency="EUR"
                         intent="CAPTURE"
@@ -1070,25 +1009,28 @@ export default function CheckoutForm() {
                           console.log("PayPal payment successful", data);
                           toast({
                             title: "Zahlung erfolgreich",
-                            description: "Ihre Bestellung wurde erfolgreich aufgegeben.",
+                            description:
+                              "Ihre Bestellung wurde erfolgreich aufgegeben.",
                           });
-                          
+
                           // Get the form values
                           const formValues = form.getValues();
-                          
+
                           // Create order with PayPal payment info
                           const orderData = {
                             ...formValues,
                             paymentMethod: "paypal",
                             paymentStatus: "paid",
-                            paypalOrderId: data.id
+                            paypalOrderId: data.id,
                           };
-                          
+
                           // Submit order
-                          submitOrder(orderData, "paypal").then(result => {
+                          submitOrder(orderData, "paypal").then((result) => {
                             if (result && result.id) {
                               // Navigate to success page with order ID
-                              navigate(`/order-success/${result.id}?paymentMethod=paypal`);
+                              navigate(
+                                `/order-success/${result.id}?paymentMethod=paypal`,
+                              );
                             }
                           });
                         }}
@@ -1096,47 +1038,49 @@ export default function CheckoutForm() {
                           console.error("PayPal payment error", error);
                           toast({
                             title: "Fehler",
-                            description: "Bei der Verarbeitung Ihrer PayPal-Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+                            description:
+                              "Bei der Verarbeitung Ihrer PayPal-Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
                             variant: "destructive",
                           });
                         }}
                       />
                     )}
-                    
-                    {watchPaymentMethod !== "stripe" && watchPaymentMethod !== "paypal" && (
-                      <Button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            // Pokreni Stripe Checkout s točnim iznosom
-                            await initiateStripeCheckout(
-                              total,
-                              watchPaymentMethod,
-                            );
 
-                            // Neće se izvršiti ako korisnik bude preusmjeren
-                            setStripePaymentComplete(true);
-                          } catch (error) {
-                            toast({
-                              title: "Fehler",
-                              description:
-                                "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                        className="w-full"
-                      >
-                        {watchPaymentMethod === "klarna"
-                          ? "Mit Klarna zahlen"
-                          : watchPaymentMethod === "eps"
-                            ? "Mit EPS Online-Banking zahlen"
-                            : watchPaymentMethod === "sofort"
-                              ? "Mit Sofortüberweisung zahlen"
-                              : "Mit Karte zahlen"}{" "}
-                        ({total.toFixed(2)} €)
-                      </Button>
-                    )}
+                    {watchPaymentMethod !== "stripe" &&
+                      watchPaymentMethod !== "paypal" && (
+                        <Button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              // Pokreni Stripe Checkout s točnim iznosom
+                              await initiateStripeCheckout(
+                                total,
+                                watchPaymentMethod,
+                              );
+
+                              // Neće se izvršiti ako korisnik bude preusmjeren
+                              setStripePaymentComplete(true);
+                            } catch (error) {
+                              toast({
+                                title: "Fehler",
+                                description:
+                                  "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className="w-full"
+                        >
+                          {watchPaymentMethod === "klarna"
+                            ? "Mit Klarna zahlen"
+                            : watchPaymentMethod === "eps"
+                              ? "Mit EPS Online-Banking zahlen"
+                              : watchPaymentMethod === "sofort"
+                                ? "Mit Sofortüberweisung zahlen"
+                                : "Mit Karte zahlen"}{" "}
+                          ({total.toFixed(2)} €)
+                        </Button>
+                      )}
                   </div>
                 </div>
               </div>

@@ -342,26 +342,33 @@ export class DatabaseStorage implements IStorage {
     categoryId: number,
     includeInactive: boolean = false,
   ): Promise<Product[]> {
-    console.log(`getProductsByCategory called with categoryId: ${categoryId}, includeInactive: ${includeInactive}`);
-    
+    console.log(
+      `getProductsByCategory called with categoryId: ${categoryId}, includeInactive: ${includeInactive}`,
+    );
+
     try {
       let query = db
         .select()
         .from(products)
         .where(eq(products.categoryId, categoryId));
-        
+
       // Add active filter if we don't want inactive products
       if (!includeInactive) {
         query = query.where(eq(products.active, true));
       }
-      
+
       const results = await query;
-      
+
       console.log(`Found ${results.length} products in category ${categoryId}`);
       if (results.length > 0) {
-        console.log("Sample products:", results.slice(0, 2).map(p => ({id: p.id, name: p.name, categoryId: p.categoryId})));
+        console.log(
+          "Sample products:",
+          results
+            .slice(0, 2)
+            .map((p) => ({ id: p.id, name: p.name, categoryId: p.categoryId })),
+        );
       }
-      
+
       return results;
     } catch (error) {
       console.error("Error getting products by category:", error);
@@ -679,11 +686,14 @@ export class DatabaseStorage implements IStorage {
 
   async addOrderItem(itemData: InsertOrderItem): Promise<OrderItem> {
     console.log("Dodavanje stavke narudžbe:", itemData);
-    
+
     // Kreiramo stavku narudžbe
-    const [orderItem] = await db.insert(orderItems).values(itemData).returning();
+    const [orderItem] = await db
+      .insert(orderItems)
+      .values(itemData)
+      .returning();
     console.log("Stavka narudžbe kreirana:", orderItem);
-    
+
     return orderItem;
   }
 
@@ -849,7 +859,10 @@ export class DatabaseStorage implements IStorage {
                 .select()
                 .from(colors)
                 .where(
-                  sql`${colors.id} IN (${sql.join(colorIds.map((id) => Number(id)))})`,
+                  inArray(
+                    colors.id,
+                    colorIds.map((id) => Number(id)),
+                  ), // <-- KORISTITE inArray funkciju!
                 );
 
               console.log(

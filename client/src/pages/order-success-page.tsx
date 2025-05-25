@@ -13,8 +13,10 @@ import {
   Clock,
   ArrowRight,
   ShoppingBag,
+  LoaderCircle,
 } from "lucide-react";
 import { Link } from "wouter";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function OrderSuccessPage() {
   const [location] = useLocation();
@@ -22,359 +24,373 @@ export default function OrderSuccessPage() {
   const [order, setOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
-  // Extract session ID or order ID from URL query parameter
   const searchParams = new URLSearchParams(location.split("?")[1]);
-  const orderId = searchParams.get("orderId");
+  let orderIdFromUrl = searchParams.get("orderId");
   const sessionId = searchParams.get("session_id");
 
-  console.log("URL parametri:", { orderId, sessionId, location });
+  // POKUŠAJ DOHVATITI orderId IZ SESSION STORAGE AKO NIJE U URL-u
+  const storedOrderId =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("lastProcessedOrderId")
+      : null;
+  console.log(
+    "Pokušavam dohvatiti orderId iz sessionStorage (na početku page-a):",
+    storedOrderId,
+  ); // ADD THIS LOG
+  if (!orderIdFromUrl && storedOrderId) {
+    orderIdFromUrl = storedOrderId;
+    console.log(
+      "Dohvaćen orderId iz sessionStorage i postavljen kao orderIdFromUrl:",
+      orderIdFromUrl,
+    ); // ADD THIS LOG
+    // Nakon što ga upotrijebimo, možemo ga obrisati iz sessionStorage
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("lastProcessedOrderId");
+      console.log("Obrisan orderId iz sessionStorage."); // ADD THIS LOG
+    }
+  }
+
+  console.log("OrderSuccessPage učitan.");
+  console.log("Trenutna lokacija:", location);
+  console.log(
+    "Dohvaćen orderIdFromUrl (nakon provjere sessionStorage):",
+    orderIdFromUrl,
+  );
+  console.log("Dohvaćen sessionId:", sessionId);
 
   useEffect(() => {
+    console.log("useEffect u OrderSuccessPage pokrenut.");
+    console.log("sessionId unutar useEffect:", sessionId);
+    console.log("orderIdFromUrl unutar useEffect:", orderIdFromUrl);
+
     const processOrder = async () => {
-      // Ako imamo session_id iz Stripe-a, prvo moramo stvoriti narudžbu
-      if (sessionId && !orderId) {
-        try {
-          console.log("Obrađujem Stripe sesiju:", sessionId);
+      setLoading(true);
+      setError(null);
 
-          // Poziv API-ja za procesiranje Stripe sesije i stvaranje narudžbe
-          const createOrderResponse = await apiRequest(
-            "POST",
-            "/api/process-stripe-session",
-            {
-              sessionId: sessionId,
-            },
-          );
-
-          if (!createOrderResponse.ok) {
-            const errorData = await createOrderResponse.json();
-            console.error("Server odgovorio s greškom:", errorData);
-            throw new Error(
-              errorData.error ||
-                "Neuspješno stvaranje narudžbe iz Stripe sesije",
-            );
-          }
-
-          const newOrderData = await createOrderResponse.json();
-          console.log("Dobiveni podaci o narudžbi:", newOrderData);
-
-          // Postavljamo ID nove narudžbe
-          if (newOrderData && newOrderData.orderId) {
-            console.log("Postavljen novi ID narudžbe:", newOrderData.orderId);
-            setOrder(newOrderData.order);
-
-            // Dohvati stavke narudžbe ako ih imamo
-            if (newOrderData.orderItems && newOrderData.orderItems.length > 0) {
-              console.log(
-                "Postavljam stavke narudžbe iz odgovora:",
-                newOrderData.orderItems,
-              );
-              setOrderItems(newOrderData.orderItems);
-            } else {
-              // Dohvati stavke narudžbe standardnim putem
-              console.log("Dohvaćam stavke za narudžbu:", newOrderData.orderId);
-              const itemsResponse = await apiRequest(
-                "GET",
-                `/api/orders/${newOrderData.orderId}/items`,
-              );
-              const itemsData = await itemsResponse.json();
-              console.log("Dohvaćene stavke narudžbe:", itemsData);
-              setOrderItems(itemsData);
-            }
-
-            setLoading(false);
-            return;
-          } else {
-            console.error("Dobiveni podaci nemaju orderId:", newOrderData);
-          }
-        } catch (error) {
-          console.error("Greška pri obradi Stripe sesije:", error);
-        }
-      }
-
-      // Standardna logika za dohvaćanje postojeće narudžbe po ID-u
-      if (!orderId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch order details
-        const orderResponse = await apiRequest("GET", `/api/orders/${orderId}`);
-        const orderData = await orderResponse.json();
-        setOrder(orderData);
-
-        // Fetch order items with product, scent, and color details
-        const itemsResponse = await apiRequest(
-          "GET",
-          `/api/orders/${orderId}/items`,
+      // Webhook će se pobrinuti za ažuriranje narudžbe na backendu.
+      // Ovdje samo pokušavamo dohvatiti detalje narudžbe ako je orderId dostupan.
+      if (orderIdFromUrl) {
+        console.log(
+          "Dohvaćam narudžbu po orderIdFromUrl (iz URL-a ili sessionStorage):",
+          orderIdFromUrl,
         );
-        const itemsData = await itemsResponse.json();
-        setOrderItems(itemsData);
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching order:", error);
-        setLoading(false);
+        try {
+          const orderDetails = await apiRequest(
+            "GET",
+            `/api/orders/${orderIdFromUrl}`,
+          );
+          setOrder(orderDetails);
+          setOrderItems(orderDetails.orderItems || []);
+          // Ovdje možete dodati provjeru statusa narudžbe.
+          // Ako je status 'pending', možete prikazati poruku da se čeka potvrda plaćanja.
+        } catch (err: any) {
+          console.error(
+            "Fehler beim Abrufen der Bestelldaten (Frontend):",
+            err,
+          );
+          setError(
+            t("orderSuccessPage.orderRetrievalError") +
+              (err.message ? ` (${err.message})` : ""),
+          );
+          setOrder(null);
+        }
+      } else {
+        // Ako nema orderId u URL-u, prikazujemo generičku poruku
+        console.log(
+          "Nema orderId u URL-u. Prikazujem generičku poruku o narudžbi.",
+        );
+        // Ovdje možete postaviti defaultni 'order' objekt s porukom za korisnika
+        // npr. da se čeka obrada plaćanja
+        setOrder({
+          id: "N/A",
+          total: "N/A",
+          paymentMethod: "Online Payment (processing)",
+          status: "pending",
+          customerNote: t("orderSuccessPage.processingPaymentNote"), // Nova poruka za prijevod
+        });
+        setError(null); // Nema greške, samo čekamo
       }
+      setLoading(false);
     };
 
     processOrder();
-  }, [orderId, sessionId]);
+  }, [orderIdFromUrl, user?.id, t]); // sessionId više nije potreban kao dependency
 
   if (loading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-12">
-          <h1 className="heading text-3xl font-bold mb-8 text-center">
-            Učitavanje...
-          </h1>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <LoaderCircle className="animate-spin h-8 w-8 text-primary" />
+          <p className="ml-3">{t("orderSuccessPage.loadingOrder")}</p>{" "}
+          {/* Poruka na njemačkom */}
         </div>
       </Layout>
     );
   }
 
-  if (!orderId || !order) {
+  // Prikaz greške ako postoji
+  if (error) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-12">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center mb-6">
-                <Clock className="h-12 w-12 mx-auto text-yellow-500 mb-4" />
-                <h1 className="text-2xl font-bold mb-2">
-                  Narudžba nije pronađena
-                </h1>
-                <p className="text-gray-500 mb-4">
-                  Nismo mogli pronaći informacije o vašoj narudžbi.
-                </p>
-                <Button asChild>
-                  <Link href="/products">
-                    <ShoppingBag className="mr-2 h-5 w-5" />
-                    Pregledajte proizvode
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center text-red-500">
+          <p className="text-xl font-semibold mb-4">
+            {t("orderSuccessPage.errorTitle")}
+          </p>
+          <p className="text-lg">{error}</p>
+          <Button asChild className="mt-6">
+            <Link href="/products">
+              {t("orderSuccessPage.continueShopping")}
+            </Link>
+          </Button>
         </div>
       </Layout>
     );
   }
 
+  // ... (ostatak vašeg koda za prikaz uspješne narudžbe) ...
   return (
     <Layout>
       <Helmet>
-        <title>Narudžba uspješna | Kerzenwelt by Dani</title>
-        <meta
-          name="description"
-          content="Vaša narudžba je uspješno zaprimljena."
-        />
+        <title>{t("orderSuccessPage.title")} | Kerzenwelt by Dani</title>
       </Helmet>
-
-      <div className="container mx-auto px-4 py-12">
-        <Card className="max-w-3xl mx-auto">
-          <CardContent className="pt-6">
-            <div className="text-center mb-6">
-              <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-4" />
-              <h1 className="text-2xl font-bold mb-2">
-                Narudžba uspješno zaprimljena!
-              </h1>
-              <p className="text-gray-500">
-                Hvala vam na vašoj narudžbi. Poslali smo potvrdu na vašu email
-                adresu.
-              </p>
-            </div>
-
-            <Separator className="my-6" />
-
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Detalji narudžbe</h2>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-500">Broj narudžbe</p>
-                  <p className="font-medium">#{order.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Datum</p>
-                  <p className="font-medium">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Ukupno</p>
-                  <p className="font-medium">
-                    {parseFloat(order.total).toFixed(2)} €
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Način plaćanja</p>
-                  <p className="font-medium">
-                    {order.paymentMethod === "paypal"
-                      ? "PayPal"
-                      : "Bankovni prijenos"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-neutral rounded-lg p-4 mb-4">
-                <h3 className="text-sm font-medium mb-2">Status narudžbe</h3>
-                <div className="flex items-center">
-                  {order.status === "completed" ? (
-                    <>
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="font-medium">Završeno</span>
-                    </>
-                  ) : order.status === "processing" ? (
-                    <>
-                      <Package className="h-5 w-5 text-blue-500 mr-2" />
-                      <span className="font-medium">U obradi</span>
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="h-5 w-5 text-yellow-500 mr-2" />
-                      <span className="font-medium">Na čekanju</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Order items list */}
-              <div className="border rounded-lg p-4 mb-4">
-                <h3 className="text-sm font-medium mb-3">
-                  Proizvodi u narudžbi
-                </h3>
-                <div className="space-y-3">
-                  {orderItems.length === 0 ? (
-                    <p className="text-sm text-gray-500">
-                      Učitavanje proizvoda...
+      <div className="container mx-auto p-4 md:p-8">
+        <div className="max-w-3xl mx-auto">
+          <Card>
+            <CardContent className="p-6 md:p-8">
+              <div className="text-center">
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  {t("orderSuccessPage.orderConfirmed")}
+                </h1>
+                <p className="text-gray-600 mb-6">
+                  {t("orderSuccessPage.thankYou")}
+                </p>
+                {order && (
+                  <div className="bg-gray-100 p-4 rounded-lg inline-block text-left">
+                    <p className="text-lg font-medium mb-2">
+                      {t("orderSuccessPage.orderNumber")}: {order.id}
                     </p>
-                  ) : (
-                    orderItems.map((item) => (
+                    <p className="text-gray-700">
+                      {t("orderSuccessPage.total")}:{" "}
+                      {parseFloat(order.total).toFixed(2)} €
+                    </p>
+                    <p className="text-gray-700">
+                      {t("orderSuccessPage.paymentMethod")}:{" "}
+                      {order.paymentMethod === "stripe"
+                        ? t("orderSuccessPage.paymentMethodStripe")
+                        : order.paymentMethod === "paypal"
+                          ? t("orderSuccessPage.paymentMethodPaypal")
+                          : t("orderSuccessPage.paymentMethodPickup")}
+                    </p>
+                    {order.status === "pending" && (
+                      <p className="text-orange-500 mt-2 font-medium">
+                        <Clock className="inline-block h-4 w-4 mr-1" />
+                        {t("orderSuccessPage.statusPending")}
+                      </p>
+                    )}
+                    {order.status === "completed" && (
+                      <p className="text-green-500 mt-2 font-medium">
+                        <CheckCircle className="inline-block h-4 w-4 mr-1" />
+                        {t("orderSuccessPage.statusCompleted")}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              {order && orderItems.length > 0 && (
+                <div className="mt-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                    {t("orderSuccessPage.orderDetails")}
+                  </h2>
+                  <div className="space-y-4">
+                    {orderItems.map((item: any) => (
                       <div
                         key={item.id}
-                        className="flex items-start border-b pb-3 last:border-b-0 last:pb-0"
+                        className="flex items-center justify-between border-b pb-2"
                       >
-                        <div className="w-12 h-12 rounded overflow-hidden mr-3 bg-neutral flex-shrink-0">
-                          {item.product?.imageUrl && (
-                            <img
-                              src={item.product.imageUrl}
-                              alt={item.productName || item.product?.name}
-                              className="w-full h-full object-cover"
-                            />
+                        <div>
+                          <p className="font-medium">{item.productName}</p>
+                          <p className="text-sm text-gray-500">
+                            {item.quantity} x{" "}
+                            {parseFloat(item.price).toFixed(2)} €
+                          </p>
+                          {item.scentName && (
+                            <p className="text-sm text-gray-500">
+                              {t("orderSuccessPage.scent")}: {item.scentName}
+                            </p>
+                          )}
+                          {item.colorName && (
+                            <p className="text-sm text-gray-500">
+                              {t("orderSuccessPage.color")}: {item.colorName}
+                            </p>
                           )}
                         </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-medium">
-                                {item.productName || item.product?.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Količina: {item.quantity}
-                              </p>
-
-                              {/* Scent info */}
-                              {item.scent && (
-                                <p className="text-xs text-muted-foreground">
-                                  Miris:{" "}
-                                  <span className="font-medium">
-                                    {item.scent.name}
-                                  </span>
-                                </p>
-                              )}
-
-                              {/* Color info */}
-                              {item.color && (
-                                <div className="flex items-center mt-1">
-                                  <span className="text-xs text-muted-foreground mr-1">
-                                    Boja:
-                                  </span>
-                                  <div
-                                    className="w-3 h-3 rounded-full mr-1 border"
-                                    style={{
-                                      backgroundColor: item.color.hexValue,
-                                    }}
-                                  ></div>
-                                  <span className="text-xs font-medium">
-                                    {item.color.name}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">
-                                {parseFloat(item.price).toFixed(2)} €
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Ukupno:{" "}
-                                {(
-                                  parseFloat(item.price) * item.quantity
-                                ).toFixed(2)}{" "}
-                                €
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                        <p className="font-medium">
+                          {(item.quantity * parseFloat(item.price)).toFixed(2)}{" "}
+                          €
+                        </p>
                       </div>
-                    ))
-                  )}
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              {order.paymentMethod === "bank_transfer" && (
-                <div className="border rounded-lg p-4 bg-neutral mb-4">
-                  <h3 className="text-sm font-medium mb-2">
-                    Podaci za plaćanje
+              )}
+              {/* Dodajte detalje za "Selbstabholung" ako je to plaćanje */}
+              {order && order.paymentMethod === "pickup" && (
+                <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h3 className="text-xl font-semibold text-yellow-800 mb-3 flex items-center">
+                    <Package className="h-6 w-6 mr-2" />
+                    {t("orderSuccessPage.pickupDetails")}
                   </h3>
-                  <div className="space-y-2 text-sm">
+                  <p className="text-yellow-700 mb-2">
+                    {t("orderSuccessPage.pickupAddress")}:
+                  </p>
+                  <p className="text-yellow-700">
+                    {t("orderSuccessPage.companyName")}
+                    <br />
+                    {t("orderSuccessPage.addressLine1")}
+                    <br />
+                    {t("orderSuccessPage.addressLine2")}
+                  </p>
+                  <p className="text-yellow-700 mt-2">
+                    {t("orderSuccessPage.pickupContact")}:{" "}
+                    {t("orderSuccessPage.contactEmail")}
+                  </p>
+                  <p className="text-yellow-700 mt-2">
+                    {t("orderSuccessPage.pickupNotice")}
+                  </p>
+                </div>
+              )}
+              {/* Dodajte detalje za plaćanje virmanom (Bank transfer) ako je potrebno */}
+              {order && order.paymentMethod === "bankTransfer" && (
+                <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h3 className="text-xl font-semibold text-blue-800 mb-3">
+                    {t("orderSuccessPage.bankTransferDetails")}
+                  </h3>
+                  <div className="text-blue-700 space-y-1">
                     <div className="flex">
-                      <span className="font-medium w-32">Primatelj:</span>
-                      <span>Kerzenwelt by Dani d.o.o.</span>
+                      <span className="font-medium w-32">
+                        {t("orderSuccessPage.bankName")}:
+                      </span>
+                      <span>{t("orderSuccessPage.bankNameValue")}</span>
                     </div>
                     <div className="flex">
                       <span className="font-medium w-32">IBAN:</span>
-                      <span>HR1234567890123456789</span>
+                      <span>{t("orderSuccessPage.ibanValue")}</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Model:</span>
+                      <span className="font-medium w-32">BIC:</span>
+                      <span>{t("orderSuccessPage.bicValue")}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="font-medium w-32">
+                        {t("orderSuccessPage.accountHolder")}:
+                      </span>
+                      <span>{t("orderSuccessPage.accountHolderValue")}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="font-medium w-32">
+                        {t("orderSuccessPage.referenceModel")}:
+                      </span>
                       <span>HR00</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Poziv na broj:</span>
+                      <span className="font-medium w-32">
+                        {t("orderSuccessPage.referenceNumber")}:
+                      </span>
                       <span>{order.id}</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Iznos:</span>
+                      <span className="font-medium w-32">
+                        {t("orderSuccessPage.amount")}:
+                      </span>
                       <span>{parseFloat(order.total).toFixed(2)} €</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Opis plaćanja:</span>
-                      <span>Kerzenwelt narudžba #{order.id}</span>
+                      <span className="font-medium w-32">
+                        {t("orderSuccessPage.paymentDescription")}:
+                      </span>
+                      <span>
+                        Kerzenwelt {t("orderSuccessPage.order")} #{order.id}
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
-            </div>
+              <Separator className="my-6" />
+              <div className="flex justify-between">
+                <Button asChild variant="outline">
+                  <Link href="/account/orders">
+                    {t("orderSuccessPage.myOrders")}
+                  </Link>
+                </Button>
 
-            <Separator className="my-6" />
-
-            <div className="flex justify-between">
-              <Button asChild variant="outline">
-                <Link href="/account/orders">Moje narudžbe</Link>
-              </Button>
-
-              <Button asChild>
-                <Link href="/products">
-                  Nastavite kupovinu
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <Button asChild>
+                  <Link href="/products">
+                    {t("orderSuccessPage.continueShoppingButton")}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>{" "}
+              {/* OVO JE KRAJ DIVE S GUMBIMA */}
+            </CardContent>{" "}
+            {/* <-- DODAJTE OVU LINIJU OVDJE! */}
+          </Card>
+        </div>
       </div>
     </Layout>
   );
 }
+
+// Dodajte ove definicije u vaš JSON za jezik (npr. de.json)
+// U de.json:
+// {
+//   "orderSuccessPage": {
+//     "title": "Bestellbestätigung",
+//     "loadingOrder": "Bestellung wird geladen...",
+//     "errorTitle": "Fehler bei der Bestellung",
+//     "continueShopping": "Weiter einkaufen",
+//     "orderConfirmed": "Bestellung bestätigt!",
+//     "thankYou": "Vielen Dank für Ihre Bestellung. Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet.",
+//     "orderNumber": "Bestellnummer",
+//     "total": "Gesamt",
+//     "paymentMethod": "Zahlungsmethode",
+//     "paymentMethodStripe": "Stripe (Online-Zahlung)",
+//     "paymentMethodPaypal": "PayPal",
+//     "paymentMethodPickup": "Abholung im Geschäft",
+//     "statusPending": "Status: Ausstehend (Warten auf Zahlung)",
+//     "statusCompleted": "Status: Abgeschlossen (Zahlung erhalten)",
+//     "orderDetails": "Bestelldetails",
+//     "scent": "Duft",
+//     "color": "Farbe",
+//     "pickupDetails": "Details zur Abholung im Geschäft",
+//     "pickupAddress": "Abholadresse",
+//     "companyName": "Kerzenwelt by Dani",
+//     "addressLine1": "Seebacherstr. 35",
+//     "addressLine2": "9500 Villach, Österreich",
+//     "pickupContact": "Kontakt für Abholung",
+//     "contactEmail": "info@kerzenweltbydani.com",
+//     "pickupNotice": "Bitte vereinbaren Sie einen Abholtermin nach Erhalt der Bestätigungs-E-Mail.",
+//     "bankTransferDetails": "Banküberweisungsdetails",
+//     "bankName": "Bankname",
+//     "bankNameValue": "Sparkasse",
+//     "ibanValue": "ATxxxxxxxxxxxxxxxxxx",
+//     "bicValue": "SPKXXXAT22",
+//     "accountHolder": "Kontoinhaber",
+//     "accountHolderValue": "Daniela Mustermann",
+//     "referenceModel": "Referenzmodell",
+//     "referenceNumber": "Referenznummer",
+//     "amount": "Betrag",
+//     "paymentDescription": "Zahlungsbeschreibung",
+//     "order": "Bestellung",
+//     "myOrders": "Meine Bestellungen",
+//     "continueShoppingButton": "Weiter einkaufen",
+//     "noOrderIdFromBackend": "Bestell-ID wurde vom Server nicht zurückgegeben.",
+//     "genericError": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+//     "processingError": "Fehler bei der Bearbeitung der Stripe-Sitzung. Bitte versuchen Sie es erneut.",
+//     "orderRetrievalError": "Fehler beim Abrufen der Bestelldaten. Bitte versuchen Sie es erneut.",
+//     "noOrderInfo": "Keine Bestellinformationen gefunden. Bitte kontaktieren Sie den Support."
+//   }
+// }

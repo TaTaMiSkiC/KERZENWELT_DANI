@@ -8,7 +8,7 @@ import {
   capturePaypalOrder,
   loadPaypalDefault,
 } from "./paypal";
-import { createPaymentIntent, createCheckoutSession } from "./stripe";
+import { createPaymentIntent, createCheckoutSession, stripe } from "./stripe";
 import { upload, resizeImage } from "./imageUpload";
 import fs from "fs";
 import path from "path";
@@ -46,6 +46,8 @@ import {
   insertSubscriberSchema,
   subscribers,
 } from "@shared/schema";
+import { authMiddleware, adminMiddleware } from "./auth"; // <-- Promijenjeno!
+import { handleStripeWebhook } from "./stripeWebhookHandler"; //
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -53,6 +55,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up document routes for company documents
   registerDocumentRoutes(app);
+
+  // Stripe Webhook Endpoint (MORA BITI PRIJE authMiddleware ako imate)
+  app.post(
+    "/api/stripe-webhook",
+    express.raw({ type: "application/json" }),
+    async (req, res) => {
+      await handleStripeWebhook(req, res);
+    },
+  );
+
+  app.post("/api/orders/stripe-success", authMiddleware, async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+      const userId = req.user?.id;
+
+      if (!sessionId || !userId) {
+        console.error("Fehler: Sitzungs-ID oder Benutzer-ID fehlt.");
+        return res
+          .status(400)
+          .json({ message: "Sitzungs-ID oder Benutzer-ID fehlt." });
+      }
+
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["payment_intent"], // Dovoljno je payment_intent, ne treba line_items.data.price.product za ovaj dio
+      });
+
+      if (session.payment_status === "paid") {
+        const paymentIntentId = session.payment_intent?.id as string;
+        let orderToUpdate;
+
+        // PRVO: Pokušaj pronaći narudžbu po metadata.order_id (koji smo mi poslali)
+        if (session.metadata?.order_id) {
+          const orderIdFromMetadata = parseInt(session.metadata.order_id);
+          orderToUpdate = await db.query.orders.findFirst({
+            where: eq(orders.id, orderIdFromMetadata),
+          });
+          console.log(
+            `Pokušavam pronaći narudžbu po metadata.order_id: ${orderIdFromMetadata}`,
+          );
+        }
+
+        // AKO NIJE PRONAĐENO PO METADATA.ORDER_ID (backup, manje idealno): Pokušaj po paymentIntentId
+        if (!orderToUpdate && paymentIntentId) {
+          orderToUpdate = await db.query.orders.findFirst({
+            where: eq(orders.paymentIntentId, paymentIntentId),
+          });
+          console.log(
+            `Pokušavam pronaći narudžbu po paymentIntentId (backup): ${paymentIntentId}`,
+          );
+        }
+
+        if (orderToUpdate) {
+          if (orderToUpdate.status === "completed") {
+            console.log(
+              `Bestellung ${orderToUpdate.id} wurde bereits verarbeitet.`,
+            );
+            return res.json({
+              success: true,
+              message: "Bestellung bereits erfolgreich bestätigt.",
+              orderId: orderToUpdate.id,
+            });
+          }
+
+          // Ažuriraj narudžbu
+          await db
+            .update(orders)
+            .set({
+              status: "completed",
+              paymentIntentId: paymentIntentId, // Dodajte paymentIntentId za referencu
+              updatedAt: new Date(),
+            })
+            .where(eq(orders.id, orderToUpdate.id));
+
+          // Obriši stavke iz košarice za ovog korisnika
+          await db.delete(cartItems).where(eq(cartItems.userId, userId)); // Ova linija je ključna!
+
+          console.log(
+            `Bestellung ${orderToUpdate.id} erfolgreich aktualisiert.`,
+          );
+          return res.json({
+            success: true,
+            message: "Bestellung erfolgreich aktualisiert.",
+            orderId: orderToUpdate.id, // Vratite ID narudžbe frontendu!
+          });
+        } else {
+          console.error(
+            "Fehler: Bestehende Bestellung konnte nicht gefunden werden, um die Stripe-Sitzung abzuschließen.",
+          );
+          // OVDJE BI SE MOGLA DODATI LOGIKA ZA KREIRANJE POTPUNO NOVE NARUDŽBE
+          // AKO NIJE KREIRANA PRETHODNO (kompleksnije, ali sigurnije)
+          return res.status(404).json({
+            message:
+              "Bestellung nicht gefunden. Bitte kontaktieren Sie den Support.",
+          });
+        }
+      } else {
+        console.warn(
+          `Stripe Sitzung ${sessionId} hat den Status: ${session.payment_status}.`,
+        );
+        return res.status(400).json({
+          message: "Zahlung nicht erfolgreich oder noch ausstehend.",
+          status: session.payment_status,
+        });
+      }
+    } catch (error) {
+      console.error("Fehler bei der Stripe-Erfolgsbearbeitung:", error);
+      return res.status(500).json({
+        message: "Ein Fehler ist bei der Zahlungsabwicklung aufgetreten.",
+        error: (error as Error).message,
+      });
+    }
+  });
 
   // Stripe routes
   app.post("/api/create-payment-intent", async (req, res) => {
@@ -62,117 +176,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/create-checkout-session", async (req, res) => {
     await createCheckoutSession(req, res);
   });
-  
+
   // Nova ruta za procesiranje Stripe sesije nakon uspješnog plaćanja
   app.post("/api/process-stripe-session", async (req, res) => {
     // Explicitly set Content-Type header to application/json
-    res.setHeader('Content-Type', 'application/json');
-    
+    res.setHeader("Content-Type", "application/json");
+
     try {
       console.log("Primljen zahtjev za obradu Stripe sesije, body:", req.body);
-      
+
       const { sessionId, userId: providedUserId, language } = req.body;
-      
+
       if (!sessionId) {
         return res.status(400).json({ error: "Nedostaje ID sesije" });
       }
-      
+
       // Pokušamo dohvatiti korisnika iz sesije ili iz zahtjeva
       let userId: number | undefined = req.user?.id;
-      
+
       // Ako je ID korisnika proslijeđen u zahtjevu, koristimo ga
       if (!userId && providedUserId) {
         userId = parseInt(providedUserId);
         console.log(`Koristim ID korisnika iz zahtjeva: ${userId}`);
       }
-      
+
       // Ako korisnik nije prijavljen, nastavljamo s obradom Stripe sesije
       // ali s direktnim pristupom u processStripeSession funkciji
       if (!userId) {
-        console.log("Korisnik nije prijavljen u sesiji, nastavit ćemo s obradom Stripe podataka");
-        
+        console.log(
+          "Korisnik nije prijavljen u sesiji, nastavit ćemo s obradom Stripe podataka",
+        );
+
         // Dohvaćamo korisnika iz baze koristeći metadata u Stripe sesiji
         try {
-          const { stripe } = await import('./stripe');
-          const stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
-            expand: ['line_items', 'payment_intent', 'customer', 'customer_details']
-          });
-          
+          const { stripe } = await import("./stripe");
+          const stripeSession = await stripe.checkout.sessions.retrieve(
+            sessionId,
+            {
+              expand: [
+                "line_items",
+                "payment_intent",
+                "customer",
+                "customer_details",
+              ],
+            },
+          );
+
           // Pokušamo izvući userID iz metapodataka
           if (stripeSession.metadata?.userId) {
             userId = parseInt(stripeSession.metadata.userId);
-            console.log(`Pronađen ID korisnika u Stripe metapodacima: ${userId}`);
+            console.log(
+              `Pronađen ID korisnika u Stripe metapodacima: ${userId}`,
+            );
           }
         } catch (stripeError) {
           console.error("Greška pri dohvaćanju Stripe sesije:", stripeError);
         }
       }
-      
+
       // E-Mail-Optionen wurden entfernt, da sie nicht korrekt funktionieren
-      
+
       // Ako i dalje nemamo korisnika, provjeravamo imamo li email u Stripe sesiji
       if (!userId) {
         try {
-          const { stripe } = await import('./stripe');
-          const stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
-            expand: ['line_items', 'payment_intent', 'customer', 'customer_details']
-          });
-          
+          const { stripe } = await import("./stripe");
+          const stripeSession = await stripe.checkout.sessions.retrieve(
+            sessionId,
+            {
+              expand: [
+                "line_items",
+                "payment_intent",
+                "customer",
+                "customer_details",
+              ],
+            },
+          );
+
           // Pokušavamo pronaći korisnika po emailu iz Stripe sesije
           if (stripeSession.customer_details?.email) {
-            const userByEmail = await storage.getUserByEmail(stripeSession.customer_details.email);
+            const userByEmail = await storage.getUserByEmail(
+              stripeSession.customer_details.email,
+            );
             if (userByEmail) {
               userId = userByEmail.id;
-              console.log(`Pronađen korisnik po emailu iz Stripe sesije: ${userByEmail.email}, ID: ${userId}`);
+              console.log(
+                `Pronađen korisnik po emailu iz Stripe sesije: ${userByEmail.email}, ID: ${userId}`,
+              );
             }
           }
         } catch (err) {
-          console.error("Greška pri traženju korisnika po emailu iz Stripe sesije:", err);
+          console.error(
+            "Greška pri traženju korisnika po emailu iz Stripe sesije:",
+            err,
+          );
         }
       }
-      
+
       // Vraćamo grešku samo ako definitivno ne možemo pronaći korisnika
       if (!userId) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Nije pronađen ID korisnika za kreiranje narudžbe",
-          details: "Korisnik nije prijavljen i metadata ne sadrži userId. Molimo pokušajte ponovno." 
+          details:
+            "Korisnik nije prijavljen i metadata ne sadrži userId. Molimo pokušajte ponovno.",
         });
       }
-      
-      console.log(`Obrađujem Stripe sesiju ${sessionId} za korisnika ${userId}`);
-      
+
+      console.log(
+        `Obrađujem Stripe sesiju ${sessionId} za korisnika ${userId}`,
+      );
+
       // Dohvaćamo modul za Stripe procesiranje
-      const { processStripeSession } = await import('./stripe');
-      
+      const { processStripeSession } = await import("./stripe");
+
       try {
         // Obrađujemo Stripe sesiju i kreiramo narudžbu
         const result = await processStripeSession(sessionId, userId);
-        
+
         // Čistimo košaricu korisnika nakon uspješne narudžbe
         try {
           await storage.clearCart(userId);
-          console.log(`Očišćena košarica za korisnika ${userId} nakon uspješne narudžbe`);
+          console.log(
+            `Očišćena košarica za korisnika ${userId} nakon uspješne narudžbe`,
+          );
         } catch (cartError) {
-          console.error(`Greška pri čišćenju košarice korisnika ${userId}:`, cartError);
+          console.error(
+            `Greška pri čišćenju košarice korisnika ${userId}:`,
+            cartError,
+          );
           // Ne prekidamo proces ako je čišćenje košarice neuspjelo
         }
-        
+
         console.log("Uspješno obrađena narudžba, šaljem odgovor:", result);
-        
+
         // Vraćamo podatke o narudžbi
         return res.json(result);
       } catch (processError) {
         console.error("Greška pri procesiranju Stripe sesije:", processError);
-        return res.status(500).json({ 
-          error: "Greška pri procesiranju Stripe sesije", 
-          details: processError.message || String(processError)
+        return res.status(500).json({
+          error: "Greška pri procesiranju Stripe sesije",
+          details: processError.message || String(processError),
         });
       }
     } catch (error: any) {
       console.error("Greška pri obradi Stripe sesije:", error);
-      res.status(500).json({ 
-        error: "Greška pri obradi Stripe sesije", 
-        details: error.message || String(error) 
+      res.status(500).json({
+        error: "Greška pri obradi Stripe sesije",
+        details: error.message || String(error),
       });
     }
   });

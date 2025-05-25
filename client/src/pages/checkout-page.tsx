@@ -269,7 +269,9 @@ export default function CheckoutPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Versand:</span>
                       <span className={shipping === 0 ? "text-green-600" : ""}>
-                        {shipping === 0 ? "Kostenlos" : `${shipping.toFixed(2)} €`}
+                        {shipping === 0
+                          ? "Kostenlos"
+                          : `${shipping.toFixed(2)} €`}
                       </span>
                     </div>
 

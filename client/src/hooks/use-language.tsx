@@ -1679,6 +1679,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.orders.loadingOrders": "Bestellungen werden geladen...",
     "admin.orders.orderPlacedOn": "Bestellung aufgegeben am",
     "admin.orders.paymentDetails": "Zahlungsdetails",
+    "orderSuccessPage.processingPaymentNote":
+      "Ihre Bestellung wurde erfolgreich aufgegeben und Ihre Zahlung wird derzeit verarbeitet. Sie erhalten eine Bestätigungs-E-Mail, sobald die Zahlung abgeschlossen ist.",
     //"checkout.browseProducts": "Produkte durchsuchen",
     //"checkout.orderNotFoundDescription": "Die Bestellung wurde nicht gefunden.",
     //"checkout.orderNotFound": "Bestellung nicht gefunden",

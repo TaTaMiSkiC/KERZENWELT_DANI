@@ -36,7 +36,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
       amount: Math.round(parseFloat(amount) * 100), // Convert to cents
       currency: "eur",
       metadata,
-      payment_method_types: ['card'] as any,
+      payment_method_types: ["card"] as any,
     });
 
     // Return the client secret to the client
@@ -60,67 +60,88 @@ export async function createPaymentIntent(req: Request, res: Response) {
  * @param userId User ID
  * @returns Created order and order items
  */
-export async function processStripeSession(sessionId: string, userId: number, language?: string) {
+export async function processStripeSession(
+  sessionId: string,
+  userId: number,
+  language?: string,
+) {
   try {
-    console.log(`Verarbeite Stripe-Sitzung ${sessionId} für Benutzer ${userId}, Sprache: ${language || 'nicht angegeben'}`);
-    
+    console.log(
+      `Verarbeite Stripe-Sitzung ${sessionId} für Benutzer ${userId}, Sprache: ${language || "nicht angegeben"}`,
+    );
+
     // Retrieve the session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['line_items', 'payment_intent', 'customer', 'customer_details']
+      expand: ["line_items", "payment_intent", "customer", "customer_details"],
     });
-    
+
     console.log("Stripe-Sitzung erfolgreich abgerufen:", {
       sessionId,
       customerEmail: session.customer_details?.email,
       amount: session.amount_total,
-      paymentStatus: session.payment_status
+      paymentStatus: session.payment_status,
     });
-    
+
     // Check if the session is complete and paid
-    if (session.status !== 'complete' && session.payment_status !== 'paid') {
-      console.log(`Warnung: Sitzungsstatus ist ${session.status}, Zahlungsstatus ist ${session.payment_status}`);
+    if (session.status !== "complete" && session.payment_status !== "paid") {
+      console.log(
+        `Warnung: Sitzungsstatus ist ${session.status}, Zahlungsstatus ist ${session.payment_status}`,
+      );
     }
-    
+
     // Get cart items
     console.log(`Versuche, Warenkorbeinträge für Benutzer ${userId} abzurufen`);
     let cartItems = [];
-    
+
     try {
       cartItems = await storage.getCartItems(userId);
       console.log(`${cartItems.length} Artikel im Warenkorb gefunden`);
     } catch (cartError) {
       console.error("Fehler beim Abrufen der Warenkorbeinträge:", cartError);
     }
-    
+
     // Erstelle trotzdem eine Bestellung, auch wenn der Warenkorb leer ist
-    console.log(`Erstelle Bestellung aus Stripe-Sitzung, Warenkorbgröße: ${cartItems?.length || 0}`);
-    
-    
+    console.log(
+      `Erstelle Bestellung aus Stripe-Sitzung, Warenkorbgröße: ${cartItems?.length || 0}`,
+    );
+
     // Calculate total amount
     let totalProductAmount = 0;
     if (cartItems && cartItems.length > 0) {
       for (const item of cartItems) {
-        totalProductAmount += parseFloat(String(item.product.price)) * item.quantity;
+        totalProductAmount +=
+          parseFloat(String(item.product.price)) * item.quantity;
       }
     } else if (session.amount_total) {
       // Wenn keine Artikel im Warenkorb sind, verwenden wir den Gesamtbetrag aus der Stripe-Sitzung
       totalProductAmount = session.amount_total / 100; // Stripe gibt Beträge in Cent zurück
     }
-    
+
     // Add shipping cost if necessary
     let shippingCost = 0;
-    const freeShippingThresholdSetting = await storage.getSetting("freeShippingThreshold");
-    const standardShippingRateSetting = await storage.getSetting("standardShippingRate");
-    
+    const freeShippingThresholdSetting = await storage.getSetting(
+      "freeShippingThreshold",
+    );
+    const standardShippingRateSetting = await storage.getSetting(
+      "standardShippingRate",
+    );
+
     if (freeShippingThresholdSetting && standardShippingRateSetting) {
-      const freeShippingThreshold = parseFloat(freeShippingThresholdSetting.value);
-      const standardShippingRate = parseFloat(standardShippingRateSetting.value);
-      
-      if (totalProductAmount < freeShippingThreshold && standardShippingRate > 0) {
+      const freeShippingThreshold = parseFloat(
+        freeShippingThresholdSetting.value,
+      );
+      const standardShippingRate = parseFloat(
+        standardShippingRateSetting.value,
+      );
+
+      if (
+        totalProductAmount < freeShippingThreshold &&
+        standardShippingRate > 0
+      ) {
         shippingCost = standardShippingRate;
       }
     }
-    
+
     const orderTotal = totalProductAmount + shippingCost;
 
     // Pripremamo podatke za dostavu iz Stripe sesije - koristimo customer_details umjesto shipping
@@ -129,9 +150,9 @@ export async function processStripeSession(sessionId: string, userId: number, la
       address: session.customer_details?.address?.line1 || "",
       city: session.customer_details?.address?.city || "",
       postalCode: session.customer_details?.address?.postal_code || "",
-      country: session.customer_details?.address?.country || ""
+      country: session.customer_details?.address?.country || "",
     };
-    
+
     // Create a new order with minimal required fields
     const orderData = {
       userId: userId,
@@ -142,9 +163,9 @@ export async function processStripeSession(sessionId: string, userId: number, la
       subtotal: totalProductAmount.toString(),
       shippingCost: shippingCost.toString(),
       // Add optional fields only if they exist in the schema
-      customerNote: session.metadata?.note || ""
+      customerNote: session.metadata?.note || "",
     };
-    
+
     // Add shipping/billing info if available in session
     if (session.customer_details?.address) {
       Object.assign(orderData, {
@@ -155,70 +176,78 @@ export async function processStripeSession(sessionId: string, userId: number, la
         billingAddress: session.customer_details?.address?.line1 || "",
         billingCity: session.customer_details?.address?.city || "",
         billingPostalCode: session.customer_details?.address?.postal_code || "",
-        billingCountry: session.customer_details?.address?.country || ""
+        billingCountry: session.customer_details?.address?.country || "",
       });
     }
-    
+
     console.log("Creating order with data:", orderData);
     const newOrder = await storage.createOrder(orderData, []);
-    
+
     // Add order items
     const processedItems = [];
-    
+
     // Stelle sicher, dass wir Artikel im Warenkorb haben, bevor wir versuchen, sie zu verarbeiten
     if (cartItems && cartItems.length > 0) {
       console.log("Verarbeite Warenkorbeinträge für Bestellung:", newOrder.id);
-      
+
       for (const item of cartItems) {
         try {
           if (!item.product) {
             console.error("Produkt fehlt in Warenkorbposition:", item);
             continue;
           }
-          
-          console.log(`Verarbeite Artikelposition: ${item.productId}, Menge: ${item.quantity}`);
-          
+
+          console.log(
+            `Verarbeite Artikelposition: ${item.productId}, Menge: ${item.quantity}`,
+          );
+
           const orderItemData = {
             orderId: newOrder.id,
             productId: item.productId,
             quantity: item.quantity,
             price: String(item.product.price),
-            productName: item.product.name
+            productName: item.product.name,
           };
-          
+
           // Optionale Felder nur hinzufügen, wenn sie existieren
           if (item.scentId) orderItemData.scentId = item.scentId;
           if (item.colorId) orderItemData.colorId = item.colorId;
           if (item.colorIds) orderItemData.colorIds = item.colorIds;
           if (item.colorName) orderItemData.colorName = item.colorName;
-          if (item.hasMultipleColors !== undefined) orderItemData.hasMultipleColors = Boolean(item.hasMultipleColors);
+          if (item.hasMultipleColors !== undefined)
+            orderItemData.hasMultipleColors = Boolean(item.hasMultipleColors);
           if (item.scent?.name) orderItemData.scentName = item.scent.name;
-          
+
           const orderItem = await storage.addOrderItem(orderItemData);
-          
+
           processedItems.push({
             ...orderItem,
             product: item.product,
             scent: item.scent || null,
-            color: item.color || null
+            color: item.color || null,
           });
         } catch (itemError) {
-          console.error("Fehler beim Hinzufügen eines Bestellprodukts:", itemError);
+          console.error(
+            "Fehler beim Hinzufügen eines Bestellprodukts:",
+            itemError,
+          );
         }
       }
     } else {
-      console.log("Keine Artikel im Warenkorb gefunden oder Warenkorb bereits geleert.");
+      console.log(
+        "Keine Artikel im Warenkorb gefunden oder Warenkorb bereits geleert.",
+      );
     }
-    
+
     // Clear user's cart
     await storage.clearCart(userId);
-    
+
     // Return order data
     return {
       success: true,
       orderId: newOrder.id,
       order: newOrder,
-      orderItems
+      orderItems,
     };
   } catch (error) {
     console.error("Greška pri obradi Stripe sesije:", error);
@@ -228,7 +257,8 @@ export async function processStripeSession(sessionId: string, userId: number, la
 
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
-    const { amount, orderId, language, paymentMethod, successUrl, cancelUrl } = req.body;
+    const { amount, orderId, language, paymentMethod, successUrl, cancelUrl } =
+      req.body; // orderId je ovdje primljen
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
@@ -252,21 +282,19 @@ export async function createCheckoutSession(req: Request, res: Response) {
         customerEmail = user.email;
       }
     }
-
     // Prepare metadata
-    const metadata: Record<string, string> = {};
+    const metadataForStripeSession: Record<string, string> = {}; // <-- Ova linija
     if (orderId) {
-      metadata.order_id = orderId.toString();
+      // <--- OVAJ UVJET JE KLJUČAN!
+      metadataForStripeSession.order_id = orderId.toString(); // <--- OVO JE LINIJA KOJU TREBATE DODATI/PROVJERITI
     }
-    
     // Dodajemo ID korisnika u metapodatke
     if (userIdFromReq) {
-      metadata.userId = userIdFromReq.toString();
+      metadataForStripeSession.userId = userIdFromReq.toString();
     }
-    
     // Dodajemo informaciju o jeziku u metapodatke
     if (language) {
-      metadata.language = language;
+      metadataForStripeSession.language = language;
     }
 
     // Kreiramo listu podržanih metoda plaćanja
@@ -292,36 +320,41 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     // Pripremamo line items za Stripe Checkout
     let lineItems: any[] = [];
-    
+
     // Dohvaćamo stavke košarice i računamo ukupan iznos proizvoda
     let totalProductAmount = 0;
     let shippingCost = 0;
     let totalAmount = 0;
     let userCartItems: any[] = [];
-    
+
     // Ako je korisnik prijavljen, dohvaćamo podatke o košarici
     if (userIdFromReq) {
       try {
         userCartItems = await storage.getCartItems(userIdFromReq);
         console.log("Dohvaćene stavke košarice:", userCartItems);
-        
+
         // Ako imamo stavke u košarici, kreiramo line items
         if (userCartItems && userCartItems.length > 0) {
           // Računamo ukupan iznos proizvoda (bez dostave)
-          totalProductAmount = userCartItems.reduce((sum: number, item: any) => {
-            return sum + parseFloat(String(item.product.price)) * item.quantity;
-          }, 0);
-          
+          totalProductAmount = userCartItems.reduce(
+            (sum: number, item: any) => {
+              return (
+                sum + parseFloat(String(item.product.price)) * item.quantity
+              );
+            },
+            0,
+          );
+
           // Mapiranje svih stavki u košarici
           for (const item of userCartItems) {
             // Oblikujemo naziv proizvoda s informacijama o boji i mirisu
             let productName = item.product.name;
-            
+
             // Dodajemo boju ako postoji
             if (item.colorName) {
               productName += ` - ${item.colorName}`;
             }
-            
+
             // Dohvaćamo naziv mirisa ako postoji ID mirisa
             if (item.scentId) {
               try {
@@ -330,34 +363,39 @@ export async function createCheckoutSession(req: Request, res: Response) {
                   productName += ` - Duft: ${scent.name}`;
                 }
               } catch (error) {
-                console.error(`Greška pri dohvaćanju mirisa ${item.scentId}:`, error);
+                console.error(
+                  `Greška pri dohvaćanju mirisa ${item.scentId}:`,
+                  error,
+                );
               }
             }
-            
+
             // Pripremamo URL slike
-            const baseUrl = `${req.protocol}://${req.get("host")}`;
+            const baseUrl = `${req.protocol}://${req.get("host")}`; // <-- Ovdje je baseUrl
             let imageUrl = null;
-            
+
             if (item.product.imageUrl) {
-              imageUrl = item.product.imageUrl.startsWith("http") 
-                ? item.product.imageUrl 
-                : `${baseUrl}${item.product.imageUrl}`;
+              imageUrl = item.product.imageUrl.startsWith("http")
+                ? item.product.imageUrl
+                : `${baseUrl}${item.product.imageUrl}`; // <-- OVDJE JE KLJUČNO!
             }
-            
+
             // Kreiramo Stripe line item za ovu stavku
             lineItems.push({
               price_data: {
                 currency: "eur",
                 product_data: {
                   name: productName,
-                  description: item.product.description 
-                    ? (item.product.description.length > 100 
-                       ? item.product.description.substring(0, 97) + "..." 
-                       : item.product.description)
+                  description: item.product.description
+                    ? item.product.description.length > 100
+                      ? item.product.description.substring(0, 97) + "..."
+                      : item.product.description
                     : "",
-                  images: imageUrl ? [imageUrl] : undefined,
+                  images: imageUrl ? [imageUrl] : undefined, // <-- Ovdje se šalje image_url
                 },
-                unit_amount: Math.round(parseFloat(String(item.product.price)) * 100), // cijena u centima
+                unit_amount: Math.round(
+                  parseFloat(String(item.product.price)) * 100,
+                ), // cijena u centima
               },
               quantity: item.quantity,
             });
@@ -367,11 +405,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
         console.error("Greška pri dohvaćanju stavki košarice:", error);
       }
     }
-    
+
     // Ako nismo uspjeli dohvatiti stavke iz košarice, koristimo generički line item
     if (lineItems.length === 0) {
       totalProductAmount = parseFloat(amount);
-      
+
       lineItems = [
         {
           price_data: {
@@ -392,18 +430,18 @@ export async function createCheckoutSession(req: Request, res: Response) {
     // Dohvaćamo postavke za dostavu i dodajemo troškove dostave ako je potrebno
     try {
       const freeShippingThresholdSetting = await storage.getSetting(
-        "freeShippingThreshold"
+        "freeShippingThreshold",
       );
       const standardShippingRateSetting = await storage.getSetting(
-        "standardShippingRate"
+        "standardShippingRate",
       );
 
       if (freeShippingThresholdSetting && standardShippingRateSetting) {
         const freeShippingThreshold = parseFloat(
-          freeShippingThresholdSetting.value
+          freeShippingThresholdSetting.value,
         );
         const standardShippingRate = parseFloat(
-          standardShippingRateSetting.value
+          standardShippingRateSetting.value,
         );
 
         // Dodajemo troškove dostave ako je potrebno
@@ -412,7 +450,7 @@ export async function createCheckoutSession(req: Request, res: Response) {
           standardShippingRate > 0
         ) {
           shippingCost = standardShippingRate;
-          
+
           // Dodajemo dostavu kao zasebnu stavku u Stripe Checkout
           lineItems.push({
             price_data: {
@@ -426,28 +464,32 @@ export async function createCheckoutSession(req: Request, res: Response) {
             quantity: 1,
           });
         }
-        
+
         // Ukupan iznos je zbroj proizvoda i dostave
         totalAmount = totalProductAmount + shippingCost;
-        
-        console.log(`Ukupno košarica (server): ${totalAmount}€ (proizvodi: ${totalProductAmount}€ + dostava: ${shippingCost}€)`);
+
+        console.log(
+          `Ukupno košarica (server): ${totalAmount}€ (proizvodi: ${totalProductAmount}€ + dostava: ${shippingCost}€)`,
+        );
       }
     } catch (error) {
       console.error("Greška pri dohvaćanju postavki za dostavu:", error);
     }
 
-    // Kreiramo sesiju za naplatu s detaljima za prikaz
+    /// Kreiramo sesiju za naplatu s detaljima za prikaz
     const session = await stripe.checkout.sessions.create({
       payment_method_types: paymentMethodTypes as any,
       line_items: lineItems,
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
-      // Dodajemo metapodatke za prikaz detalja na desnoj strani
+      // OVDJE JE KLJUČNO: PROŠIRITE metadataForStripeSession
       metadata: {
-        ...metadata,
-        subtotal: `${totalProductAmount.toFixed(2)} €`,
-        shipping: shippingCost > 0 ? `${shippingCost.toFixed(2)} €` : "Kostenlos",
+        // <--- OVAJ OBJEKT SE ŠALJE STRIPEU
+        ...metadataForStripeSession, // <--- OVAKO SE PROŠIRUJU SVI VAŠI PRETHODNO DEFINIRANI METADATA (uklj. order_id)
+        subtotal: `${totalProductAmount.toFixed(2)} €`, // Ovo su dodatni podaci
+        shipping:
+          shippingCost > 0 ? `${shippingCost.toFixed(2)} €` : "Kostenlos",
         total: `${totalAmount.toFixed(2)} €`,
       },
       customer_email: customerEmail || undefined,
