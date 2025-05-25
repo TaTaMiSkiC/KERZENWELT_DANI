@@ -26,21 +26,24 @@ export default function OrderSuccessPageNew() {
   const { language } = useLanguage();
   
   // Extract parameters from URL
-  const searchParams = new URLSearchParams(location.split("?")[1] || "");
-  const orderId = searchParams.get("orderId");
+  const searchParams = new URLSearchParams(window.location.search);
+  const orderId = searchParams.get("order_id") || searchParams.get("orderId");
   const sessionId = searchParams.get("session_id");
   const userId = searchParams.get("user_id");
   const urlLang = searchParams.get("lang");
   const userEmail = searchParams.get("email");
   
-  // Ako jezik dolazi iz URL-a, možemo ga koristiti umjesto trenutnog jezika
+  // Ako jezik dolazi iz URL-a, koristimo ga umjesto trenutnog jezika
   // Ovo omogućuje da korisnik dobije stranicu na istom jeziku koji je koristio prilikom plaćanja
+  const { setLanguage } = useLanguage();
+  
   useEffect(() => {
     if (urlLang && ['de', 'en', 'hr', 'it'].includes(urlLang)) {
-      // Ovdje bismo mogli postaviti jezik, ali za sada samo logiramo
-      console.log(`Jezik iz URL-a: ${urlLang}`);
+      // Postavljamo jezik iz URL-a
+      console.log(`Postavljanje jezika iz URL-a: ${urlLang}`);
+      setLanguage(urlLang as any);
     }
-  }, [urlLang]);
+  }, [urlLang, setLanguage]);
 
   console.log("URL parametri:", { orderId, sessionId, userId, urlLang, userEmail, language, location });
   

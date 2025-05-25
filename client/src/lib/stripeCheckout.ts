@@ -49,6 +49,7 @@ export async function initiateStripeCheckout(
       userId, // Dodajemo ID korisnika za praćenje
       language: currentLanguage, // Dodajemo informaciju o jeziku
       paymentMethod: stripePaymentMethod, // Dodajemo metodu plaćanja za Stripe
+      // Wir stellen sicher, dass alle wichtigen Parameter in der Erfolgs-URL enthalten sind
       successUrl: `${origin}/order-success-new?session_id={CHECKOUT_SESSION_ID}&user_id=${userId || ''}&lang=${currentLanguage || 'de'}&email={CUSTOMER_EMAIL}`,
       cancelUrl: `${origin}/checkout?canceled=true`,
     });
