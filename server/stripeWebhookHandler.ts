@@ -88,5 +88,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   }
 
   // Return a 200 response to acknowledge receipt of the event
-  res.json({ received: true });
+  if (!res.headersSent) {
+    res.json({ received: true });
+  }
 }
