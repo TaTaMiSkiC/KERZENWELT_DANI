@@ -247,8 +247,8 @@ export async function processStripeSession(
 
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
-    // Provjerite da 'orderId' dolazi u req.body
-    const { amount, orderId, language, paymentMethod, successUrl, cancelUrl } =
+    // Provjerite da 'orderData' dolazi u req.body
+    const { amount, orderData, userId, language, paymentMethod, successUrl, cancelUrl } =
       req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
@@ -277,17 +277,16 @@ export async function createCheckoutSession(req: Request, res: Response) {
     // PRIPREMA METADATA OBJEKTA:
     const metadataForStripeSession: Record<string, string> = {}; // Inicijaliziramo prazan objekt
 
-    if (orderId) {
-      // AKO IMAMO orderId (trebali bismo ga uvijek imati iz CheckoutForm.tsx)
-      metadataForStripeSession.order_id = orderId.toString(); // <--- OVDJE DODAJEMO order_id!
+    if (orderData) {
+      metadataForStripeSession.orderData = orderData; // Podatci o narudžbi
     }
-    if (userIdFromReq) {
-      // Dodajemo userId ako postoji
-      metadataForStripeSession.userId = userIdFromReq.toString();
+
+    if (userId) {
+      metadataForStripeSession.userId = userId.toString(); // ID korisnika
     }
+
     if (language) {
-      // Dodajemo jezik ako postoji
-      metadataForStripeSession.language = language;
+      metadataForStripeSession.language = language; // Jezik
     }
 
     // KRAJ PRIPREME METADATA OBJEKTA. OVDJE SE SVI PODACI SKUPLJAJU.
