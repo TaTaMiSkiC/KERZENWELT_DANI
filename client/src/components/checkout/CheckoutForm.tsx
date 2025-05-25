@@ -945,8 +945,7 @@ export default function CheckoutForm() {
               watchPaymentMethod === "eps" ||
               watchPaymentMethod === "sofort") && (
               <div className="space-y-4">
-
-                  <div className="mt-4">
+                <div className="mt-4">
                     {watchPaymentMethod === "stripe" && (
                       <StripeBuyButton
                         amount={total}
@@ -1038,7 +1037,6 @@ export default function CheckoutForm() {
                           ({total.toFixed(2)} €)
                         </Button>
                       )}
-                  </div>
                 </div>
               </div>
             )}
