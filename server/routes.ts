@@ -66,11 +66,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nova ruta za procesiranje Stripe sesije nakon uspješnog plaćanja
   app.post("/api/process-stripe-session", async (req, res) => {
     try {
-      const { sessionId, userId: providedUserId, language } = req.body;
+      const { sessionId, userId: providedUserId, language, email: providedEmail } = req.body;
       
       console.log("Primljeni zahtjev za obradu Stripe sesije:", {
         sessionId,
         providedUserId,
+        providedEmail,
         language,
         isAuthenticated: !!req.user
       });
@@ -110,6 +111,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Provjeravamo imamo li email iz URL-a
+      if (!userId && providedEmail) {
+        try {
+          console.log(`Pokušavam pronaći korisnika po emailu iz URL-a: ${providedEmail}`);
+          const userByEmail = await storage.getUserByEmail(providedEmail);
+          if (userByEmail) {
+            userId = userByEmail.id;
+            console.log(`Pronađen korisnik po emailu iz URL-a: ${providedEmail}, ID: ${userId}`);
+          }
+        } catch (err) {
+          console.error("Greška pri traženju korisnika po emailu iz URL-a:", err);
+        }
+      }
+      
       // Ako i dalje nemamo korisnika, provjeravamo imamo li email u Stripe sesiji
       if (!userId) {
         try {
@@ -123,11 +138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const userByEmail = await storage.getUserByEmail(stripeSession.customer_details.email);
             if (userByEmail) {
               userId = userByEmail.id;
-              console.log(`Pronađen korisnik po emailu: ${userByEmail.email}, ID: ${userId}`);
+              console.log(`Pronađen korisnik po emailu iz Stripe sesije: ${userByEmail.email}, ID: ${userId}`);
             }
           }
         } catch (err) {
-          console.error("Greška pri traženju korisnika po emailu:", err);
+          console.error("Greška pri traženju korisnika po emailu iz Stripe sesije:", err);
         }
       }
       

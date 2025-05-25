@@ -31,6 +31,7 @@ export default function OrderSuccessPageNew() {
   const sessionId = searchParams.get("session_id");
   const userId = searchParams.get("user_id");
   const urlLang = searchParams.get("lang");
+  const userEmail = searchParams.get("email");
   
   // Ako jezik dolazi iz URL-a, možemo ga koristiti umjesto trenutnog jezika
   // Ovo omogućuje da korisnik dobije stranicu na istom jeziku koji je koristio prilikom plaćanja
@@ -41,7 +42,7 @@ export default function OrderSuccessPageNew() {
     }
   }, [urlLang]);
 
-  console.log("URL parametri:", { orderId, sessionId, userId, urlLang, language, location });
+  console.log("URL parametri:", { orderId, sessionId, userId, urlLang, userEmail, language, location });
   
   // Višejezični tekstovi
   const translations = {
@@ -280,6 +281,11 @@ export default function OrderSuccessPageNew() {
           // Ako imamo ID korisnika, dodajemo ga
           if (userId) {
             requestData.userId = userId;
+          }
+          
+          // Ako imamo e-mail korisnika iz URL-a, dodajemo ga
+          if (userEmail) {
+            requestData.email = userEmail;
           }
           
           // Poziv API-ja za procesiranje Stripe sesije i stvaranje narudžbe
