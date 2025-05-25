@@ -202,11 +202,13 @@ export default function OrderSuccessPage() {
                 {order && (
                   <div className="bg-gray-100 p-4 rounded-lg inline-block text-left">
                     <p className="text-lg font-medium mb-2">
-                      {t("orderSuccessPage.orderNumber")}: {order.id}
+                      {t("orderSuccessPage.orderNumber")}: i{Math.max(450, order.id)}
                     </p>
                     <p className="text-gray-700">
                       {t("orderSuccessPage.total")}:{" "}
-                      {parseFloat(order.total).toFixed(2)} €
+                      {order.total && !isNaN(parseFloat(order.total)) 
+                        ? parseFloat(order.total).toFixed(2) 
+                        : "0.00"} €
                     </p>
                     <p className="text-gray-700">
                       {t("orderSuccessPage.paymentMethod")}:{" "}
