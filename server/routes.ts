@@ -58,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/create-payment-intent", async (req, res) => {
     await createPaymentIntent(req, res);
   });
-  
+
   app.post("/api/create-checkout-session", async (req, res) => {
     await createCheckoutSession(req, res);
   });
@@ -97,24 +97,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Provjera je li korisnik admin - ako je admin, dohvati i neaktivne proizvode
       const includeInactive = req.isAuthenticated() && req.user?.isAdmin;
-      
+
       // Check if category filter is applied
-      const categoryId = req.query.category ? parseInt(req.query.category as string) : null;
-      
+      const categoryId = req.query.category
+        ? parseInt(req.query.category as string)
+        : null;
+
       let products;
       if (categoryId) {
         console.log(`Filtering products by category ID: ${categoryId}`);
-        
+
         // Use the storage method for consistency
-        products = await storage.getProductsByCategory(categoryId, includeInactive);
-          
-        console.log(`Found ${products.length} products in category ${categoryId}`);
+        products = await storage.getProductsByCategory(
+          categoryId,
+          includeInactive,
+        );
+
+        console.log(
+          `Found ${products.length} products in category ${categoryId}`,
+        );
       } else {
         console.log("Getting all products, includeInactive:", includeInactive);
         products = await storage.getAllProducts(includeInactive);
         console.log(`Retrieved ${products.length} total products`);
       }
-      
+
       res.json(products);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -722,6 +729,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      if (
+        req.body.paymentMethod === "nachnahme" &&
+        req.body.shippingCountry !== "Österreich"
+      ) {
+        return res.status(400).json({
+          error: "Nachnahme ist nur für Österreich verfügbar.",
+        });
       }
 
       if (req.user.isAdmin) {
@@ -1732,29 +1748,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({
           titleText: {
             de: [
-              { text: "Willkommen", fontSize: "2xl", fontWeight: "medium", color: "white" },
-              { text: "Kerzenwelt by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-              { text: "Wo Kerzen Wärme und Stil vereinen", fontSize: "xl", fontWeight: "medium", color: "white" },
+              {
+                text: "Willkommen",
+                fontSize: "2xl",
+                fontWeight: "medium",
+                color: "white",
+              },
+              {
+                text: "Kerzenwelt by Dani",
+                fontSize: "4xl",
+                fontWeight: "bold",
+                color: "white",
+              },
+              {
+                text: "Wo Kerzen Wärme und Stil vereinen",
+                fontSize: "xl",
+                fontWeight: "medium",
+                color: "white",
+              },
             ],
             hr: [
-              { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
-              { text: "Svijet svijeća by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-              { text: "Gdje se toplina i stil spajaju", fontSize: "xl", fontWeight: "medium", color: "white" },
+              {
+                text: "Dobrodošli",
+                fontSize: "2xl",
+                fontWeight: "medium",
+                color: "white",
+              },
+              {
+                text: "Svijet svijeća by Dani",
+                fontSize: "4xl",
+                fontWeight: "bold",
+                color: "white",
+              },
+              {
+                text: "Gdje se toplina i stil spajaju",
+                fontSize: "xl",
+                fontWeight: "medium",
+                color: "white",
+              },
             ],
             en: [
-              { text: "Welcome", fontSize: "2xl", fontWeight: "medium", color: "white" },
-              { text: "The Candle World by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-              { text: "Where warmth and style unite", fontSize: "xl", fontWeight: "medium", color: "white" },
+              {
+                text: "Welcome",
+                fontSize: "2xl",
+                fontWeight: "medium",
+                color: "white",
+              },
+              {
+                text: "The Candle World by Dani",
+                fontSize: "4xl",
+                fontWeight: "bold",
+                color: "white",
+              },
+              {
+                text: "Where warmth and style unite",
+                fontSize: "xl",
+                fontWeight: "medium",
+                color: "white",
+              },
             ],
             it: [
-              { text: "Benvenuti", fontSize: "2xl", fontWeight: "medium", color: "white" },
-              { text: "Il mondo delle candele di Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-              { text: "Dove calore e stile si incontrano", fontSize: "xl", fontWeight: "medium", color: "white" },
+              {
+                text: "Benvenuti",
+                fontSize: "2xl",
+                fontWeight: "medium",
+                color: "white",
+              },
+              {
+                text: "Il mondo delle candele di Dani",
+                fontSize: "4xl",
+                fontWeight: "bold",
+                color: "white",
+              },
+              {
+                text: "Dove calore e stile si incontrano",
+                fontSize: "xl",
+                fontWeight: "medium",
+                color: "white",
+              },
             ],
             sl: [
-              { text: "Dobrodošli", fontSize: "2xl", fontWeight: "medium", color: "white" },
-              { text: "Svet sveč by Dani", fontSize: "4xl", fontWeight: "bold", color: "white" },
-              { text: "Kjer se toplina in stil združita", fontSize: "xl", fontWeight: "medium", color: "white" },
+              {
+                text: "Dobrodošli",
+                fontSize: "2xl",
+                fontWeight: "medium",
+                color: "white",
+              },
+              {
+                text: "Svet sveč by Dani",
+                fontSize: "4xl",
+                fontWeight: "bold",
+                color: "white",
+              },
+              {
+                text: "Kjer se toplina in stil združita",
+                fontSize: "xl",
+                fontWeight: "medium",
+                color: "white",
+              },
             ],
           },
           subtitleText: {
@@ -2641,7 +2732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle both nested and flat formats
       let invoice, items;
-      
+
       if (req.body.invoice && req.body.items) {
         // Nested format (original)
         invoice = req.body.invoice;

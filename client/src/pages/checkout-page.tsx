@@ -262,19 +262,14 @@ export default function CheckoutPage() {
                   {/* Order totals */}
                   <div className="mt-6 pt-6 border-t space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
-                        {t("orders.subtotal")}
-                      </span>
+                      <span className="text-gray-600">Zwischensumme</span>
                       <span>{cartTotal.toFixed(2)} €</span>
                     </div>
+
                     <div className="flex justify-between">
-                      <span className="text-gray-600">
-                        {t("orders.shipping")}
-                      </span>
-                      <span>
-                        {shipping === 0
-                          ? t("cart.shippingFree")
-                          : `${shipping.toFixed(2)} €`}
+                      <span className="text-gray-600">Versand:</span>
+                      <span className={shipping === 0 ? "text-green-600" : ""}>
+                        {shipping === 0 ? "Kostenlos" : `${shipping.toFixed(2)} €`}
                       </span>
                     </div>
 

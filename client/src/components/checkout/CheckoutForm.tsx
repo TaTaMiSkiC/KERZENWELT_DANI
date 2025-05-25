@@ -49,7 +49,17 @@ const checkoutSchema = (t: TFunction) =>
     postalCode: z.string().min(4, t("checkout.postalCodeRequired")),
     country: z.string().min(2, t("checkout.countryRequired")),
     customerNote: z.string().optional(),
-    paymentMethod: z.enum(["stripe", "cash", "pickup", "bank", "paypal", "klarna", "eps", "sofort"]),
+    paymentMethod: z.enum([
+      "stripe",
+      "cash",
+      "pickup",
+      "bank",
+      "paypal",
+      "klarna",
+      "eps",
+      "sofort",
+      "nachnahme", // ⬅️ dodano
+    ]),
     saveAddress: z.boolean().optional(),
     sameAsBilling: z.boolean().optional(),
   });
@@ -66,7 +76,8 @@ export default function CheckoutForm() {
   const schema = checkoutSchema(t);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("stripe");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<string>("stripe");
   const [stripePaymentComplete, setStripePaymentComplete] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>("");
   const [showStripeForm, setShowStripeForm] = useState(false);
@@ -123,10 +134,20 @@ export default function CheckoutForm() {
   });
 
   const onSubmit = async (data: CheckoutFormValues) => {
+    if (data.paymentMethod === "nachnahme" && data.country !== "Austrija") {
+      toast({
+        title: "Nachnahme nicht erlaubt",
+        description: "Nachnahme ist nur in Österreich verfügbar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!cartItems || cartItems.length === 0) {
       toast({
         title: "Warenkorb ist leer",
-        description: "Bitte fügen Sie Produkte zu Ihrem Warenkorb hinzu, bevor Sie zur Kasse gehen.",
+        description:
+          "Bitte fügen Sie Produkte zu Ihrem Warenkorb hinzu, bevor Sie zur Kasse gehen.",
         variant: "destructive",
       });
       return;
@@ -135,7 +156,7 @@ export default function CheckoutForm() {
     // If Stripe is selected as payment method and payment is not complete yet
     if (data.paymentMethod === "stripe" && !stripePaymentComplete) {
       setIsSubmitting(true);
-      
+
       try {
         // Create a preliminary order to get an order ID
         const orderItems = cartItems?.map((item) => ({
@@ -148,43 +169,56 @@ export default function CheckoutForm() {
         }));
 
         // Calculate totals for the order
-        const cartTotal = cartItems?.reduce((sum, item) => sum + (item.quantity * Number(item.product.price)), 0) || 0;
+        const cartTotal =
+          cartItems?.reduce(
+            (sum, item) => sum + item.quantity * Number(item.product.price),
+            0,
+          ) || 0;
         const discountAmount = 0; // If you have discount logic, replace this
         const shippingCost = isFreeShipping ? 0 : Number(standardShippingRate);
         const orderTotal = cartTotal - discountAmount + shippingCost;
-        
+
         // Store the order data in session to use later
-        window.sessionStorage.setItem('pendingOrderData', JSON.stringify({
-          data,
-          orderItems,
-          cartTotal,
-          discountAmount,
-          shippingCost,
-          orderTotal
-        }));
-        
+        window.sessionStorage.setItem(
+          "pendingOrderData",
+          JSON.stringify({
+            data,
+            orderItems,
+            cartTotal,
+            discountAmount,
+            shippingCost,
+            orderTotal,
+          }),
+        );
+
         // Create the payment intent with Stripe
-        const response = await apiRequest("POST", "/api/create-payment-intent", {
-          amount: orderTotal,
-          orderId: 'pending' // We'll update this with the real order ID after payment
-        });
-        
+        const response = await apiRequest(
+          "POST",
+          "/api/create-payment-intent",
+          {
+            amount: orderTotal,
+            orderId: "pending", // We'll update this with the real order ID after payment
+          },
+        );
+
         const responseData = await response.json();
         setClientSecret(responseData.clientSecret);
         setShowStripeForm(true);
         setIsSubmitting(false);
-        
+
         toast({
           title: "Zahlungsinformationen",
-          description: "Bitte schließen Sie den Zahlungsvorgang ab, um Ihre Bestellung zu bestätigen.",
+          description:
+            "Bitte schließen Sie den Zahlungsvorgang ab, um Ihre Bestellung zu bestätigen.",
         });
-        
+
         return; // Exit early to wait for Stripe payment completion
       } catch (error) {
         console.error("Error creating payment intent:", error);
         toast({
           title: "Zahlungsfehler",
-          description: "Bei der Verarbeitung Ihrer Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+          description:
+            "Bei der Verarbeitung Ihrer Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -245,7 +279,11 @@ export default function CheckoutForm() {
         shippingCost: shippingCost.toString(),
         paymentMethod: data.paymentMethod,
         paymentStatus:
-          data.paymentMethod === "bank" || data.paymentMethod === "cash" || data.paymentMethod === "pickup" ? "pending" : "completed",
+          data.paymentMethod === "bank" ||
+          data.paymentMethod === "cash" ||
+          data.paymentMethod === "pickup"
+            ? "pending"
+            : "completed",
         shippingAddress: data.address,
         shippingCity: data.city,
         shippingPostalCode: data.postalCode,
@@ -623,7 +661,21 @@ export default function CheckoutForm() {
                         htmlFor="paypal"
                         className="flex items-center cursor-pointer w-full"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2 text-primary"
+                        >
+                          <rect width="20" height="14" x="2" y="5" rx="2" />
+                          <line x1="2" x2="22" y1="10" y2="10" />
+                        </svg>
                         <div className="flex-1">
                           <span className="font-medium">PayPal</span>
                           <p className="text-sm text-gray-500">
@@ -649,7 +701,21 @@ export default function CheckoutForm() {
                         htmlFor="klarna"
                         className="flex items-center cursor-pointer w-full"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2 text-primary"
+                        >
+                          <rect width="20" height="14" x="2" y="5" rx="2" />
+                          <line x1="2" x2="22" y1="10" y2="10" />
+                        </svg>
                         <div className="flex-1">
                           <span className="font-medium">Klarna</span>
                           <p className="text-sm text-gray-500">
@@ -658,7 +724,7 @@ export default function CheckoutForm() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <img
-                            src="https://www.klarna.com/assets/sites/5/2020/04/27140600/Klarna-LogoRGB-Black.jpg"
+                            src="https://upload.wikimedia.org/wikipedia/commons/4/40/Klarna_Payment_Badge.svg"
                             alt="Klarna"
                             className="h-6"
                           />
@@ -675,7 +741,21 @@ export default function CheckoutForm() {
                         htmlFor="eps"
                         className="flex items-center cursor-pointer w-full"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2 text-primary"
+                        >
+                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg>
                         <div className="flex-1">
                           <span className="font-medium">EPS</span>
                           <p className="text-sm text-gray-500">
@@ -684,7 +764,7 @@ export default function CheckoutForm() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/EPS-payment-system-logo.svg/1280px-EPS-payment-system-logo.svg.png"
+                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Eps-%C3%9Cberweisung_Logo.svg/1200px-Eps-%C3%9Cberweisung_Logo.svg.png"
                             alt="EPS"
                             className="h-6"
                           />
@@ -701,7 +781,21 @@ export default function CheckoutForm() {
                         htmlFor="sofort"
                         className="flex items-center cursor-pointer w-full"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><path d="M6 9h12v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M18 4H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2 text-primary"
+                        >
+                          <path d="M6 9h12v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" />
+                          <path d="M18 4H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                        </svg>
                         <div className="flex-1">
                           <span className="font-medium">Online Banking</span>
                           <p className="text-sm text-gray-500">
@@ -712,7 +806,7 @@ export default function CheckoutForm() {
                     </div>
 
                     {/* Bankovna transakcija */}
-                    <div
+                    {/* <div
                       className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "bank" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
                       <RadioGroupItem value="bank" id="bank" />
@@ -728,26 +822,46 @@ export default function CheckoutForm() {
                           </p>
                         </div>
                       </label>
-                    </div>
-                    
+                    </div> */}
+
                     {/* Gotovina */}
-                    <div
-                      className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "cash" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
-                    >
-                      <RadioGroupItem value="cash" id="cash" />
-                      <label
-                        htmlFor="cash"
-                        className="flex items-center cursor-pointer w-full"
+                    {form.watch("country") === "Austrija" && (
+                      <div
+                        className={`flex items-center space-x-2 border rounded-lg p-4 ${
+                          field.value === "nachnahme"
+                            ? "border-primary bg-accent bg-opacity-10"
+                            : "border-gray-200"
+                        }`}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><circle cx="12" cy="12" r="8"/><path d="M12 6v6l4 2"/></svg>
-                        <div className="flex-1">
-                          <span className="font-medium">{t('checkout.paymentMethods.cash.title')}</span>
-                          <p className="text-sm text-gray-500">
-                            {t('checkout.paymentMethods.cash.description')}
-                          </p>
-                        </div>
-                      </label>
-                    </div>
+                        <RadioGroupItem value="nachnahme" id="nachnahme" />
+                        <label
+                          htmlFor="nachnahme"
+                          className="flex items-center cursor-pointer w-full"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="mr-2 text-primary"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 6v6l3 3" />
+                          </svg>
+                          <div className="flex-1">
+                            <span className="font-medium">Nachnahme</span>
+                            <p className="text-sm text-gray-500">
+                              Bezahlung bei Lieferung (nur in Österreich)
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    )}
 
                     {/* Preuzimanje u trgovini */}
                     <div
@@ -758,11 +872,28 @@ export default function CheckoutForm() {
                         htmlFor="pickup"
                         className="flex items-center cursor-pointer w-full"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-primary"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="mr-2 text-primary"
+                        >
+                          <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" />
+                          <path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9" />
+                          <path d="M12 3v6" />
+                        </svg>
                         <div className="flex-1">
-                          <span className="font-medium">{t('checkout.paymentMethods.pickup.title')}</span>
+                          <span className="font-medium">
+                            {t("checkout.paymentMethods.pickup.title")}
+                          </span>
                           <p className="text-sm text-gray-500">
-                            {t('checkout.paymentMethods.pickup.description')}
+                            {t("checkout.paymentMethods.pickup.description")}
                           </p>
                         </div>
                       </label>
@@ -776,50 +907,90 @@ export default function CheckoutForm() {
 
           {/* Payment method specific forms */}
           <div className="mt-4">
-            {(watchPaymentMethod === "stripe" || watchPaymentMethod === "paypal" || watchPaymentMethod === "klarna" || watchPaymentMethod === "eps" || watchPaymentMethod === "sofort") && (
+            {(watchPaymentMethod === "stripe" ||
+              watchPaymentMethod === "paypal" ||
+              watchPaymentMethod === "klarna" ||
+              watchPaymentMethod === "eps" ||
+              watchPaymentMethod === "sofort") && (
               <div className="space-y-4">
                 <div className="border rounded-lg p-4 bg-neutral">
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    <img src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" alt="Visa" className="h-8" />
-                    <img src="https://www.mastercard.com/content/dam/public/mastercardcom/eu/de/logos/mc-logo-52.svg" alt="Mastercard" className="h-8" />
-                    <img src="https://cdn.freebiesupply.com/logos/large/2x/american-express-logo-png-transparent.png" alt="Amex" className="h-8" />
-                    <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg" alt="PayPal" className="h-8" />
-                    <img src="https://www.klarna.com/assets/sites/5/2020/04/27140600/Klarna-LogoRGB-Black.jpg" alt="Klarna" className="h-8" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/EPS-payment-system-logo.svg/1280px-EPS-payment-system-logo.svg.png" alt="EPS" className="h-8" />
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <img
+                      src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png"
+                      alt="Visa"
+                      className="h-8 object-contain"
+                    />
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg"
+                      alt="Mastercard"
+                      className="h-8 object-contain"
+                    />
+                    <img
+                      src="https://cdn.freebiesupply.com/logos/large/2x/american-express-logo-png-transparent.png"
+                      alt="American Express"
+                      className="h-8 object-contain"
+                    />
+                    <img
+                      src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg"
+                      alt="PayPal"
+                      className="h-8 object-contain"
+                    />
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/4/40/Klarna_Payment_Badge.svg"
+                      alt="Klarna"
+                      className="h-8 object-contain"
+                    />
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Eps-%C3%9Cberweisung_Logo.svg/1200px-Eps-%C3%9Cberweisung_Logo.svg.png"
+                      alt="EPS"
+                      className="h-8 object-contain"
+                    />
                   </div>
-                  
-                  <p className="text-sm mb-3">Zahlen Sie sicher und einfach mit Online-Zahlungsmethoden:</p>
+
+                  <p className="text-sm mb-3">
+                    Zahlen Sie sicher und einfach mit Online-Zahlungsmethoden:
+                  </p>
                   <div className="bg-background rounded-md p-4 mt-4 mb-4">
                     <p className="text-sm">
-                      Alle Zahlungsdaten werden sicher über eine verschlüsselte Verbindung übertragen.
+                      Alle Zahlungsdaten werden sicher über eine verschlüsselte
+                      Verbindung übertragen.
                     </p>
                   </div>
-                  
+
                   <div className="mt-4">
-                    <Button 
+                    <Button
                       type="button"
                       onClick={async () => {
                         try {
                           // Pokreni Stripe Checkout s točnim iznosom
-                          await initiateStripeCheckout(total, watchPaymentMethod);
-                          
+                          await initiateStripeCheckout(
+                            total,
+                            watchPaymentMethod,
+                          );
+
                           // Neće se izvršiti ako korisnik bude preusmjeren
                           setStripePaymentComplete(true);
                         } catch (error) {
                           toast({
                             title: "Fehler",
-                            description: "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+                            description:
+                              "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
                             variant: "destructive",
                           });
                         }
                       }}
                       className="w-full"
                     >
-                      {watchPaymentMethod === "paypal" ? "Mit PayPal zahlen" : 
-                       watchPaymentMethod === "klarna" ? "Mit Klarna zahlen" : 
-                       watchPaymentMethod === "eps" ? "Mit EPS Online-Banking zahlen" : 
-                       watchPaymentMethod === "sofort" ? "Mit Sofortüberweisung zahlen" : 
-                       "Mit Karte zahlen"} ({total.toFixed(2)} €)
+                      {watchPaymentMethod === "paypal"
+                        ? "Mit PayPal zahlen"
+                        : watchPaymentMethod === "klarna"
+                          ? "Mit Klarna zahlen"
+                          : watchPaymentMethod === "eps"
+                            ? "Mit EPS Online-Banking zahlen"
+                            : watchPaymentMethod === "sofort"
+                              ? "Mit Sofortüberweisung zahlen"
+                              : "Mit Karte zahlen"}{" "}
+                      ({total.toFixed(2)} €)
                     </Button>
                   </div>
                 </div>
@@ -829,10 +1000,12 @@ export default function CheckoutForm() {
             {watchPaymentMethod === "cash" && (
               <div className="border rounded-lg p-4 bg-neutral">
                 <p className="text-sm mb-4">
-                  {t('checkout.paymentMethods.cash.description')}
+                  {t("checkout.paymentMethods.cash.description")}
                 </p>
                 <div className="bg-background rounded-md p-4">
-                  <p className="text-sm font-medium">{t('checkout.paymentMethods.cash.instructions')}</p>
+                  <p className="text-sm font-medium">
+                    {t("checkout.paymentMethods.cash.instructions")}
+                  </p>
                 </div>
               </div>
             )}
@@ -840,22 +1013,29 @@ export default function CheckoutForm() {
             {watchPaymentMethod === "pickup" && (
               <div className="border rounded-lg p-4 bg-neutral">
                 <p className="text-sm mb-4">
-                  {t('checkout.paymentMethods.pickup.description')}
+                  {t("checkout.paymentMethods.pickup.description")}
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex">
-                    <span className="font-medium w-32">{t('checkout.storeLocation')}:</span>
+                    <span className="font-medium w-32">
+                      {t("checkout.storeLocation")}:
+                    </span>
                     <span>Kerzenwelt by Dani</span>
                   </div>
                   <div className="flex">
-                    <span className="font-medium w-32">{t('checkout.address')}:</span>
+                    <span className="font-medium w-32">
+                      {t("checkout.address")}:
+                    </span>
                     <span>Widmanngasse 37, 9500 Villach, Österreich</span>
                   </div>
                   <div className="flex">
-                    <span className="font-medium w-32">{t('checkout.businessHours')}:</span>
+                    <span className="font-medium w-32">
+                      {t("checkout.businessHours")}:
+                    </span>
                     <span>
-                      {t('checkout.mondayToFriday')}: 9:00 - 18:00<br />
-                      {t('checkout.saturday')}: 9:00 - 13:00
+                      {t("checkout.mondayToFriday")}: 9:00 - 18:00
+                      <br />
+                      {t("checkout.saturday")}: 9:00 - 13:00
                     </span>
                   </div>
                 </div>
@@ -865,11 +1045,13 @@ export default function CheckoutForm() {
             {watchPaymentMethod === "bank" && (
               <div className="border rounded-lg p-4 bg-neutral">
                 <p className="text-sm mb-4">
-                  {t('checkout.paymentMethods.bank.description')}
+                  {t("checkout.paymentMethods.bank.description")}
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex">
-                    <span className="font-medium w-32">{t('checkout.recipient')}:</span>
+                    <span className="font-medium w-32">
+                      {t("checkout.recipient")}:
+                    </span>
                     <span>Kerzenwelt by Dani</span>
                   </div>
                   <div className="flex">
@@ -957,10 +1139,7 @@ export default function CheckoutForm() {
             type="submit"
             className="w-full mt-6"
             size="lg"
-            disabled={
-              isSubmitting ||
-              !form.getValues("sameAsBilling")
-            }
+            disabled={isSubmitting || !form.getValues("sameAsBilling")}
           >
             {isSubmitting ? (
               <>
