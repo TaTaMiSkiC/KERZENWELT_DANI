@@ -57,6 +57,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
                 .update(orders)
                 .set({
                   status: "completed",
+                  paymentStatus: "paid",
                   paymentIntentId: session.payment_intent?.id as string,
                   updatedAt: new Date(),
                 })
@@ -70,12 +71,16 @@ export async function handleStripeWebhook(req: Request, res: Response) {
                 console.log(
                   `[Webhook] Pokušavam obrisati košaricu za korisnika ID: ${userId}`,
                 );
-                await db
-                  .delete(cartItems)
-                  .where(eq(cartItems.userId, parseInt(userId)));
-                console.log(
-                  `[Webhook] Košarica očišćena za korisnika ${userId}.`,
-                );
+                try {
+                  await db
+                    .delete(cartItems)
+                    .where(eq(cartItems.userId, parseInt(userId)));
+                  console.log(
+                    `[Webhook] Košarica očišćena za korisnika ${userId}.`,
+                  );
+                } catch (cartError) {
+                  console.error("[Webhook] Greška pri brisanju košarice:", cartError);
+                }
               } else {
                 console.warn(
                   "[Webhook] Nedostaje userId u metadata, ne mogu obrisati košaricu.",
@@ -88,6 +93,20 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               console.error(
                 `[Webhook ERROR] Narudžba s ID-om ${orderId} NIJE pronađena za ažuriranje.`,
               );
+              
+              // Pokušajmo dohvatiti sesiju direktno od Stripe-a za više informacija
+              console.log("[Webhook] Dohvaćam detalje sesije direktno od Stripe-a");
+              const stripeSession = await stripe.checkout.sessions.retrieve(session.id, {
+                expand: ['line_items', 'customer']
+              });
+              
+              console.log("[Webhook] Detalji sesije:", {
+                id: stripeSession.id,
+                customer: stripeSession.customer,
+                customerEmail: stripeSession.customer_details?.email,
+                amount: stripeSession.amount_total,
+                metadata: stripeSession.metadata
+              });
             }
           } catch (updateError: any) {
             console.error(

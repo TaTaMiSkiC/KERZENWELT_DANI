@@ -287,10 +287,14 @@ export async function createCheckoutSession(req: Request, res: Response) {
     if (orderId) {
       // <--- OVAJ UVJET JE KLJUČAN!
       metadataForStripeSession.order_id = orderId.toString(); // <--- OVO JE LINIJA KOJU TREBATE DODATI/PROVJERITI
+      console.log(`📝 Dodajem order_id ${orderId} u Stripe metapodatke`);
+    } else {
+      console.warn('⚠️ Nije proslijeđen orderId pri kreiranju Stripe sesije!');
     }
     // Dodajemo ID korisnika u metapodatke
     if (userIdFromReq) {
       metadataForStripeSession.userId = userIdFromReq.toString();
+      console.log(`📝 Dodajem userId ${userIdFromReq} u Stripe metapodatke`);
     }
     // Dodajemo informaciju o jeziku u metapodatke
     if (language) {
