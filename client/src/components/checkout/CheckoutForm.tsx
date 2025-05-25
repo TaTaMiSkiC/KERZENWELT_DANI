@@ -1085,7 +1085,12 @@ export default function CheckoutForm() {
                           };
                           
                           // Submit order
-                          submitOrder(orderData, "paypal");
+                          submitOrder(orderData, "paypal").then(result => {
+                            if (result && result.id) {
+                              // Navigate to success page with order ID
+                              navigate(`/order-success/${result.id}?paymentMethod=paypal`);
+                            }
+                          });
                         }}
                         onPaymentError={(error) => {
                           console.error("PayPal payment error", error);
