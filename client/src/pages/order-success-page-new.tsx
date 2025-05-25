@@ -293,17 +293,51 @@ export default function OrderSuccessPageNew() {
           let newOrderData;
           try {
             console.log("Šaljem zahtjev za obradu Stripe sesije:", requestData);
-            const createOrderResponse = await apiRequest("POST", "/api/process-stripe-session", requestData);
+            // Direktno koristimo fetch umjesto apiRequest da bismo imali više kontrole
+            const createOrderResponse = await fetch("/api/process-stripe-session", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(requestData)
+            });
             
             if (!createOrderResponse.ok) {
-              const errorData = await createOrderResponse.json();
-              console.error("Server odgovorio s greškom:", errorData);
-              setError(errorData.error || "Neuspješno stvaranje narudžbe iz Stripe sesije");
+              try {
+                const errorText = await createOrderResponse.text();
+                console.error("Server odgovorio s greškom:", errorText);
+                setError("Neuspješno stvaranje narudžbe iz Stripe sesije: " + createOrderResponse.status);
+              } catch (e) {
+                console.error("Greška pri čitanju odgovora:", e);
+                setError("Neuspješno stvaranje narudžbe iz Stripe sesije: " + createOrderResponse.status);
+              }
               setLoading(false);
               return;
             }
             
-            newOrderData = await createOrderResponse.json();
+            try {
+              const responseText = await createOrderResponse.text();
+              if (!responseText) {
+                console.log("Prazan odgovor od servera");
+                setError("Prazan odgovor od servera");
+                setLoading(false);
+                return;
+              }
+              
+              try {
+                newOrderData = JSON.parse(responseText);
+              } catch (parseError) {
+                console.error("Greška pri parsiranju JSON-a:", parseError, "Tekst:", responseText);
+                setError("Greška pri obradi odgovora servera");
+                setLoading(false);
+                return;
+              }
+            } catch (textError) {
+              console.error("Greška pri čitanju teksta odgovora:", textError);
+              setError("Greška pri čitanju odgovora servera");
+              setLoading(false);
+              return;
+            }
           } catch (apiError) {
             console.error("Greška pri pozivu API-ja:", apiError);
             setError("Neuspješna komunikacija sa serverom. Molimo pokušajte ponovno.");

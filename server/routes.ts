@@ -66,15 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nova ruta za procesiranje Stripe sesije nakon uspješnog plaćanja
   app.post("/api/process-stripe-session", async (req, res) => {
     try {
-      const { sessionId, userId: providedUserId, language, email: providedEmail } = req.body;
+      console.log("Primljen zahtjev za obradu Stripe sesije, body:", req.body);
       
-      console.log("Primljeni zahtjev za obradu Stripe sesije:", {
-        sessionId,
-        providedUserId,
-        providedEmail,
-        language,
-        isAuthenticated: !!req.user
-      });
+      const { sessionId, userId: providedUserId, language } = req.body;
       
       if (!sessionId) {
         return res.status(400).json({ error: "Nedostaje ID sesije" });
@@ -111,19 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Provjeravamo imamo li email iz URL-a
-      if (!userId && providedEmail) {
-        try {
-          console.log(`Pokušavam pronaći korisnika po emailu iz URL-a: ${providedEmail}`);
-          const userByEmail = await storage.getUserByEmail(providedEmail);
-          if (userByEmail) {
-            userId = userByEmail.id;
-            console.log(`Pronađen korisnik po emailu iz URL-a: ${providedEmail}, ID: ${userId}`);
-          }
-        } catch (err) {
-          console.error("Greška pri traženju korisnika po emailu iz URL-a:", err);
-        }
-      }
+      // E-Mail-Optionen wurden entfernt, da sie nicht korrekt funktionieren
       
       // Ako i dalje nemamo korisnika, provjeravamo imamo li email u Stripe sesiji
       if (!userId) {
@@ -159,20 +141,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Dohvaćamo modul za Stripe procesiranje
       const { processStripeSession } = await import('./stripe');
       
-      // Obrađujemo Stripe sesiju i kreiramo narudžbu
-      const result = await processStripeSession(sessionId, userId);
-      
-      // Čistimo košaricu korisnika nakon uspješne narudžbe
       try {
-        await storage.clearCart(userId);
-        console.log(`Očišćena košarica za korisnika ${userId} nakon uspješne narudžbe`);
-      } catch (cartError) {
-        console.error(`Greška pri čišćenju košarice korisnika ${userId}:`, cartError);
-        // Ne prekidamo proces ako je čišćenje košarice neuspjelo
+        // Obrađujemo Stripe sesiju i kreiramo narudžbu
+        const result = await processStripeSession(sessionId, userId);
+        
+        // Čistimo košaricu korisnika nakon uspješne narudžbe
+        try {
+          await storage.clearCart(userId);
+          console.log(`Očišćena košarica za korisnika ${userId} nakon uspješne narudžbe`);
+        } catch (cartError) {
+          console.error(`Greška pri čišćenju košarice korisnika ${userId}:`, cartError);
+          // Ne prekidamo proces ako je čišćenje košarice neuspjelo
+        }
+        
+        console.log("Uspješno obrađena narudžba, šaljem odgovor:", result);
+        
+        // Vraćamo podatke o narudžbi
+        return res.json(result);
+      } catch (processError) {
+        console.error("Greška pri procesiranju Stripe sesije:", processError);
+        return res.status(500).json({ 
+          error: "Greška pri procesiranju Stripe sesije", 
+          details: processError.message || String(processError)
+        });
       }
-      
-      // Vraćamo podatke o narudžbi
-      res.json(result);
     } catch (error: any) {
       console.error("Greška pri obradi Stripe sesije:", error);
       res.status(500).json({ 

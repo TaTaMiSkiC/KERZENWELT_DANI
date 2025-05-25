@@ -60,7 +60,7 @@ export async function createPaymentIntent(req: Request, res: Response) {
  * @param userId User ID
  * @returns Created order and order items
  */
-export async function processStripeSession(sessionId: string, userId: number) {
+export async function processStripeSession(sessionId: string, userId: number, language?: string) {
   try {
     // Retrieve the session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
