@@ -140,7 +140,7 @@ export default function CheckoutForm() {
       setIsSubmitting(true);
       
       // Get the cart items to create order items
-      const orderItems = cartItems.map((item) => ({
+      const orderItems = cartItems?.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
         price: item.product.price,
@@ -148,7 +148,7 @@ export default function CheckoutForm() {
         colorId: item.colorId,
         colorIds: item.colorIds,
         hasMultipleColors: item.hasMultipleColors,
-      }));
+      })) || [];
 
       // Add shipping cost if necessary
       const isFreeShipping =
@@ -1073,13 +1073,19 @@ export default function CheckoutForm() {
                             description: "Ihre Bestellung wurde erfolgreich aufgegeben.",
                           });
                           
-                          // Submit order with PayPal payment info
-                          submitOrder({
-                            ...form.getValues(),
+                          // Get the form values
+                          const formValues = form.getValues();
+                          
+                          // Create order with PayPal payment info
+                          const orderData = {
+                            ...formValues,
                             paymentMethod: "paypal",
                             paymentStatus: "paid",
                             paypalOrderId: data.id
-                          });
+                          };
+                          
+                          // Submit order
+                          submitOrder(orderData, "paypal");
                         }}
                         onPaymentError={(error) => {
                           console.error("PayPal payment error", error);
