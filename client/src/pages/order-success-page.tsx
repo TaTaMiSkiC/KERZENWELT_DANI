@@ -98,20 +98,51 @@ export default function OrderSuccessPage() {
           setOrder(null);
         }
       } else {
-        // Ako nema orderId u URL-u, prikazujemo generičku poruku
+        // Ako nema orderId u URL-u, pokušavamo dohvatiti zadnju narudžbu korisnika
         console.log(
-          "Nema orderId u URL-u. Prikazujem generičku poruku o narudžbi.",
+          "Nema orderId u URL-u. Pokušavam dohvatiti zadnju narudžbu korisnika.",
         );
-        // Ovdje možete postaviti defaultni 'order' objekt s porukom za korisnika
-        // npr. da se čeka obrada plaćanja
-        setOrder({
-          id: "N/A",
-          total: "N/A",
-          paymentMethod: "Online Payment (processing)",
-          status: "pending",
-          customerNote: t("orderSuccessPage.processingPaymentNote"), // Nova poruka za prijevod
-        });
-        setError(null); // Nema greške, samo čekamo
+        if (user?.id) {
+          try {
+            const userOrders = await apiRequest("GET", `/api/orders`);
+            if (userOrders && userOrders.length > 0) {
+              // Uzmi zadnju narudžbu (prva u nizu jer su sortirane po datumu)
+              const latestOrder = userOrders[0];
+              console.log("Dohvaćena zadnja narudžba:", latestOrder);
+              setOrder(latestOrder);
+              
+              // Dohvati stavke narudžbe
+              const orderItems = await apiRequest("GET", `/api/orders/${latestOrder.id}/items`);
+              setOrderItems(orderItems || []);
+            } else {
+              setOrder({
+                id: "N/A",
+                total: "N/A",
+                paymentMethod: "Online Payment (processing)",
+                status: "pending",
+                customerNote: t("orderSuccessPage.processingPaymentNote"),
+              });
+            }
+          } catch (err: any) {
+            console.error("Greška pri dohvaćanju zadnje narudžbe:", err);
+            setOrder({
+              id: "N/A",
+              total: "N/A",
+              paymentMethod: "Online Payment (processing)",
+              status: "pending",
+              customerNote: t("orderSuccessPage.processingPaymentNote"),
+            });
+          }
+        } else {
+          setOrder({
+            id: "N/A",
+            total: "N/A",
+            paymentMethod: "Online Payment (processing)",
+            status: "pending",
+            customerNote: t("orderSuccessPage.processingPaymentNote"),
+          });
+        }
+        setError(null);
       }
       setLoading(false);
     };
