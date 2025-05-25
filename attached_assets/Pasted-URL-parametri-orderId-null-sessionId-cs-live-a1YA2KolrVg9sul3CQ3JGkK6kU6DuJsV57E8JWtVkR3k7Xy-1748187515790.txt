@@ -1,0 +1,60 @@
+URL parametri: 
+{orderId: null, sessionId: 'cs_live_a1YA2KolrVg9sul3CQ3JGkK6kU6DuJsV57E8JWtVkR3k7Xy8oKkuIB9M8L', userId: '4', urlLang: 'de', language: 'de', …}
+language
+: 
+"de"
+location
+: 
+"/order-success-new"
+orderId
+: 
+null
+sessionId
+: 
+"cs_live_a1YA2KolrVg9sul3CQ3JGkK6kU6DuJsV57E8JWtVkR3k7Xy8oKkuIB9M8L"
+urlLang
+: 
+"de"
+userId
+: 
+"4"
+[[Prototype]]
+: 
+Object
+order-success-page-new.tsx:44 Postavljanje jezika iz URL-a: de
+order-success-page-new.tsx:277 Obrađujem Stripe sesiju: cs_live_a1YA2KolrVg9sul3CQ3JGkK6kU6DuJsV57E8JWtVkR3k7Xy8oKkuIB9M8L
+order-success-page-new.tsx:295 Šaljem zahtjev za obradu Stripe sesije: 
+{sessionId: 'cs_live_a1YA2KolrVg9sul3CQ3JGkK6kU6DuJsV57E8JWtVkR3k7Xy8oKkuIB9M8L', language: 'de', userId: '4'}
+order-success-page-new.tsx:299 API URL: https://35972460-91c6-42dd-92bc-da912b0e3609-00-1drcd7m558rz7.worf.replit.dev/api/process-stripe-session
+main.js?attr=knY7o9r…oa0csJLCq8bdqA:3372 
+ POST https://35972460-91c6-42dd-92bc-da912b0e3609-00-1drcd7m558rz7.worf.replit.dev/api/process-stripe-session 500 (Internal Server Error)
+fetchCallImpl	@	main.js?attr=knY7o9r…oa0csJLCq8bdqA:3372
+fetch	@	main.js?attr=knY7o9r…oa0csJLCq8bdqA:3378
+processPayment	@	order-success-page-new.tsx:302
+(anonymous)	@	order-success-page-new.tsx:418
+order-success-page-new.tsx:312 Status odgovora: 500
+order-success-page-new.tsx:313 Content-Type: application/json; charset=utf-8
+order-success-page-new.tsx:317 Server odgovorio s greškom: {"error":"Greška pri procesiranju Stripe sesije","details":"Cannot read properties of undefined (reading 'length')"}
+order-success-page-new.tsx:49 URL parametri: 
+{orderId: null, sessionId: 'cs_live_a1YA2KolrVg9sul3CQ3JGkK6kU6DuJsV57E8JWtVkR3k7Xy8oKkuIB9M8L', userId: '4', urlLang: 'de', language: 'de', …}
+language
+: 
+"de"
+location
+: 
+"/order-success-new"
+orderId
+: 
+null
+sessionId
+: 
+"cs_live_a1YA2KolrVg9sul3CQ3JGkK6kU6DuJsV57E8JWtVkR3k7Xy8oKkuIB9M8L"
+urlLang
+: 
+"de"
+userId
+: 
+"4"
+[[Prototype]]
+: 
+Object

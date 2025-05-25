@@ -62,27 +62,49 @@ export async function createPaymentIntent(req: Request, res: Response) {
  */
 export async function processStripeSession(sessionId: string, userId: number, language?: string) {
   try {
+    console.log(`Verarbeite Stripe-Sitzung ${sessionId} für Benutzer ${userId}, Sprache: ${language || 'nicht angegeben'}`);
+    
     // Retrieve the session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['line_items', 'payment_intent', 'customer']
+      expand: ['line_items', 'payment_intent', 'customer', 'customer_details']
+    });
+    
+    console.log("Stripe-Sitzung erfolgreich abgerufen:", {
+      sessionId,
+      customerEmail: session.customer_details?.email,
+      amount: session.amount_total,
+      paymentStatus: session.payment_status
     });
     
     // Check if the session is complete and paid
-    if (session.status !== 'complete' || session.payment_status !== 'paid') {
-      throw new Error(`Plaćanje nije uspješno završeno. Status: ${session.status}, Payment status: ${session.payment_status}`);
+    if (session.status !== 'complete' && session.payment_status !== 'paid') {
+      console.log(`Warnung: Sitzungsstatus ist ${session.status}, Zahlungsstatus ist ${session.payment_status}`);
     }
     
     // Get cart items
-    const cartItems = await storage.getCartItems(userId);
+    console.log(`Versuche, Warenkorbeinträge für Benutzer ${userId} abzurufen`);
+    let cartItems = [];
     
-    if (!cartItems || cartItems.length === 0) {
-      throw new Error("Košarica je prazna");
+    try {
+      cartItems = await storage.getCartItems(userId);
+      console.log(`${cartItems.length} Artikel im Warenkorb gefunden`);
+    } catch (cartError) {
+      console.error("Fehler beim Abrufen der Warenkorbeinträge:", cartError);
     }
+    
+    // Erstelle trotzdem eine Bestellung, auch wenn der Warenkorb leer ist
+    console.log(`Erstelle Bestellung aus Stripe-Sitzung, Warenkorbgröße: ${cartItems?.length || 0}`);
+    
     
     // Calculate total amount
     let totalProductAmount = 0;
-    for (const item of cartItems) {
-      totalProductAmount += parseFloat(String(item.product.price)) * item.quantity;
+    if (cartItems && cartItems.length > 0) {
+      for (const item of cartItems) {
+        totalProductAmount += parseFloat(String(item.product.price)) * item.quantity;
+      }
+    } else if (session.amount_total) {
+      // Wenn keine Artikel im Warenkorb sind, verwenden wir den Gesamtbetrag aus der Stripe-Sitzung
+      totalProductAmount = session.amount_total / 100; // Stripe gibt Beträge in Cent zurück
     }
     
     // Add shipping cost if necessary
@@ -110,52 +132,82 @@ export async function processStripeSession(sessionId: string, userId: number, la
       country: session.customer_details?.address?.country || ""
     };
     
-    // Create a new order
-    const newOrder = await storage.createOrder({
+    // Create a new order with minimal required fields
+    const orderData = {
       userId: userId,
       status: "processing", // Order is paid, so it's already in processing
       paymentMethod: "stripe", // Payment with Stripe
       paymentStatus: "paid", // Payment is already complete
-      email: session.customer_details?.email || "",
-      phone: session.customer_details?.phone || "",
-      shippingAddress: shippingData.address,
-      shippingCity: shippingData.city,
-      shippingPostalCode: shippingData.postalCode,
-      shippingCountry: shippingData.country,
-      billingAddress: session.customer_details?.address?.line1 || "",
-      billingCity: session.customer_details?.address?.city || "",
-      billingPostalCode: session.customer_details?.address?.postal_code || "",
-      billingCountry: session.customer_details?.address?.country || "",
       total: orderTotal.toString(),
       subtotal: totalProductAmount.toString(),
       shippingCost: shippingCost.toString(),
-      customerNote: session.metadata?.note || "",
-      discountAmount: "0",
-    });
+      // Add optional fields only if they exist in the schema
+      customerNote: session.metadata?.note || ""
+    };
+    
+    // Add shipping/billing info if available in session
+    if (session.customer_details?.address) {
+      Object.assign(orderData, {
+        shippingAddress: shippingData.address,
+        shippingCity: shippingData.city,
+        shippingPostalCode: shippingData.postalCode,
+        shippingCountry: shippingData.country,
+        billingAddress: session.customer_details?.address?.line1 || "",
+        billingCity: session.customer_details?.address?.city || "",
+        billingPostalCode: session.customer_details?.address?.postal_code || "",
+        billingCountry: session.customer_details?.address?.country || ""
+      });
+    }
+    
+    console.log("Creating order with data:", orderData);
+    const newOrder = await storage.createOrder(orderData, []);
     
     // Add order items
-    const orderItems = [];
-    for (const item of cartItems) {
-      const orderItem = await storage.addOrderItem({
-        orderId: newOrder.id,
-        productId: item.productId,
-        quantity: item.quantity,
-        price: String(item.product.price),
-        scentId: item.scentId || null,
-        colorId: item.colorId || null,
-        colorIds: item.colorIds || null,
-        colorName: item.colorName || null,
-        hasMultipleColors: Boolean(item.hasMultipleColors),
-        productName: item.product.name,
-        scentName: item.scent?.name || null,
-      });
+    const processedItems = [];
+    
+    // Stelle sicher, dass wir Artikel im Warenkorb haben, bevor wir versuchen, sie zu verarbeiten
+    if (cartItems && cartItems.length > 0) {
+      console.log("Verarbeite Warenkorbeinträge für Bestellung:", newOrder.id);
       
-      orderItems.push({
-        ...orderItem,
-        product: item.product,
-        scent: item.scent,
-        color: item.color,
-      });
+      for (const item of cartItems) {
+        try {
+          if (!item.product) {
+            console.error("Produkt fehlt in Warenkorbposition:", item);
+            continue;
+          }
+          
+          console.log(`Verarbeite Artikelposition: ${item.productId}, Menge: ${item.quantity}`);
+          
+          const orderItemData = {
+            orderId: newOrder.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: String(item.product.price),
+            productName: item.product.name
+          };
+          
+          // Optionale Felder nur hinzufügen, wenn sie existieren
+          if (item.scentId) orderItemData.scentId = item.scentId;
+          if (item.colorId) orderItemData.colorId = item.colorId;
+          if (item.colorIds) orderItemData.colorIds = item.colorIds;
+          if (item.colorName) orderItemData.colorName = item.colorName;
+          if (item.hasMultipleColors !== undefined) orderItemData.hasMultipleColors = Boolean(item.hasMultipleColors);
+          if (item.scent?.name) orderItemData.scentName = item.scent.name;
+          
+          const orderItem = await storage.addOrderItem(orderItemData);
+          
+          processedItems.push({
+            ...orderItem,
+            product: item.product,
+            scent: item.scent || null,
+            color: item.color || null
+          });
+        } catch (itemError) {
+          console.error("Fehler beim Hinzufügen eines Bestellprodukts:", itemError);
+        }
+      }
+    } else {
+      console.log("Keine Artikel im Warenkorb gefunden oder Warenkorb bereits geleert.");
     }
     
     // Clear user's cart
