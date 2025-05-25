@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDatabase } from "./initDb";
 import { initDatabase } from "./db";
+import { handleStripeWebhook } from "./stripeWebhookHandler";
 import compression from "compression";
 
 const app = express();
@@ -30,6 +31,15 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Webhook ruta MORA biti prije JSON parsiranja
+app.post(
+  "/api/stripe-webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    await handleStripeWebhook(req, res);
+  },
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

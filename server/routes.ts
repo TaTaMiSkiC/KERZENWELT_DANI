@@ -47,7 +47,6 @@ import {
   subscribers,
 } from "@shared/schema";
 import { authMiddleware, adminMiddleware } from "./auth"; // <-- Promijenjeno!
-import express from "express";
 import { handleStripeWebhook } from "./stripeWebhookHandler";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -57,17 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up document routes for company documents
   registerDocumentRoutes(app);
 
-  // Stripe Webhook Endpoint (MORA BITI PRIJE authMiddleware ako imate)
-  app.post(
-    "/api/stripe-webhook",
-    express.raw({ type: "application/json" }),
-    async (req, res) => {
-      await handleStripeWebhook(req, res);
-    },
-  );
-
-  app.use(express.json()); // <-- Provjerite da su OVI ILI SLIČNI pozivi NAKON webhook rute
-  app.use(express.urlencoded({ extended: true }));
+  // Webhook je sada u index.ts prije JSON parsiranja
 
   app.post("/api/orders/stripe-success", authMiddleware, async (req, res) => {
     try {
