@@ -66,14 +66,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nova ruta za procesiranje Stripe sesije nakon uspješnog plaćanja
   app.post("/api/process-stripe-session", async (req, res) => {
     try {
-      const { sessionId } = req.body;
+      const { sessionId, userId: providedUserId } = req.body;
       
       if (!sessionId) {
         return res.status(400).json({ error: "Nedostaje ID sesije" });
       }
       
-      // Pokušamo dohvatiti korisnika iz sesije
+      // Pokušamo dohvatiti korisnika iz sesije ili iz zahtjeva
       let userId: number | undefined = req.user?.id;
+      
+      // Ako je ID korisnika proslijeđen u zahtjevu, koristimo ga
+      if (!userId && providedUserId) {
+        userId = parseInt(providedUserId);
+        console.log(`Koristim ID korisnika iz zahtjeva: ${userId}`);
+      }
       
       // Ako korisnik nije prijavljen, nastavljamo s obradom Stripe sesije
       // ali s direktnim pristupom u processStripeSession funkciji
@@ -84,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const { stripe } = await import('./stripe');
           const stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
-            expand: ['line_items', 'payment_intent', 'customer']
+            expand: ['line_items', 'payment_intent', 'customer', 'customer_details']
           });
           
           // Pokušamo izvući userID iz metapodataka
@@ -100,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(400).json({ 
           error: "Nije pronađen ID korisnika za kreiranje narudžbe",
-          details: "Korisnik nije prijavljen i metadata ne sadrži userId" 
+          details: "Korisnik nije prijavljen i metadata ne sadrži userId. Molimo pokušajte ponovno." 
         });
       }
       
@@ -111,6 +117,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Obrađujemo Stripe sesiju i kreiramo narudžbu
       const result = await processStripeSession(sessionId, userId);
+      
+      // Čistimo košaricu korisnika nakon uspješne narudžbe
+      try {
+        await storage.clearCart(userId);
+        console.log(`Očišćena košarica za korisnika ${userId} nakon uspješne narudžbe`);
+      } catch (cartError) {
+        console.error(`Greška pri čišćenju košarice korisnika ${userId}:`, cartError);
+        // Ne prekidamo proces ako je čišćenje košarice neuspjelo
+      }
       
       // Vraćamo podatke o narudžbi
       res.json(result);

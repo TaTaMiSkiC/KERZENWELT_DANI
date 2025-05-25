@@ -255,7 +255,10 @@ export default function OrderSuccessPageNew() {
           console.log("Obrađujem Stripe sesiju:", sessionId);
           
           // Formiramo podatke za API poziv
-          const requestData: any = { sessionId };
+          const requestData: any = { 
+            sessionId,
+            language // Dodajemo jezik za kasnije korištenje
+          };
           
           // Ako imamo ID korisnika, dodajemo ga
           if (userId) {
@@ -347,6 +350,13 @@ export default function OrderSuccessPageNew() {
     processPayment();
   }, [orderId, sessionId, userId]);
   
+  // Pomoćna funkcija za dohvat prijevoda
+  const t = (key: string) => {
+    const translation = translations[key as keyof typeof translations];
+    if (!translation) return key;
+    return translation[language as keyof typeof translation] || translation.de;
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -355,9 +365,9 @@ export default function OrderSuccessPageNew() {
             <CardContent className="pt-6">
               <div className="text-center mb-6">
                 <div className="animate-spin h-12 w-12 mx-auto border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-                <h1 className="text-2xl font-bold mb-2">Obrađujemo Vašu narudžbu...</h1>
+                <h1 className="text-2xl font-bold mb-2">{t('loading')}</h1>
                 <p className="text-gray-500 mb-4">
-                  Molimo pričekajte dok obradimo Vaše plaćanje i pripremimo narudžbu.
+                  {t('waitMessage')}
                 </p>
               </div>
             </CardContent>
@@ -375,14 +385,14 @@ export default function OrderSuccessPageNew() {
             <CardContent className="pt-6">
               <div className="text-center mb-6">
                 <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
-                <h1 className="text-2xl font-bold mb-2">Greška pri obradi narudžbe</h1>
+                <h1 className="text-2xl font-bold mb-2">{t('errorTitle')}</h1>
                 <p className="text-gray-500 mb-4">
                   {error}
                 </p>
                 <Button asChild>
                   <Link href="/products">
                     <ShoppingBag className="mr-2 h-5 w-5" />
-                    Pregledajte proizvode
+                    {t('browseProducts')}
                   </Link>
                 </Button>
               </div>
@@ -401,14 +411,14 @@ export default function OrderSuccessPageNew() {
             <CardContent className="pt-6">
               <div className="text-center mb-6">
                 <Clock className="h-12 w-12 mx-auto text-yellow-500 mb-4" />
-                <h1 className="text-2xl font-bold mb-2">Narudžba nije pronađena</h1>
+                <h1 className="text-2xl font-bold mb-2">{t('orderNotFound')}</h1>
                 <p className="text-gray-500 mb-4">
-                  Nismo mogli pronaći informacije o vašoj narudžbi.
+                  {t('orderNotFoundDesc')}
                 </p>
                 <Button asChild>
                   <Link href="/products">
                     <ShoppingBag className="mr-2 h-5 w-5" />
-                    Pregledajte proizvode
+                    {t('browseProducts')}
                   </Link>
                 </Button>
               </div>
@@ -422,8 +432,8 @@ export default function OrderSuccessPageNew() {
   return (
     <Layout>
       <Helmet>
-        <title>Narudžba uspješna | Kerzenwelt by Dani</title>
-        <meta name="description" content="Vaša narudžba je uspješno zaprimljena." />
+        <title>{t('pageTitle')}</title>
+        <meta name="description" content={t('pageDescription')} />
       </Helmet>
       
       <div className="container mx-auto px-4 py-12">
@@ -431,59 +441,59 @@ export default function OrderSuccessPageNew() {
           <CardContent className="pt-6">
             <div className="text-center mb-6">
               <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-4" />
-              <h1 className="text-2xl font-bold mb-2">Narudžba uspješno zaprimljena!</h1>
+              <h1 className="text-2xl font-bold mb-2">{t('orderSuccessTitle')}</h1>
               <p className="text-gray-500">
-                Hvala vam na vašoj narudžbi. Poslali smo potvrdu na vašu email adresu.
+                {t('thankYouMessage')}
               </p>
             </div>
             
             <Separator className="my-6" />
             
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Detalji narudžbe</h2>
+              <h2 className="text-xl font-semibold mb-4">{t('orderDetails')}</h2>
               
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-gray-500">Broj narudžbe</p>
+                  <p className="text-sm text-gray-500">{t('orderNumber')}</p>
                   <p className="font-medium">#{order.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Datum</p>
+                  <p className="text-sm text-gray-500">{t('date')}</p>
                   <p className="font-medium">
-                    {new Date(order.createdAt).toLocaleDateString()}
+                    {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'it' ? 'it-IT' : 'hr-HR')}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Ukupno</p>
+                  <p className="text-sm text-gray-500">{t('total')}</p>
                   <p className="font-medium">{parseFloat(order.total).toFixed(2)} €</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Način plaćanja</p>
+                  <p className="text-sm text-gray-500">{t('paymentMethod')}</p>
                   <p className="font-medium">
-                    {order.paymentMethod === "paypal" ? "PayPal" : 
-                     order.paymentMethod === "stripe" ? "Kreditna kartica" : 
-                     "Bankovni prijenos"}
+                    {order.paymentMethod === "paypal" ? t('paypalPayment') : 
+                     order.paymentMethod === "stripe" ? t('stripePayment') : 
+                     t('bankTransfer')}
                   </p>
                 </div>
               </div>
               
               <div className="bg-neutral rounded-lg p-4 mb-4">
-                <h3 className="text-sm font-medium mb-2">Status narudžbe</h3>
+                <h3 className="text-sm font-medium mb-2">{t('status')}</h3>
                 <div className="flex items-center">
                   {order.status === "completed" ? (
                     <>
                       <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                      <span className="font-medium">Završeno</span>
+                      <span className="font-medium">{t('completed')}</span>
                     </>
                   ) : order.status === "processing" ? (
                     <>
                       <Package className="h-5 w-5 text-blue-500 mr-2" />
-                      <span className="font-medium">U obradi</span>
+                      <span className="font-medium">{t('processing')}</span>
                     </>
                   ) : (
                     <>
                       <Clock className="h-5 w-5 text-yellow-500 mr-2" />
-                      <span className="font-medium">Na čekanju</span>
+                      <span className="font-medium">{t('pending')}</span>
                     </>
                   )}
                 </div>
@@ -491,10 +501,10 @@ export default function OrderSuccessPageNew() {
               
               {/* Order items list */}
               <div className="border rounded-lg p-4 mb-4">
-                <h3 className="text-sm font-medium mb-3">Proizvodi u narudžbi</h3>
+                <h3 className="text-sm font-medium mb-3">{t('products')}</h3>
                 <div className="space-y-3">
                   {orderItems.length === 0 ? (
-                    <p className="text-sm text-gray-500">Učitavanje proizvoda...</p>
+                    <p className="text-sm text-gray-500">{t('loadingProducts')}</p>
                   ) : (
                     orderItems.map((item) => (
                       <div key={item.id} className="flex items-start border-b pb-3 last:border-b-0 last:pb-0">
@@ -511,19 +521,19 @@ export default function OrderSuccessPageNew() {
                           <div className="flex justify-between">
                             <div>
                               <p className="font-medium">{item.productName || item.product?.name}</p>
-                              <p className="text-xs text-gray-500">Količina: {item.quantity}</p>
+                              <p className="text-xs text-gray-500">{t('quantity')}: {item.quantity}</p>
                               
                               {/* Scent info */}
                               {item.scent && (
                                 <p className="text-xs text-muted-foreground">
-                                  Miris: <span className="font-medium">{item.scent.name}</span>
+                                  {t('scent')}: <span className="font-medium">{item.scent.name}</span>
                                 </p>
                               )}
                               
                               {/* Color info */}
                               {item.color && (
                                 <div className="flex items-center mt-1">
-                                  <span className="text-xs text-muted-foreground mr-1">Boja:</span>
+                                  <span className="text-xs text-muted-foreground mr-1">{t('color')}:</span>
                                   <div 
                                     className="w-3 h-3 rounded-full mr-1 border"
                                     style={{ backgroundColor: item.color.hexValue }}
@@ -535,7 +545,7 @@ export default function OrderSuccessPageNew() {
                             <div className="text-right">
                               <p className="font-medium">{parseFloat(item.price).toFixed(2)} €</p>
                               <p className="text-xs text-gray-500">
-                                Ukupno: {(parseFloat(item.price) * item.quantity).toFixed(2)} €
+                                {t('total')}: {(parseFloat(item.price) * item.quantity).toFixed(2)} €
                               </p>
                             </div>
                           </div>
@@ -548,10 +558,10 @@ export default function OrderSuccessPageNew() {
               
               {order.paymentMethod === "bank_transfer" && (
                 <div className="border rounded-lg p-4 bg-neutral mb-4">
-                  <h3 className="text-sm font-medium mb-2">Podaci za plaćanje</h3>
+                  <h3 className="text-sm font-medium mb-2">{t('paymentInfo')}</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex">
-                      <span className="font-medium w-32">Primatelj:</span>
+                      <span className="font-medium w-32">{t('recipient')}:</span>
                       <span>Kerzenwelt by Dani d.o.o.</span>
                     </div>
                     <div className="flex">
@@ -559,20 +569,20 @@ export default function OrderSuccessPageNew() {
                       <span>HR1234567890123456789</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Model:</span>
+                      <span className="font-medium w-32">{t('model')}:</span>
                       <span>HR00</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Poziv na broj:</span>
+                      <span className="font-medium w-32">{t('reference')}:</span>
                       <span>{order.id}</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Iznos:</span>
+                      <span className="font-medium w-32">{t('amount')}:</span>
                       <span>{parseFloat(order.total).toFixed(2)} €</span>
                     </div>
                     <div className="flex">
-                      <span className="font-medium w-32">Opis plaćanja:</span>
-                      <span>Kerzenwelt narudžba #{order.id}</span>
+                      <span className="font-medium w-32">{t('paymentDescription')}:</span>
+                      <span>Kerzenwelt {t('orderNumber')} #{order.id}</span>
                     </div>
                   </div>
                 </div>
@@ -584,13 +594,13 @@ export default function OrderSuccessPageNew() {
             <div className="flex justify-between">
               <Button asChild variant="outline">
                 <Link href="/account/orders">
-                  Moje narudžbe
+                  {t('myOrders')}
                 </Link>
               </Button>
               
               <Button asChild>
                 <Link href="/products">
-                  Nastavite kupovinu
+                  {t('continueShopping')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
