@@ -35,27 +35,36 @@ export default function OrderSuccessPage() {
           });
           
           if (!createOrderResponse.ok) {
-            throw new Error("Neuspješno stvaranje narudžbe iz Stripe sesije");
+            const errorData = await createOrderResponse.json();
+            console.error("Server odgovorio s greškom:", errorData);
+            throw new Error(errorData.error || "Neuspješno stvaranje narudžbe iz Stripe sesije");
           }
           
           const newOrderData = await createOrderResponse.json();
+          console.log("Dobiveni podaci o narudžbi:", newOrderData);
           
           // Postavljamo ID nove narudžbe
           if (newOrderData && newOrderData.orderId) {
+            console.log("Postavljen novi ID narudžbe:", newOrderData.orderId);
             setOrder(newOrderData.order);
             
             // Dohvati stavke narudžbe ako ih imamo
-            if (newOrderData.orderItems) {
+            if (newOrderData.orderItems && newOrderData.orderItems.length > 0) {
+              console.log("Postavljam stavke narudžbe iz odgovora:", newOrderData.orderItems);
               setOrderItems(newOrderData.orderItems);
             } else {
               // Dohvati stavke narudžbe standardnim putem
+              console.log("Dohvaćam stavke za narudžbu:", newOrderData.orderId);
               const itemsResponse = await apiRequest("GET", `/api/orders/${newOrderData.orderId}/items`);
               const itemsData = await itemsResponse.json();
+              console.log("Dohvaćene stavke narudžbe:", itemsData);
               setOrderItems(itemsData);
             }
             
             setLoading(false);
             return;
+          } else {
+            console.error("Dobiveni podaci nemaju orderId:", newOrderData);
           }
         } catch (error) {
           console.error("Greška pri obradi Stripe sesije:", error);
