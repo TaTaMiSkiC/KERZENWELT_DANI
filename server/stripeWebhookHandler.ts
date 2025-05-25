@@ -70,6 +70,20 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             
             console.log(`[Webhook] Kreiram narudžbu iz košarice, cartTotal: ${cartTotal}`);
 
+            // Transformiraj cartItems u order items format
+            const orderItemsData = cartItems.map((item: any) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.product.price.toString(),
+              productName: item.product.name,
+              scentId: item.scentId || null,
+              colorId: item.colorId || null,
+              colorIds: item.colorIds || null,
+              colorName: item.colorName || null,
+              hasMultipleColors: item.hasMultipleColors || false,
+              scentName: item.scent?.name || null,
+            }));
+
             // Kreiraj narudžbu
             const newOrder = await storage.createOrder({
               userId: parseInt(userId),
@@ -85,7 +99,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               shippingPostalCode: user.postalCode || "",
               shippingCountry: user.country || "",
               customerNote: "",
-            }, cartItems);
+            }, orderItemsData);
 
             console.log(`[Webhook] Nova narudžba kreirana sa ID: ${newOrder.id}`);
 
