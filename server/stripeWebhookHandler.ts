@@ -48,14 +48,54 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
         if (userId) {
           try {
-            console.log(`[Webhook] Kreiram jednostavnu narudžbu za korisnika ${userId}`);
+            console.log(`[Webhook] Kreiram narudžbu za korisnika ${userId}`);
             
-            // Kreiraj osnovnu narudžbu
-            console.log(`[Webhook SUCCESS] Stripe webhook obrađen`);
+            // Dohvati podatke iz korisničke košarice
+            const { storage } = await import('./storage');
+            const cartItems = await storage.getCartItems(parseInt(userId));
+            const user = await storage.getUser(parseInt(userId));
+
+            if (!cartItems || cartItems.length === 0) {
+              console.error(`[Webhook] Nema stavki u košarici za korisnika ${userId}`);
+              return;
+            }
+
+            if (!user) {
+              console.error(`[Webhook] Korisnik ${userId} nije pronađen`);
+              return;
+            }
+
+            // Izračunaj ukupan iznos iz košarice
+            const cartTotal = cartItems.reduce((sum: number, item: any) => sum + (item.product.price * item.quantity), 0);
+            
+            console.log(`[Webhook] Kreiram narudžbu iz košarice, cartTotal: ${cartTotal}`);
+
+            // Kreiraj narudžbu
+            const newOrder = await storage.createOrder({
+              userId: parseInt(userId),
+              total: cartTotal.toString(),
+              subtotal: cartTotal.toString(),
+              discountAmount: "0",
+              shippingCost: "0",
+              paymentMethod: "stripe",
+              status: "completed",
+              paymentStatus: "paid",
+              shippingAddress: user.address || "",
+              shippingCity: user.city || "",
+              shippingPostalCode: user.postalCode || "",
+              shippingCountry: user.country || "",
+              customerNote: "",
+            }, cartItems);
+
+            console.log(`[Webhook] Nova narudžba kreirana sa ID: ${newOrder.id}`);
+
+            // Obriši košaricu
+            await storage.clearCart(parseInt(userId));
+            console.log(`[Webhook SUCCESS] Košarica očišćena za korisnika ${userId}`);
 
           } catch (error: any) {
             console.error(
-              `[Webhook ERROR] Greška pri obradi webhook-a:`,
+              `[Webhook ERROR] Greška pri kreiranju narudžbe:`,
               error.message || error,
             );
           }
