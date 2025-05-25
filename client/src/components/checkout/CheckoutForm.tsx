@@ -958,40 +958,50 @@ export default function CheckoutForm() {
                   </div>
 
                   <div className="mt-4">
-                    <Button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          // Pokreni Stripe Checkout s točnim iznosom
-                          await initiateStripeCheckout(
-                            total,
-                            watchPaymentMethod,
-                          );
+                    {watchPaymentMethod === "stripe" && (
+                      <StripeBuyButton 
+                        amount={total} 
+                        userId={user?.id}
+                        language={t('languageCode') || "de"} 
+                      />
+                    )}
+                    
+                    {watchPaymentMethod !== "stripe" && (
+                      <Button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            // Pokreni Stripe Checkout s točnim iznosom
+                            await initiateStripeCheckout(
+                              total,
+                              watchPaymentMethod,
+                            );
 
-                          // Neće se izvršiti ako korisnik bude preusmjeren
-                          setStripePaymentComplete(true);
-                        } catch (error) {
-                          toast({
-                            title: "Fehler",
-                            description:
-                              "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      className="w-full"
-                    >
-                      {watchPaymentMethod === "paypal"
-                        ? "Mit PayPal zahlen"
-                        : watchPaymentMethod === "klarna"
-                          ? "Mit Klarna zahlen"
-                          : watchPaymentMethod === "eps"
-                            ? "Mit EPS Online-Banking zahlen"
-                            : watchPaymentMethod === "sofort"
-                              ? "Mit Sofortüberweisung zahlen"
-                              : "Mit Karte zahlen"}{" "}
-                      ({total.toFixed(2)} €)
-                    </Button>
+                            // Neće se izvršiti ako korisnik bude preusmjeren
+                            setStripePaymentComplete(true);
+                          } catch (error) {
+                            toast({
+                              title: "Fehler",
+                              description:
+                                "Bei der Verbindung mit dem Zahlungsanbieter ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="w-full"
+                      >
+                        {watchPaymentMethod === "paypal"
+                          ? "Mit PayPal zahlen"
+                          : watchPaymentMethod === "klarna"
+                            ? "Mit Klarna zahlen"
+                            : watchPaymentMethod === "eps"
+                              ? "Mit EPS Online-Banking zahlen"
+                              : watchPaymentMethod === "sofort"
+                                ? "Mit Sofortüberweisung zahlen"
+                                : "Mit Karte zahlen"}{" "}
+                        ({total.toFixed(2)} €)
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
