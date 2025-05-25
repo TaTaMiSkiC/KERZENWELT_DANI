@@ -40,12 +40,16 @@ export async function initiateStripeCheckout(
     }
 
     // Kreiraj Checkout sesiju
+    // Dohvaćamo trenutni odabrani jezik
+    const currentLanguage = document.documentElement.lang || 'de';
+    
     const response = await apiRequest("POST", "/api/create-checkout-session", {
       amount,
       orderId,
       userId, // Dodajemo ID korisnika za praćenje
+      language: currentLanguage, // Dodajemo informaciju o jeziku
       paymentMethod: stripePaymentMethod, // Dodajemo metodu plaćanja za Stripe
-      successUrl: `${origin}/order-success-new?session_id={CHECKOUT_SESSION_ID}&user_id=${userId || ''}`,
+      successUrl: `${origin}/order-success-new?session_id={CHECKOUT_SESSION_ID}&user_id=${userId || ''}&lang=${currentLanguage}`,
       cancelUrl: `${origin}/checkout?canceled=true`,
     });
 

@@ -66,7 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Nova ruta za procesiranje Stripe sesije nakon uspješnog plaćanja
   app.post("/api/process-stripe-session", async (req, res) => {
     try {
-      const { sessionId, userId: providedUserId } = req.body;
+      const { sessionId, userId: providedUserId, language } = req.body;
       
       if (!sessionId) {
         return res.status(400).json({ error: "Nedostaje ID sesije" });

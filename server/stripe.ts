@@ -176,7 +176,7 @@ export async function processStripeSession(sessionId: string, userId: number) {
 
 export async function createCheckoutSession(req: Request, res: Response) {
   try {
-    const { amount, orderId, paymentMethod, successUrl, cancelUrl } = req.body;
+    const { amount, orderId, userId, language, paymentMethod, successUrl, cancelUrl } = req.body;
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res.status(400).json({
@@ -210,6 +210,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
     // Dodajemo ID korisnika u metapodatke
     if (userId) {
       metadata.userId = userId.toString();
+    }
+    
+    // Dodajemo informaciju o jeziku u metapodatke
+    if (language) {
+      metadata.language = language;
     }
 
     // Kreiramo listu podržanih metoda plaćanja

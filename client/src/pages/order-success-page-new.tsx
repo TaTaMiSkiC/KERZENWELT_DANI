@@ -30,8 +30,18 @@ export default function OrderSuccessPageNew() {
   const orderId = searchParams.get("orderId");
   const sessionId = searchParams.get("session_id");
   const userId = searchParams.get("user_id");
+  const urlLang = searchParams.get("lang");
+  
+  // Ako jezik dolazi iz URL-a, možemo ga koristiti umjesto trenutnog jezika
+  // Ovo omogućuje da korisnik dobije stranicu na istom jeziku koji je koristio prilikom plaćanja
+  useEffect(() => {
+    if (urlLang && ['de', 'en', 'hr', 'it'].includes(urlLang)) {
+      // Ovdje bismo mogli postaviti jezik, ali za sada samo logiramo
+      console.log(`Jezik iz URL-a: ${urlLang}`);
+    }
+  }, [urlLang]);
 
-  console.log("URL parametri:", { orderId, sessionId, userId, language, location });
+  console.log("URL parametri:", { orderId, sessionId, userId, urlLang, language, location });
   
   // Višejezični tekstovi
   const translations = {
@@ -350,11 +360,12 @@ export default function OrderSuccessPageNew() {
     processPayment();
   }, [orderId, sessionId, userId]);
   
-  // Pomoćna funkcija za dohvat prijevoda
+  // Pomoćna funkcija za dohvat prijevoda - koristimo urlLang ako postoji, inače language iz contexta
   const t = (key: string) => {
+    const currentLanguage = (urlLang && ['de', 'en', 'hr', 'it'].includes(urlLang)) ? urlLang : language;
     const translation = translations[key as keyof typeof translations];
     if (!translation) return key;
-    return translation[language as keyof typeof translation] || translation.de;
+    return translation[currentLanguage as keyof typeof translation] || translation.de;
   };
 
   if (loading) {
