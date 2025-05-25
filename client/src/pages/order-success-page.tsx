@@ -17,12 +17,52 @@ export default function OrderSuccessPage() {
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Extract order ID from URL query parameter
+  // Extract session ID or order ID from URL query parameter
   const searchParams = new URLSearchParams(location.split("?")[1]);
   const orderId = searchParams.get("orderId");
+  const sessionId = searchParams.get("session_id");
   
   useEffect(() => {
-    const fetchOrder = async () => {
+    const processOrder = async () => {
+      // Ako imamo session_id iz Stripe-a, prvo moramo stvoriti narudžbu
+      if (sessionId && !orderId) {
+        try {
+          console.log("Obrađujem Stripe sesiju:", sessionId);
+          
+          // Poziv API-ja za procesiranje Stripe sesije i stvaranje narudžbe
+          const createOrderResponse = await apiRequest("POST", "/api/process-stripe-session", {
+            sessionId: sessionId
+          });
+          
+          if (!createOrderResponse.ok) {
+            throw new Error("Neuspješno stvaranje narudžbe iz Stripe sesije");
+          }
+          
+          const newOrderData = await createOrderResponse.json();
+          
+          // Postavljamo ID nove narudžbe
+          if (newOrderData && newOrderData.orderId) {
+            setOrder(newOrderData.order);
+            
+            // Dohvati stavke narudžbe ako ih imamo
+            if (newOrderData.orderItems) {
+              setOrderItems(newOrderData.orderItems);
+            } else {
+              // Dohvati stavke narudžbe standardnim putem
+              const itemsResponse = await apiRequest("GET", `/api/orders/${newOrderData.orderId}/items`);
+              const itemsData = await itemsResponse.json();
+              setOrderItems(itemsData);
+            }
+            
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Greška pri obradi Stripe sesije:", error);
+        }
+      }
+      
+      // Standardna logika za dohvaćanje postojeće narudžbe po ID-u
       if (!orderId) {
         setLoading(false);
         return;
@@ -46,8 +86,8 @@ export default function OrderSuccessPage() {
       }
     };
     
-    fetchOrder();
-  }, [orderId]);
+    processOrder();
+  }, [orderId, sessionId]);
   
   if (loading) {
     return (

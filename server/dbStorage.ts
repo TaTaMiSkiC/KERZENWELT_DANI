@@ -677,6 +677,16 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder;
   }
 
+  async addOrderItem(itemData: InsertOrderItem): Promise<OrderItem> {
+    console.log("Dodavanje stavke narudžbe:", itemData);
+    
+    // Kreiramo stavku narudžbe
+    const [orderItem] = await db.insert(orderItems).values(itemData).returning();
+    console.log("Stavka narudžbe kreirana:", orderItem);
+    
+    return orderItem;
+  }
+
   async getOrderItems(orderId: number): Promise<OrderItemWithProduct[]> {
     try {
       // Koristimo direktni SQL upit kako bismo osigurali pristup svim poljima
