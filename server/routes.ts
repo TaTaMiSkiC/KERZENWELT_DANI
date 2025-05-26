@@ -3459,7 +3459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Koristim novi broj računa:", invoiceNumber);
       }
 
-      // Generiraj PDF sadržaj (kopiram logiku iz frontend-a)
+      // Generiraj PDF sadržaj - kopiram TAČNO isti format iz order-details-page.tsx
       console.log("📄 PDF endpoint - počinje generiranje PDF-a");
       const jsPDF = (await import("jspdf")).default;
       const autoTable = (await import("jspdf-autotable")).default;
@@ -3467,43 +3467,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const doc = new jsPDF();
       console.log("✅ PDF endpoint - jsPDF inicijalizovan");
 
-      // Postavi font
-      doc.setFont("helvetica");
+      // KOPIRAM TAČAN FORMAT IZ FRONTEND-A:
+      const lang = "de"; // Default jezik
+      const currentDate = new Date();
+      const formattedDate = currentDate.toLocaleDateString('de-DE');
 
-      // Header sa poslovnim podacima
-      doc.setFontSize(20);
-      doc.setTextColor(33, 37, 41);
-      doc.text("Kerzenwelt by Dani", 20, 30);
-      
-      doc.setFontSize(28);
-      doc.setTextColor(212, 175, 55);
-      doc.text("RECHNUNG", 150, 30);
+      // Određivanje broj računa (isti kao frontend)
+      const baseNumber = 450;
+      // Proveravamo da li već postoji račun u bazi
+      try {
+        const invoicesResponse = await storage.getAllInvoices();
+        const existingInvoice = invoicesResponse.find(inv => inv.orderId === order.id);
+        if (existingInvoice && existingInvoice.invoiceNumber) {
+          invoiceNumber = existingInvoice.invoiceNumber;
+        } else {
+          invoiceNumber = order.id < baseNumber ? `i${baseNumber}` : `i${order.id}`;
+        }
+      } catch (invoiceError) {
+        invoiceNumber = order.id < baseNumber ? `i${baseNumber}` : `i${order.id}`;
+      }
 
+      // Header sa logo pozicijom (kopiram iz frontend-a)
+      doc.setTextColor(218, 165, 32); // Zlatna boja
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("Kerzenwelt by Dani", 55, 24);
       doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text("Ossiacher Zeile 30, 9500 Villach, Österreich", 20, 40);
-      doc.text(`Rechnungsnummer: ${invoiceNumber}`, 150, 40);
-      doc.text("Email: daniela.svoboda2@gmail.com", 20, 50);
-      doc.text(`Rechnungsdatum: ${new Date().toLocaleDateString('de-DE')}`, 150, 50);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      doc.text("Ossiacher Zeile 30, 9500 Villach, Österreich", 55, 30);
+      doc.text("Email: info@kerzenweltbydani.com", 55, 35);
 
-      // Informacije o kupcu
-      doc.setFontSize(12);
-      doc.setTextColor(33, 37, 41);
-      doc.text("Käuferinformationen:", 20, 70);
-      
+      // Naslov i broj računa na desnoj strani
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("RECHNUNG", 190, 24, { align: "right" });
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Rechnungsnummer: ${invoiceNumber}`, 190, 32, { align: "right" });
+      doc.text(`Rechnungsdatum: ${formattedDate}`, 190, 38, { align: "right" });
+
+      // Horizontalna linija
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, 42, 190, 42);
+
+      // Informacije o kupcu (kao u frontend-u)
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("Kundendaten:", 20, 55);
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`${user.firstName || ''} ${user.lastName || ''}`, 20, 80);
-      doc.text(`Email: ${user.email}`, 20, 90);
-      doc.text("Lieferadresse: " + (order.shippingAddress || "Nicht angegeben"), 20, 100);
-      doc.text((order.shippingCity || ""), 20, 110);
-      doc.text((order.shippingCountry || ""), 20, 120);
 
-      // Tabela proizvoda
-      doc.setFontSize(12);
-      doc.text("Bestellpositionen:", 20, 140);
+      let customerY = 62;
+      if (user.firstName || user.lastName) {
+        doc.text(`${user.firstName || ''} ${user.lastName || ''}`.trim(), 20, customerY);
+        customerY += 5;
+      }
 
+      if (user.email) {
+        doc.text(`Email: ${user.email}`, 20, customerY);
+        customerY += 5;
+      }
+
+      // Adresa isporuke
+      if (order.shippingAddress || order.shippingCity || order.shippingPostalCode || order.shippingCountry) {
+        doc.text("Lieferadresse:", 20, customerY);
+        customerY += 5;
+        
+        if (order.shippingAddress) {
+          doc.text(order.shippingAddress, 20, customerY);
+          customerY += 5;
+        }
+        
+        const cityLine = [order.shippingPostalCode, order.shippingCity].filter(Boolean).join(' ');
+        if (cityLine) {
+          doc.text(cityLine, 20, customerY);
+          customerY += 5;
+        }
+        
+        if (order.shippingCountry) {
+          doc.text(order.shippingCountry, 20, customerY);
+          customerY += 5;
+        }
+      } else {
+        doc.text("Lieferadresse: N/A - Rechnung wird persönlich übergeben", 20, customerY);
+        customerY += 5;
+      }
+
+      // Napomene kupca (ako postoje)
+      if (order.customerNote) {
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text("Kundennotiz:", 120, 55);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+
+        const noteLines = doc.splitTextToSize(order.customerNote, 65);
+        const maxLines = Math.min(3, noteLines.length);
+
+        for (let i = 0; i < maxLines; i++) {
+          doc.text(noteLines[i], 120, 62 + i * 5);
+        }
+      }
+
+      // Stavke narudžbe
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("Bestellartikel:", 20, customerY + 5);
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, customerY + 7, 190, customerY + 7);
+
+      // Priprema podataka za tablicu (TAČNO kao u frontend-u)
       const items = orderItems.map((item) => {
-        let productName = item.productName || "Nepoznat proizvod";
+        let productName = item.productName || `Produkt #${item.productId}`;
         let details = [];
 
         // Dodaj miris ako postoji
@@ -3511,20 +3589,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details.push(`Duft: ${item.scentName}`);
         }
 
-        // Dodaj boju/boje
+        // Dodaj boju/boje - tačno kao u frontend-u
         let colorText = null;
         if (item.hasMultipleColors && item.colorIds) {
           try {
             const colorIds = JSON.parse(item.colorIds);
             if (Array.isArray(colorIds)) {
               const colorMap = {
-                1: "Weiß", 2: "Beige", 3: "Golden", 5: "Rot",
-                6: "Grün", 7: "Blau", 8: "Gelb", 9: "Lila",
-                10: "Rosa", 11: "Schwarz", 12: "Orange", 13: "Braun"
+                1: "Weiß", 2: "Beige", 3: "Golden", 5: "Rot", 6: "Grün",
+                7: "Blau", 8: "Gelb", 9: "Lila", 10: "Rosa", 11: "Schwarz",
+                12: "Orange", 13: "Braun"
               };
-              const colorNames = colorIds.map(colorId => 
-                colorMap[colorId] || `Farbe ${colorId}`
-              );
+              const colorNames = colorIds.map(colorId => colorMap[colorId] || `Farbe ${colorId}`);
               colorText = colorNames.join(", ");
             }
           } catch (e) {
