@@ -31,28 +31,26 @@ export default function ProductsPage() {
   const [, params] = useRoute("/products/:category");
   const [location] = useLocation();
   
-  // Get category from URL immediately
+  // Get category from URL and set it directly
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
-  const categoryParam = urlParams.get("category");
+  const categoryFromUrl = urlParams.get("category") || "all";
   
   const [filters, setFilters] = useState({
-    category: "all",
+    category: categoryFromUrl,
     search: "",
     priceRange: [0, 100],
     sortBy: "newest",
   });
 
-  // Update filters when URL changes
+  // Update filters when URL location changes
   useEffect(() => {
     const urlParams = new URLSearchParams(location.split("?")[1] || "");
-    const currentCategoryParam = urlParams.get("category");
+    const currentCategory = urlParams.get("category") || "all";
     
-    if (currentCategoryParam) {
-      setFilters(prev => ({ ...prev, category: currentCategoryParam }));
-    } else {
-      setFilters(prev => ({ ...prev, category: "all" }));
+    if (currentCategory !== filters.category) {
+      setFilters(prev => ({ ...prev, category: currentCategory }));
     }
-  }, [location]);
+  }, [location, filters.category]);
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
@@ -81,17 +79,7 @@ export default function ProductsPage() {
     queryKey: ["/api/categories"],
   });
   
-  // Set initial category from URL parameters - watch for changes
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.split("?")[1] || "");
-    const currentCategoryParam = urlParams.get("category");
-    
-    if (currentCategoryParam && currentCategoryParam !== filters.category) {
-      setFilters(prev => ({ ...prev, category: currentCategoryParam }));
-    } else if (!currentCategoryParam && filters.category !== "all") {
-      setFilters(prev => ({ ...prev, category: "all" }));
-    }
-  }, [location, filters.category]);
+  // Remove the problematic useEffect to avoid conflicts
   
   // Log product data for debugging
   useEffect(() => {
