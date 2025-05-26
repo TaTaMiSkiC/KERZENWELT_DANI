@@ -44,22 +44,10 @@ export default function Hero() {
     }
   });
 
-  // Funkcija za detektiranje mobilnog uređaja
-  const isMobile = () => {
-    return window.innerWidth <= 768;
-  };
-
-  // Funkcija za navigaciju na products stranicu s kategoriazacijom
+  // Funkcija za navigaciju na products stranicu
   const handleExploreCollection = () => {
-    if (isMobile()) {
-      // Za mobilne uređaje, idi na products stranicu i postavi sessionStorage za kategoriju filtriranje
-      sessionStorage.setItem('categoryFilter', 'all');
-      sessionStorage.setItem('showAllCategories', 'true');
-      setLocation('/products');
-    } else {
-      // Za desktop, koristi običnu navigaciju
-      setLocation('/products');
-    }
+    // Jednostavno idi na products stranicu bez dodatne logike
+    setLocation('/products');
   };
   
   // Get title array for the current language
