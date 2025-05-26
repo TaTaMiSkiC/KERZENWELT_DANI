@@ -3601,9 +3601,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.setFontSize(10); //
       doc.setTextColor(0, 0, 0); //
 
-      // Header with logo position (copied from frontend)
-      // Note: Logo will be added as text instead of image for now
-      // If you want to add a logo image, define logoBase64 variable first
+      // Header with logo
+      const logoBase64 = "data:image/png;base64," + require('fs').readFileSync('client/src/assets/Kerzenwelt by Dani.png', 'base64');
+      
+      try {
+        doc.addImage(logoBase64, "PNG", 20, 15, 30, 30);
+      } catch (logoError) {
+        console.log("⚠️ Logo could not be added to PDF:", logoError);
+        // Continue without logo if there's an error
+      }
 
       // Format date and invoice number
       const currentDate = new Date(); //
