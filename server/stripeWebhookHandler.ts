@@ -198,6 +198,49 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             const cartTotal = cartItems.reduce((sum: number, item: any) => sum + (item.product.price * item.quantity), 0);
             
             console.log(`[Webhook] Kreiram narudžbu iz košarice, cartTotal: ${cartTotal}`);
+            
+            // Get actual payment method from session payment_method_types
+            let actualPaymentMethod = "Online Payment"; // Default fallback
+            console.log(`[Webhook] Session payment_method_types:`, session.payment_method_types);
+            
+            // First try to get from payment_method_types in the session
+            if (session.payment_method_types && session.payment_method_types.length > 0) {
+              const primaryPaymentMethod = session.payment_method_types[0]; // Usually the one used
+              console.log(`[Webhook] Primary payment method type: ${primaryPaymentMethod}`);
+              
+              switch (primaryPaymentMethod) {
+                case 'card':
+                  actualPaymentMethod = "Kreditkarte";
+                  break;
+                case 'klarna':
+                  actualPaymentMethod = "Klarna";
+                  break;
+                case 'eps':
+                  actualPaymentMethod = "EPS";
+                  break;
+                case 'sofort':
+                  actualPaymentMethod = "Sofort";
+                  break;
+                case 'bancontact':
+                  actualPaymentMethod = "Bancontact";
+                  break;
+                case 'ideal':
+                  actualPaymentMethod = "iDEAL";
+                  break;
+                case 'giropay':
+                  actualPaymentMethod = "Giropay";
+                  break;
+                case 'sepa_debit':
+                  actualPaymentMethod = "SEPA Lastschrift";
+                  break;
+                default:
+                  actualPaymentMethod = primaryPaymentMethod.charAt(0).toUpperCase() + primaryPaymentMethod.slice(1);
+              }
+              
+              console.log(`[Webhook] Payment method from session types: ${primaryPaymentMethod} -> ${actualPaymentMethod}`);
+            } else {
+              console.log(`[Webhook] No payment_method_types found in session, using default`);
+            }
 
             // Transformiraj cartItems u order items format
             const orderItemsData = cartItems.map((item: any) => ({
