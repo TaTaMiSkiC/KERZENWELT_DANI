@@ -46,14 +46,14 @@ export default function ProductsPage() {
   
   // Fetch products with category filtering
   const { data: products, isLoading: productsLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["/api/products", filters.category !== "all" ? filters.category : null],
-    queryFn: async ({ queryKey }) => {
-      const categoryId = queryKey[1];
+    queryKey: ["/api/products", filters.category],
+    queryFn: async () => {
+      const categoryId = filters.category !== "all" ? filters.category : null;
       const url = categoryId 
         ? `/api/products?category=${categoryId}` 
         : "/api/products";
       
-      console.log("Fetching products with URL:", url);
+      console.log("Fetching products with URL:", url, "Category:", categoryId);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -62,13 +62,7 @@ export default function ProductsPage() {
       
       return response.json();
     },
-    enabled: true, // Always enabled
   });
-
-  // Force refetch when category filter changes
-  useEffect(() => {
-    refetch();
-  }, [filters.category, refetch]);
   
   // Fetch all categories
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
