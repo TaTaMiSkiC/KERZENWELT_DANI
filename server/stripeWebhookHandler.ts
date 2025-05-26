@@ -51,10 +51,50 @@ export async function handleStripeWebhook(req: Request, res: Response) {
           try {
             console.log(`[Webhook] Kreiram narudžbu za korisnika ${userId}`);
             console.log(`[Webhook] Session payment_intent:`, session.payment_intent ? 'EXISTS' : 'NULL');
+            console.log(`[Webhook] Session payment_method_types:`, session.payment_method_types);
             
-            // Get actual payment method from payment intent with enhanced detection
+            // Get actual payment method from session payment_method_types
             let actualPaymentMethod = "Online Payment"; // Default fallback
-            if (session.payment_intent) {
+            
+            // First try to get from payment_method_types in the session
+            if (session.payment_method_types && session.payment_method_types.length > 0) {
+              const primaryPaymentMethod = session.payment_method_types[0]; // Usually the one used
+              console.log(`[Webhook] Primary payment method type: ${primaryPaymentMethod}`);
+              
+              switch (primaryPaymentMethod) {
+                case 'card':
+                  actualPaymentMethod = "Kreditkarte";
+                  break;
+                case 'klarna':
+                  actualPaymentMethod = "Klarna";
+                  break;
+                case 'eps':
+                  actualPaymentMethod = "EPS";
+                  break;
+                case 'sofort':
+                  actualPaymentMethod = "Sofort";
+                  break;
+                case 'bancontact':
+                  actualPaymentMethod = "Bancontact";
+                  break;
+                case 'ideal':
+                  actualPaymentMethod = "iDEAL";
+                  break;
+                case 'giropay':
+                  actualPaymentMethod = "Giropay";
+                  break;
+                case 'sepa_debit':
+                  actualPaymentMethod = "SEPA Lastschrift";
+                  break;
+                default:
+                  actualPaymentMethod = primaryPaymentMethod.charAt(0).toUpperCase() + primaryPaymentMethod.slice(1);
+              }
+              
+              console.log(`[Webhook] Payment method from session types: ${primaryPaymentMethod} -> ${actualPaymentMethod}`);
+            }
+            
+            // Fallback: Try payment intent if session types didn't work
+            else if (session.payment_intent) {
               try {
                 const paymentIntentId = typeof session.payment_intent === 'string' 
                   ? session.payment_intent 
