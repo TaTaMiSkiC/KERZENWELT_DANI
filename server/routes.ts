@@ -3602,9 +3602,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.setTextColor(0, 0, 0); //
 
       // Header with logo
-      const logoBase64 = "data:image/png;base64," + require('fs').readFileSync('client/src/assets/Kerzenwelt by Dani.png', 'base64');
-      
       try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const logoPath = path.join(process.cwd(), 'client/src/assets/Kerzenwelt by Dani.png');
+        const logoBuffer = fs.readFileSync(logoPath);
+        const logoBase64 = "data:image/png;base64," + logoBuffer.toString('base64');
+        
+        console.log("🖼️ Logo loaded successfully, adding to PDF");
         doc.addImage(logoBase64, "PNG", 20, 15, 30, 30);
       } catch (logoError) {
         console.log("⚠️ Logo could not be added to PDF:", logoError);
