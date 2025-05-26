@@ -3602,8 +3602,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.setTextColor(0, 0, 0); //
 
       // Header with logo position (copied from frontend)
-      // Note: `logoImg` is not available in the backend. Skipping image for now.
-      // doc.addImage(logoImg, "PNG", 20, 15, 30, 30); //
+      // Note: Logo will be added as text instead of image for now
+      // If you want to add a logo image, define logoBase64 variable first
 
       // Format date and invoice number
       const currentDate = new Date(); //
