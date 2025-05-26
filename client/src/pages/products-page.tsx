@@ -31,15 +31,16 @@ export default function ProductsPage() {
   const [, params] = useRoute("/products/:category");
   const [location] = useLocation();
   
+  // Get category from URL immediately
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
   const categoryParam = urlParams.get("category");
   
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => ({
     category: categoryParam || "all",
     search: "",
     priceRange: [0, 100],
     sortBy: "newest",
-  });
+  }));
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
