@@ -456,6 +456,7 @@ export type OrderItemWithProduct = Omit<
   colorId: number | null;
   scentName: string | null;
   colorName: string | null;
+  colorIds: string | null;
   // hasMultipleColors je već prisutan u OrderItem
 };
 
