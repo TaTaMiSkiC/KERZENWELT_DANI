@@ -87,7 +87,7 @@ export async function generateInvoiceFromOrder(
     }
     
     // Generiraj sljedeći broj računa - uvijek povećaj za 1 od posljednjeg
-    const nextInvoiceNumber = Math.max(lastInvoiceNumber + 1, baseNumber, order.id);
+    const nextInvoiceNumber = lastInvoiceNumber + 1;
     invoiceNumber = `${invoicePrefix}${nextInvoiceNumber}`;
     
     console.log(`Generiranje računa za narudžbu ${order.id}, broj računa: ${invoiceNumber}`);
