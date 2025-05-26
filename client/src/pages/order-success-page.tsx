@@ -100,13 +100,7 @@ export default function OrderSuccessPage() {
                 `/api/orders/${orderDetails.id}/generate-pdf`,
               );
 
-              // TEST KOMANDA - pozovi sa narudžbom 51 (najnovija)
-              console.log("🧪 TEST: Pozivam PDF za narudžbu 51");
-              fetch('/api/orders/51/generate-pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-              }).then(r => r.json()).then(console.log);
+
               const pdfResponse = await fetch(
                 `/api/orders/${orderDetails.id}/generate-pdf`,
                 {
@@ -191,13 +185,7 @@ export default function OrderSuccessPage() {
                     `/api/orders/${latestOrder.id}/generate-pdf`,
                   );
 
-                  // TEST KOMANDA - pozovi sa trenutnom narudžbom
-                  console.log(`🧪 TEST: Pozivam PDF za narudžbu ${latestOrder.id}`);
-                  fetch(`/api/orders/${latestOrder.id}/generate-pdf`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                  }).then(r => r.json()).then(console.log);
+
                   const pdfResponse = await fetch(
                     `/api/orders/${latestOrder.id}/generate-pdf`,
                     {
