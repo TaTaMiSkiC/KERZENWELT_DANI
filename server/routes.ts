@@ -3612,7 +3612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("📧 PDF endpoint - pozivam SendGrid...");
       const emailSent = await sendEmail({
         to: user.email,
-        from: "info@kerzenweltbydani.com",
+        from: "v.miskic2@gmail.com",
         subject: `Rechnung ${invoiceNumber} - Kerzenwelt by Dani`,
         text: `Kerzenwelt by Dani
 
