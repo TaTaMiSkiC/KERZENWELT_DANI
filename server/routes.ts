@@ -3546,7 +3546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Izračunaj totale
-      const subtotal = parseFloat(order.totalAmount);
+      const subtotal = parseFloat(order.total);
       const shipping = parseFloat(order.shippingCost || "0");
       const tax = 0; // Bez PDV-a
       const total = subtotal + shipping;
