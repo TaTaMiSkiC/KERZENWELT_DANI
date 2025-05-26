@@ -203,11 +203,29 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             let actualPaymentMethodForCart = "Online Payment"; // Reset to default for cart path
             console.log(`[Webhook] Session payment_method_types:`, session.payment_method_types);
             
-            // First try to get from payment_method_types in the session
-            if (session.payment_method_types && session.payment_method_types.length > 0) {
-              const primaryPaymentMethod = session.payment_method_types[0]; // Usually the one used
-              console.log(`[Webhook] Primary payment method type: ${primaryPaymentMethod}`);
-              
+            // Try to get the actual payment method used from payment_intent
+            let actualPaymentMethodUsed = null;
+            
+            if (session.payment_intent) {
+              try {
+                const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+                console.log(`[Webhook] Payment intent retrieved, status: ${paymentIntent.status}`);
+                
+                if (paymentIntent.latest_charge) {
+                  const charge = await stripe.charges.retrieve(paymentIntent.latest_charge as string);
+                  actualPaymentMethodUsed = charge.payment_method_details?.type;
+                  console.log(`[Webhook] Actual payment method used: ${actualPaymentMethodUsed}`);
+                }
+              } catch (error) {
+                console.log(`[Webhook] Error retrieving payment intent: ${error}`);
+              }
+            }
+            
+            // Use the actual payment method if found, otherwise fall back to first available
+            const primaryPaymentMethod = actualPaymentMethodUsed || (session.payment_method_types && session.payment_method_types[0]);
+            console.log(`[Webhook] Using payment method: ${primaryPaymentMethod}`);
+            
+            if (primaryPaymentMethod) {
               switch (primaryPaymentMethod) {
                 case 'card':
                   actualPaymentMethodForCart = "Kreditkarte";
@@ -237,9 +255,9 @@ export async function handleStripeWebhook(req: Request, res: Response) {
                   actualPaymentMethodForCart = primaryPaymentMethod.charAt(0).toUpperCase() + primaryPaymentMethod.slice(1);
               }
               
-              console.log(`[Webhook] Payment method from session types: ${primaryPaymentMethod} -> ${actualPaymentMethodForCart}`);
+              console.log(`[Webhook] Payment method from actual usage: ${primaryPaymentMethod} -> ${actualPaymentMethodForCart}`);
             } else {
-              console.log(`[Webhook] No payment_method_types found in session, using default`);
+              console.log(`[Webhook] No payment method found, using default`);
             }
 
             // Transformiraj cartItems u order items format
