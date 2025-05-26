@@ -88,10 +88,11 @@ export default function OrderSuccessPage() {
           // Automatski pozovi postojeću funkcionalnost za generiranje PDF-a iz order details
           if (orderDetails && orderDetails.id) {
             try {
-              console.log(`Automatsko generiranje i slanje PDF računa za narudžbu ${orderDetails.id}`);
+              console.log("🔥 CLIENT - Početak automatskog slanja PDF-a za narudžbu:", orderDetails.id);
               
               // Pozovi isti endpoint koji se koristi u "Meine Bestellungen" > order details
               // Ovo će automatski generirati PDF sa svim podacima i poslati ga na email
+              console.log("📞 CLIENT - Pozivam endpoint:", `/api/orders/${orderDetails.id}/generate-pdf`);
               const pdfResponse = await fetch(`/api/orders/${orderDetails.id}/generate-pdf`, {
                 method: 'POST',
                 headers: {
@@ -100,13 +101,18 @@ export default function OrderSuccessPage() {
                 credentials: 'include'
               });
               
+              console.log("📨 CLIENT - Response status:", pdfResponse.status);
+              console.log("📨 CLIENT - Response ok:", pdfResponse.ok);
+              
               if (pdfResponse.ok) {
-                console.log("PDF račun je uspešno generiran i poslan na email");
+                const responseData = await pdfResponse.json();
+                console.log("✅ CLIENT - PDF račun je uspešno generiran i poslan na email:", responseData);
               } else {
-                console.warn("PDF račun se nije mogao generirati");
+                const errorData = await pdfResponse.text();
+                console.warn("❌ CLIENT - PDF račun se nije mogao generirati:", errorData);
               }
             } catch (invoiceError) {
-              console.warn("Greška pri generiranju PDF računa:", invoiceError);
+              console.error("❌ CLIENT - Greška pri generiranju PDF računa:", invoiceError);
               // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
             }
           }
@@ -148,11 +154,29 @@ export default function OrderSuccessPage() {
               // Automatski generiraj i pošalji PDF račun na email
               if (latestOrder && latestOrder.id) {
                 try {
-                  console.log(`Automatsko slanje PDF računa za zadnju narudžbu ${latestOrder.id}`);
-                  await apiRequest("POST", `/api/orders/${latestOrder.id}/send-invoice`);
-                  console.log("PDF račun je uspešno poslan na email");
+                  console.log("🔥 CLIENT - Početak automatskog slanja PDF-a za zadnju narudžbu:", latestOrder.id);
+                  
+                  console.log("📞 CLIENT - Pozivam endpoint:", `/api/orders/${latestOrder.id}/generate-pdf`);
+                  const pdfResponse = await fetch(`/api/orders/${latestOrder.id}/generate-pdf`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                  });
+                  
+                  console.log("📨 CLIENT - Response status:", pdfResponse.status);
+                  console.log("📨 CLIENT - Response ok:", pdfResponse.ok);
+                  
+                  if (pdfResponse.ok) {
+                    const responseData = await pdfResponse.json();
+                    console.log("✅ CLIENT - PDF račun je uspešno generiran i poslan na email:", responseData);
+                  } else {
+                    const errorData = await pdfResponse.text();
+                    console.warn("❌ CLIENT - PDF račun se nije mogao generirati:", errorData);
+                  }
                 } catch (invoiceError) {
-                  console.warn("Greška pri slanju PDF računa na email:", invoiceError);
+                  console.error("❌ CLIENT - Greška pri generiranju PDF računa:", invoiceError);
                   // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
                 }
               }

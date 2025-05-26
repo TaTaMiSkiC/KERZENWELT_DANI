@@ -3409,29 +3409,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Endpoint za automatsko generiranje PDF računa i slanje preko email-a (kao postojeći "Generiere PDF" gumb)
   app.post("/api/orders/:id/generate-pdf", async (req, res) => {
+    console.log("🔥 PDF ENDPOINT POZVAN - orderId:", req.params.id);
     try {
       const orderId = parseInt(req.params.id);
+      console.log("📧 PDF endpoint - parsing orderId:", orderId);
       if (isNaN(orderId)) {
+        console.log("❌ PDF endpoint - nevaljan orderId");
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
       // Dohvati podatke o narudžbi
+      console.log("🔍 PDF endpoint - dohvaćam narudžbu:", orderId);
       const order = await storage.getOrder(orderId);
       if (!order) {
+        console.log("❌ PDF endpoint - narudžba nije pronađena:", orderId);
         return res.status(404).json({ message: "Order not found" });
       }
+      console.log("✅ PDF endpoint - narudžba pronađena:", order.id, "korisnik:", order.userId);
 
       // Dohvati korisnika
+      console.log("🔍 PDF endpoint - dohvaćam korisnika:", order.userId);
       const user = await storage.getUser(order.userId);
       if (!user) {
+        console.log("❌ PDF endpoint - korisnik nije pronađen:", order.userId);
         return res.status(404).json({ message: "User not found" });
       }
+      console.log("✅ PDF endpoint - korisnik pronađen:", user.email);
 
       // Dohvati stavke narudžbe (ne trebam kreirat novi račun, koristim postojeće podatke)
+      console.log("🔍 PDF endpoint - dohvaćam stavke narudžbe:", orderId);
       const orderItems = await storage.getOrderItems(orderId);
       if (!orderItems || orderItems.length === 0) {
+        console.log("❌ PDF endpoint - nema stavki narudžbe:", orderId);
         return res.status(404).json({ message: "No order items found" });
       }
+      console.log("✅ PDF endpoint - pronađeno", orderItems.length, "stavki narudžbe");
 
       // Kreiraj jednostavan račun broj za PDF (ili koristi postojeći ako postoji)
       let invoiceNumber = `R${orderId}-${Date.now()}`;
@@ -3448,10 +3460,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generiraj PDF sadržaj (kopiram logiku iz frontend-a)
+      console.log("📄 PDF endpoint - počinje generiranje PDF-a");
       const jsPDF = (await import("jspdf")).default;
       const autoTable = (await import("jspdf-autotable")).default;
       
       const doc = new jsPDF();
+      console.log("✅ PDF endpoint - jsPDF inicijalizovan");
 
       // Postavi font
       doc.setFont("helvetica");
@@ -3592,8 +3606,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
 
       // Pošalji email sa PDF prilogom
+      console.log("📧 PDF endpoint - počinje slanje email-a na:", user.email);
       const { sendEmail } = await import("./sendgrid");
       
+      console.log("📧 PDF endpoint - pozivam SendGrid...");
       const emailSent = await sendEmail({
         to: user.email,
         from: "info@kerzenweltbydani.com",
@@ -3617,18 +3633,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (emailSent) {
-        console.log(`PDF invoice sent via email to ${user.email} for order ${orderId}`);
+        console.log("✅ PDF endpoint - email uspešno poslan na:", user.email);
+        console.log(`🎉 PDF invoice sent via email to ${user.email} for order ${orderId}`);
         res.json({ 
           success: true, 
           message: "Invoice generated and sent via email",
           invoiceNumber: invoiceNumber
         });
       } else {
+        console.log("❌ PDF endpoint - email slanje neuspešno");
         res.status(500).json({ message: "Invoice generated but email sending failed" });
       }
 
     } catch (error) {
-      console.error("Error generating and sending invoice:", error);
+      console.error("❌ PDF endpoint - greška:", error);
       res.status(500).json({ message: "Failed to generate and send invoice" });
     }
   });
