@@ -293,25 +293,37 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
             console.log(`[Webhook] Nova narudžba kreirana sa ID: ${newOrder.id}`);
 
-            // AUTOMATSKI KREIRAJ RAČUN za novu narudžbu - isti pristup kao u /api/orders
+            // AUTOMATSKI KREIRAJ RAČUN - TAČNO ISTI KOD KAO U /api/orders (Selbstabholung)
             try {
-              console.log(`[Webhook] Kreiram automatski račun za narudžbu ${newOrder.id}`);
-              
-              // Koristi istu funkciju kao u /api/orders endpoint-u
+              console.log(`[Webhook] Automatsko generiranje računa za narudžbu ${newOrder.id}...`);
+              const language = "de"; // Koristimo njemački jezik kao default
+
+              // Import funkcija - ISTO kao u /api/orders
               const { generateInvoiceFromOrder } = await import('./invoiceService.js');
+              const { sendNewOrderNotification, sendInvoiceGeneratedNotification } = await import('./notificationService.js');
               
-              // Generiraj račun s njemačkim jezikom (kao u Selbstabholung)
+              // Pošalji obavijest o novoj narudžbi
+              sendNewOrderNotification(newOrder).catch((err: any) => {
+                console.error("[Webhook] Greška kod slanja obavijesti o novoj narudžbi:", err);
+              });
+
+              // Generiraj račun s odabranim jezikom - ISTO kao u /api/orders
               const invoiceId = await generateInvoiceFromOrder(newOrder.id, {
-                language: "de"
+                language,
               });
 
               if (invoiceId) {
-                console.log(`[Webhook SUCCESS] Račun automatski kreiran sa ID: ${invoiceId} za narudžbu ${newOrder.id}`);
+                console.log(`[Webhook] Uspješno generiran račun (ID: ${invoiceId}) za narudžbu ${newOrder.id}`);
+
+                // Pošalji obavijest o generiranom računu
+                sendInvoiceGeneratedNotification(newOrder.id, invoiceId).catch((err: any) => {
+                  console.error("[Webhook] Greška kod slanja obavijesti o generiranom računu:", err);
+                });
               } else {
-                console.error(`[Webhook ERROR] Neuspjelo generiranje računa za narudžbu ${newOrder.id}`);
+                console.error(`[Webhook] Neuspješno generiranje računa za narudžbu ${newOrder.id}`);
               }
             } catch (invoiceError) {
-              console.error(`[Webhook ERROR] Greška pri automatskom kreiranju računa:`, invoiceError);
+              console.error(`[Webhook] Greška pri automatskom kreiranju računa:`, invoiceError);
             }
 
             // Obriši košaricu

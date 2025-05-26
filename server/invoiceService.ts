@@ -93,7 +93,7 @@ export async function generateInvoiceFromOrder(
     console.log(`Generiranje računa za narudžbu ${order.id}, broj računa: ${invoiceNumber}`);
     
     // Pripremi podatke za račun
-    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
     
     const invoiceData = {
       invoiceNumber,
