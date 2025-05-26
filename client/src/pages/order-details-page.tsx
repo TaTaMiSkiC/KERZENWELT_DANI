@@ -1113,20 +1113,28 @@ export default function OrderDetailsPage() {
                                 <span className="font-medium text-purple-800 mr-1">
                                   {t("orders.colors")}:
                                 </span>
-                                {(() => {
+{(() => {
                                   try {
                                     const colorIds = JSON.parse(item.colorIds);
                                     if (Array.isArray(colorIds)) {
-                                      const colorNames = colorIds.map(colorId => {
-                                        const colorInfo = products
-                                          ?.flatMap((p) =>
-                                            p.id === item.productId
-                                              ? (p as any).colors || []
-                                              : [],
-                                          )
-                                          .find((c) => c?.id === colorId);
-                                        return colorInfo?.name || `Farbe ${colorId}`;
-                                      });
+                                      // Jednostavno mapiranje za poznate boje
+                                      const colorMap = {
+                                        1: "Weiß",
+                                        2: "Beige", 
+                                        3: "Golden",
+                                        5: "Rot",
+                                        6: "Grün",
+                                        7: "Blau",
+                                        8: "Gelb",
+                                        9: "Lila",
+                                        10: "Rosa",
+                                        11: "Schwarz",
+                                        12: "Orange",
+                                        13: "Braun"
+                                      };
+                                      const colorNames = colorIds.map(colorId => 
+                                        colorMap[colorId] || `Farbe ${colorId}`
+                                      );
                                       return colorNames.join(", ");
                                     }
                                   } catch (e) {
