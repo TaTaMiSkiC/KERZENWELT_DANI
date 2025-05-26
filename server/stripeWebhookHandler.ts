@@ -51,7 +51,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
           try {
             console.log(`[Webhook] Kreiram narudžbu za korisnika ${userId}`);
             
-            // Get actual payment method from payment intent
+            // Get actual payment method from payment intent with enhanced detection
             let actualPaymentMethod = "Online Payment"; // Default fallback
             if (session.payment_intent) {
               try {
@@ -61,32 +61,43 @@ export async function handleStripeWebhook(req: Request, res: Response) {
                 
                 console.log(`[Webhook] Retrieving payment intent: ${paymentIntentId}`);
                 
+                // Try to get the payment intent with charges expanded
                 const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-                  expand: ['payment_method', 'charges.data.payment_method_details']
+                  expand: ['payment_method', 'charges', 'charges.data.payment_method_details']
                 });
                 
-                console.log(`[Webhook] PaymentIntent object:`, JSON.stringify({
-                  id: paymentIntent.id,
-                  payment_method: paymentIntent.payment_method,
-                  charges: paymentIntent.charges?.data?.map(charge => ({
-                    payment_method_details: charge.payment_method_details
-                  }))
-                }, null, 2));
+                console.log(`[Webhook] PaymentIntent retrieved successfully`);
                 
                 // Try multiple ways to get the payment method type
                 let paymentMethodType = null;
                 
+                // Method 1: From payment_method directly
                 if (paymentIntent.payment_method) {
-                  if (typeof paymentIntent.payment_method === 'object') {
+                  if (typeof paymentIntent.payment_method === 'object' && paymentIntent.payment_method.type) {
                     paymentMethodType = paymentIntent.payment_method.type;
+                    console.log(`[Webhook] Payment method from payment_method object: ${paymentMethodType}`);
+                  } else if (typeof paymentIntent.payment_method === 'string') {
+                    // If it's a string ID, retrieve the payment method
+                    try {
+                      const pm = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+                      paymentMethodType = pm.type;
+                      console.log(`[Webhook] Payment method from retrieved PM: ${paymentMethodType}`);
+                    } catch (pmError) {
+                      console.warn(`[Webhook] Could not retrieve payment method details: ${pmError}`);
+                    }
                   }
                 }
                 
-                if (!paymentMethodType && paymentIntent.charges?.data?.[0]?.payment_method_details) {
-                  paymentMethodType = paymentIntent.charges.data[0].payment_method_details.type;
+                // Method 2: From charges if payment method not found
+                if (!paymentMethodType && paymentIntent.charges?.data?.length > 0) {
+                  const charge = paymentIntent.charges.data[0];
+                  if (charge.payment_method_details?.type) {
+                    paymentMethodType = charge.payment_method_details.type;
+                    console.log(`[Webhook] Payment method from charge details: ${paymentMethodType}`);
+                  }
                 }
                 
-                console.log(`[Webhook] Raw payment method type: ${paymentMethodType}`);
+                console.log(`[Webhook] Final detected payment method type: ${paymentMethodType}`);
                 
                 // Map Stripe payment method types to user-friendly names
                 switch (paymentMethodType) {
@@ -118,11 +129,13 @@ export async function handleStripeWebhook(req: Request, res: Response) {
                     actualPaymentMethod = paymentMethodType ? paymentMethodType.charAt(0).toUpperCase() + paymentMethodType.slice(1) : "Online Payment";
                 }
                 
-                console.log(`[Webhook] Detected payment method: ${paymentMethodType} -> ${actualPaymentMethod}`);
+                console.log(`[Webhook] Final payment method: ${paymentMethodType} -> ${actualPaymentMethod}`);
               } catch (paymentIntentError) {
-                console.warn(`[Webhook] Could not retrieve payment method details:`, paymentIntentError);
+                console.error(`[Webhook] Error retrieving payment method details:`, paymentIntentError);
                 actualPaymentMethod = "Online Payment";
               }
+            } else {
+              console.warn(`[Webhook] No payment_intent found in session`);
             }
             
             // Dohvati podatke iz korisničke košarice
@@ -166,7 +179,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               subtotal: cartTotal.toString(),
               discountAmount: "0",
               shippingCost: "0",
-              paymentMethod: actualPaymentMethod,
+              paymentMethod: actualPaymentMethod || "Online Payment",
               status: "pending",
               paymentStatus: "paid",
               shippingAddress: user.address || "",
