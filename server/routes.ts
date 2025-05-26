@@ -3624,58 +3624,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return [fullName, item.quantity, `${price} €`, `${total} €`];
       });
 
+      // TAČNO kao u frontend order-details-page.tsx
       autoTable(doc, {
         head: [["Produkt", "Menge", "Preis/Stück", "Gesamt"]],
         body: items,
-        startY: 150,
-        theme: "grid",
+        startY: customerY + 10,
+        margin: { left: 20, right: 20 },
         headStyles: {
-          fillColor: [212, 175, 55],
-          textColor: [255, 255, 255],
+          fillColor: [245, 245, 245],
+          textColor: [0, 0, 0],
           fontStyle: "bold",
+          halign: "left",
+          valign: "middle",
+          fontSize: 10,
+          cellPadding: 5,
+          minCellWidth: 30,
+          overflow: "visible",
         },
-        styles: {
+        bodyStyles: {
+          textColor: [0, 0, 0],
           fontSize: 10,
           cellPadding: 5,
         },
+        columnStyles: {
+          0: { cellWidth: "auto" },
+          1: { cellWidth: 30, halign: "center" },
+          2: { cellWidth: 30, halign: "right" },
+          3: { cellWidth: 30, halign: "right" },
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250],
+        },
       });
 
-      // Izračunaj totale
-      const subtotal = parseFloat(order.total);
-      const shipping = parseFloat(order.shippingCost || "0");
-      const tax = 0; // Bez PDV-a
-      const total = subtotal + shipping;
+      // Izračunavanje ukupnog iznosa (TAČNO kao u frontend-u)
+      let subtotal = orderItems.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+      const shippingCost = order.shippingCost ? parseFloat(order.shippingCost) : 0;
+      const total = parseFloat(order.total) || subtotal + shippingCost;
+      const finalY = (doc as any).lastAutoTable.finalY || 200;
 
-      const finalY = (doc as any).lastAutoTable.finalY + 20;
-
-      // Totali
+      // Dodavanje ukupnog iznosa (TAČNO kao u frontend-u)
       doc.setFontSize(10);
-      doc.text(`Zwischensumme: ${subtotal.toFixed(2)} €`, 130, finalY);
-      doc.text(`Versand: ${shipping.toFixed(2)} €`, 130, finalY + 10);
-      doc.text(`MwSt. (0%): ${tax.toFixed(2)} €`, 130, finalY + 20);
-      
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text(`GESAMTBETRAG: ${total.toFixed(2)} €`, 130, finalY + 35);
+      doc.text("Zwischensumme:", 160, finalY + 10, { align: "right" });
+      doc.text(`${subtotal.toFixed(2)} €`, 190, finalY + 10, { align: "right" });
 
-      // Zahlungsinformationen
+      doc.text("Versand:", 160, finalY + 15, { align: "right" });
+      doc.text(`${shippingCost.toFixed(2)} €`, 190, finalY + 15, { align: "right" });
+
+      doc.text("MwSt. (0%):", 160, finalY + 20, { align: "right" });
+      doc.text("0.00 €", 190, finalY + 20, { align: "right" });
+
+      // Ukupan iznos
+      doc.setFont("helvetica", "bold");
+      doc.text("GESAMTBETRAG:", 160, finalY + 25, { align: "right" });
+      doc.text(`${total.toFixed(2)} €`, 190, finalY + 25, { align: "right" });
+      doc.setFont("helvetica", "normal");
+
+      // Informacije o plaćanju (TAČNO kao u frontend-u)
+      doc.setDrawColor(200, 200, 200);
+      doc.line(20, finalY + 30, 190, finalY + 30);
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("Zahlungsinformationen:", 20, finalY + 38);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text("Zahlungsinformationen:", 20, finalY + 60);
-      doc.text(`Zahlungsmethode: ${order.paymentMethod || "Nicht angegeben"}`, 20, finalY + 70);
-      doc.text(`Zahlungsstatus: ${order.status === "completed" ? "Bezahlt" : "In Bearbeitung"}`, 20, finalY + 80);
 
-      // Footer
-      doc.setFontSize(12);
-      doc.setTextColor(212, 175, 55);
-      doc.text("Vielen Dank für Ihre Bestellung!", 105, finalY + 110, { align: "center" });
+      // Mapiranje načina plaćanja
+      const paymentMethodMap = {
+        "cash": "Bargeld",
+        "bank_transfer": "Banküberweisung", 
+        "paypal": "PayPal",
+        "credit_card": "Kreditkarte",
+        "eps": "EPS"
+      };
+      const paymentMethod = paymentMethodMap[order.paymentMethod] || order.paymentMethod || "Nicht definiert";
+      const paymentStatus = order.status === "completed" ? "Bezahlt" : "In Bearbeitung";
 
+      doc.text(`Zahlungsmethode: ${paymentMethod}`, 20, finalY + 45);
+      doc.text(`Zahlungsstatus: ${paymentStatus}`, 20, finalY + 50);
+
+      // Zahvala za narudžbu (TAČNO kao u frontend-u)
+      doc.setFontSize(10);
+      doc.text("Vielen Dank für Ihre Bestellung!", 105, finalY + 65, { align: "center" });
+
+      // Podnožje s informacijama o tvrtki (TAČNO kao u frontend-u)
       doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100);
-      doc.text("Kerzenwelt by Dani | Ossiacher Zeile 30, 9500 Villach, Österreich | Email: info@kerzenweltbydani.com | Telefon: 004366038787621", 105, finalY + 125, { align: "center" });
-      doc.text("Dies ist eine automatisch generierte Rechnung und ist ohne Unterschrift und Stempel gültig.", 105, finalY + 135, { align: "center" });
-      doc.text("Steuernummer: 61 154/7175", 105, finalY + 145, { align: "center" });
-      doc.text("Der Unternehmer ist nicht im Mehrwertsteuersystem, MwSt. wird nicht berechnet gemäß den Bestimmungen des Kleinunternehmerregelung.", 105, finalY + 155, { align: "center" });
+      doc.text(
+        "Kerzenwelt by Dani | Ossiacher Zeile 30, 9500 Villach, Österreich | Email: info@kerzenweltbydani.com | Telefon: 004366038787621",
+        105, finalY + 75, { align: "center" }
+      );
+      doc.text("Dies ist eine automatisch generierte Rechnung und ist ohne Unterschrift und Stempel gültig.", 105, finalY + 80, { align: "center" });
+      doc.text("Steuernummer: 61 154/7175", 105, finalY + 85, { align: "center" });
+      doc.text("Der Unternehmer ist nicht im Mehrwertsteuersystem, MwSt. wird nicht berechnet gemäß den Bestimmungen des Kleinunternehmerregelung.", 105, finalY + 90, { align: "center" });
 
       // Generiraj PDF kao base64
       const pdfBuffer = doc.output('arraybuffer');
