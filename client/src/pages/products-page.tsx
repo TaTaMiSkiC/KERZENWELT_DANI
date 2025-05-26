@@ -35,12 +35,24 @@ export default function ProductsPage() {
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
   const categoryParam = urlParams.get("category");
   
-  const [filters, setFilters] = useState(() => ({
-    category: categoryParam || "all",
+  const [filters, setFilters] = useState({
+    category: "all",
     search: "",
     priceRange: [0, 100],
     sortBy: "newest",
-  }));
+  });
+
+  // Update filters when URL changes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.split("?")[1] || "");
+    const currentCategoryParam = urlParams.get("category");
+    
+    if (currentCategoryParam) {
+      setFilters(prev => ({ ...prev, category: currentCategoryParam }));
+    } else {
+      setFilters(prev => ({ ...prev, category: "all" }));
+    }
+  }, [location]);
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
