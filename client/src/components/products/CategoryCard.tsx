@@ -1,5 +1,6 @@
 import { Category } from "@shared/schema";
 import { useLanguage } from "@/hooks/use-language";
+import { useLocation } from "wouter";
 
 interface CategoryCardProps {
   category: Category;
@@ -7,14 +8,12 @@ interface CategoryCardProps {
 
 export default function CategoryCard({ category }: CategoryCardProps) {
   const { t } = useLanguage();
+  const [, setLocation] = useLocation();
   const { id, name, description, imageUrl = '' } = category;
   
   const handleCategoryClick = () => {
-    const url = `/products?category=${id}`;
-    console.log("CategoryCard: Navigating to URL:", url);
-    console.log("CategoryCard: Category ID:", id);
-    // Force a full page reload with the category parameter for better mobile compatibility
-    window.location.assign(url);
+    // Use React Router navigation for better state management
+    setLocation(`/products?category=${id}`);
   };
   
   return (
