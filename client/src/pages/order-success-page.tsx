@@ -159,7 +159,11 @@ export default function OrderSuccessPage() {
         if (user?.id) {
           try {
             console.log("🔍 CLIENT - Šaljem zahtev za narudžbe...");
-            const userOrders = await apiRequest("GET", `/api/orders`);
+            const response = await fetch("/api/orders", {
+              method: "GET",
+              credentials: "include"
+            });
+            const userOrders = await response.json();
             console.log("🔍 CLIENT - Odgovor sa narudžbama:", userOrders);
             if (userOrders && userOrders.length > 0) {
               // Uzmi zadnju narudžbu (prva u nizu jer su sortirane po datumu)
