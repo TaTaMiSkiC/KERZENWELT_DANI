@@ -53,7 +53,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             console.log(`[Webhook] Session payment_intent:`, session.payment_intent ? 'EXISTS' : 'NULL');
             console.log(`[Webhook] Session payment_method_types:`, session.payment_method_types);
             
-            // Get actual payment method from session payment_method_types
+            // Declare payment method variable once
             let actualPaymentMethod = "Online Payment"; // Default fallback
             
             // First try to get from payment_method_types in the session
@@ -199,8 +199,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             
             console.log(`[Webhook] Kreiram narudžbu iz košarice, cartTotal: ${cartTotal}`);
             
-            // Get actual payment method from session payment_method_types
-            let actualPaymentMethod = "Online Payment"; // Default fallback
+            // Reset payment method detection for this path
+            let actualPaymentMethodForCart = "Online Payment"; // Reset to default for cart path
             console.log(`[Webhook] Session payment_method_types:`, session.payment_method_types);
             
             // First try to get from payment_method_types in the session
@@ -210,34 +210,34 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               
               switch (primaryPaymentMethod) {
                 case 'card':
-                  actualPaymentMethod = "Kreditkarte";
+                  actualPaymentMethodForCart = "Kreditkarte";
                   break;
                 case 'klarna':
-                  actualPaymentMethod = "Klarna";
+                  actualPaymentMethodForCart = "Klarna";
                   break;
                 case 'eps':
-                  actualPaymentMethod = "EPS";
+                  actualPaymentMethodForCart = "EPS";
                   break;
                 case 'sofort':
-                  actualPaymentMethod = "Sofort";
+                  actualPaymentMethodForCart = "Sofort";
                   break;
                 case 'bancontact':
-                  actualPaymentMethod = "Bancontact";
+                  actualPaymentMethodForCart = "Bancontact";
                   break;
                 case 'ideal':
-                  actualPaymentMethod = "iDEAL";
+                  actualPaymentMethodForCart = "iDEAL";
                   break;
                 case 'giropay':
-                  actualPaymentMethod = "Giropay";
+                  actualPaymentMethodForCart = "Giropay";
                   break;
                 case 'sepa_debit':
-                  actualPaymentMethod = "SEPA Lastschrift";
+                  actualPaymentMethodForCart = "SEPA Lastschrift";
                   break;
                 default:
-                  actualPaymentMethod = primaryPaymentMethod.charAt(0).toUpperCase() + primaryPaymentMethod.slice(1);
+                  actualPaymentMethodForCart = primaryPaymentMethod.charAt(0).toUpperCase() + primaryPaymentMethod.slice(1);
               }
               
-              console.log(`[Webhook] Payment method from session types: ${primaryPaymentMethod} -> ${actualPaymentMethod}`);
+              console.log(`[Webhook] Payment method from session types: ${primaryPaymentMethod} -> ${actualPaymentMethodForCart}`);
             } else {
               console.log(`[Webhook] No payment_method_types found in session, using default`);
             }
@@ -263,7 +263,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               subtotal: cartTotal.toString(),
               discountAmount: "0",
               shippingCost: "0",
-              paymentMethod: actualPaymentMethod || "Online Payment",
+              paymentMethod: actualPaymentMethodForCart || "Online Payment",
               status: "pending",
               paymentStatus: "paid",
               shippingAddress: user.address || "",
