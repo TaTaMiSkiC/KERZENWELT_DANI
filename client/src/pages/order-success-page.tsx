@@ -378,7 +378,7 @@ export default function OrderSuccessPage() {
               <Separator className="my-6" />
               <div className="flex justify-between">
                 <Button asChild variant="outline">
-                  <Link href="/account/orders">
+                  <Link href="/orders">
                     {t("orderSuccessPage.myOrders")}
                   </Link>
                 </Button>
