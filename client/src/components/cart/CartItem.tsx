@@ -87,12 +87,15 @@ export default function CartItem({ item }: CartItemProps) {
                 type="image/webp" 
               />
               <img
-                src={imageUrl || ""}
+                src={imageUrl || "/placeholder-candle.jpg"}
                 alt={name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover bg-gray-100"
                 loading="lazy"
                 width="100"
                 height="100"
+                onError={(e) => {
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='12' fill='%236b7280'%3EKerze%3C/text%3E%3C/svg%3E";
+                }}
               />
             </picture>
           </Link>
