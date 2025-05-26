@@ -85,14 +85,28 @@ export default function OrderSuccessPage() {
           setOrder(orderDetails);
           setOrderItems(orderDetails.orderItems || []);
           
-          // Automatski generiraj i pošalji PDF račun na email
+          // Automatski pozovi postojeću funkcionalnost za generiranje PDF-a iz order details
           if (orderDetails && orderDetails.id) {
             try {
-              console.log(`Automatsko slanje PDF računa za narudžbu ${orderDetails.id}`);
-              await apiRequest("POST", `/api/orders/${orderDetails.id}/send-invoice`);
-              console.log("PDF račun je uspešno poslan na email");
+              console.log(`Automatsko generiranje i slanje PDF računa za narudžbu ${orderDetails.id}`);
+              
+              // Pozovi isti endpoint koji se koristi u "Meine Bestellungen" > order details
+              // Ovo će automatski generirati PDF sa svim podacima i poslati ga na email
+              const pdfResponse = await fetch(`/api/orders/${orderDetails.id}/generate-pdf`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+              });
+              
+              if (pdfResponse.ok) {
+                console.log("PDF račun je uspešno generiran i poslan na email");
+              } else {
+                console.warn("PDF račun se nije mogao generirati");
+              }
             } catch (invoiceError) {
-              console.warn("Greška pri slanju PDF računa na email:", invoiceError);
+              console.warn("Greška pri generiranju PDF računa:", invoiceError);
               // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
             }
           }

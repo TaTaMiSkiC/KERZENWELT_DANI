@@ -3407,8 +3407,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
-  // Endpoint za automatsko generiranje i slanje PDF računa preko email-a
-  app.post("/api/orders/:id/send-invoice", async (req, res) => {
+  // Endpoint za automatsko generiranje PDF računa i slanje preko email-a (kao postojeći "Generiere PDF" gumb)
+  app.post("/api/orders/:id/generate-pdf", async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
       if (isNaN(orderId)) {
@@ -3427,20 +3427,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Generiraj PDF račun (koristim postojeći kod iz invoice servisa)
-      const invoiceId = await generateInvoiceFromOrder(orderId);
-      if (!invoiceId) {
-        return res.status(500).json({ message: "Failed to generate invoice" });
-      }
-
-      // Dohvati generiranu fakturu
-      const invoice = await storage.getInvoice(invoiceId);
-      if (!invoice) {
-        return res.status(500).json({ message: "Invoice not found after generation" });
-      }
-
-      // Dohvati stavke narudžbe
+      // Dohvati stavke narudžbe (ne trebam kreirat novi račun, koristim postojeće podatke)
       const orderItems = await storage.getOrderItems(orderId);
+      if (!orderItems || orderItems.length === 0) {
+        return res.status(404).json({ message: "No order items found" });
+      }
+
+      // Kreiraj jednostavan račun broj za PDF (ili koristi postojeći ako postoji)
+      let invoiceNumber = `R${orderId}-${Date.now()}`;
+      
+      // Proveriti da li već postoji račun za ovu narudžbu
+      try {
+        const invoicesResponse = await storage.getAllInvoices();
+        const existingInvoice = invoicesResponse.find(inv => inv.orderId === orderId);
+        if (existingInvoice) {
+          invoiceNumber = existingInvoice.invoiceNumber;
+        }
+      } catch (invoiceError) {
+        console.log("Koristim novi broj računa:", invoiceNumber);
+      }
 
       // Generiraj PDF sadržaj (kopiram logiku iz frontend-a)
       const jsPDF = (await import("jspdf")).default;
@@ -3463,9 +3468,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       doc.text("Ossiacher Zeile 30, 9500 Villach, Österreich", 20, 40);
-      doc.text(`Rechnungsnummer: ${invoice.invoiceNumber}`, 150, 40);
+      doc.text(`Rechnungsnummer: ${invoiceNumber}`, 150, 40);
       doc.text("Email: daniela.svoboda2@gmail.com", 20, 50);
-      doc.text(`Rechnungsdatum: ${new Date(invoice.createdAt).toLocaleDateString('de-DE')}`, 150, 50);
+      doc.text(`Rechnungsdatum: ${new Date().toLocaleDateString('de-DE')}`, 150, 50);
 
       // Informacije o kupcu
       doc.setFontSize(12);
@@ -3592,20 +3597,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailSent = await sendEmail({
         to: user.email,
         from: "info@kerzenweltbydani.com",
-        subject: `Rechnung ${invoice.invoiceNumber} - Kerzenwelt by Dani`,
+        subject: `Rechnung ${invoiceNumber} - Kerzenwelt by Dani`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #D4AF37;">Kerzenwelt by Dani</h1>
             <h2>Ihre Rechnung ist bereit!</h2>
             <p>Sehr geehrte/r ${user.firstName || ''} ${user.lastName || ''},</p>
-            <p>vielen Dank für Ihre Bestellung. Ihre Rechnung ${invoice.invoiceNumber} finden Sie im Anhang.</p>
+            <p>vielen Dank für Ihre Bestellung. Ihre Rechnung ${invoiceNumber} finden Sie im Anhang.</p>
             <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
             <p>Mit freundlichen Grüßen,<br>Ihr Team von Kerzenwelt by Dani</p>
           </div>
         `,
         attachments: [{
           content: pdfBase64,
-          filename: `Rechnung_${invoice.invoiceNumber}.pdf`,
+          filename: `Rechnung_${invoiceNumber}.pdf`,
           type: 'application/pdf',
           disposition: 'attachment'
         }]
@@ -3616,8 +3621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ 
           success: true, 
           message: "Invoice generated and sent via email",
-          invoiceId: invoiceId,
-          invoiceNumber: invoice.invoiceNumber
+          invoiceNumber: invoiceNumber
         });
       } else {
         res.status(500).json({ message: "Invoice generated but email sending failed" });
