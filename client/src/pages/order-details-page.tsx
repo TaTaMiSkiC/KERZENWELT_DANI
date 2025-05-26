@@ -1113,7 +1113,27 @@ export default function OrderDetailsPage() {
                                 <span className="font-medium text-purple-800 mr-1">
                                   {t("orders.colors")}:
                                 </span>
-                                Ausgewählte Farben
+                                {(() => {
+                                  try {
+                                    const colorIds = JSON.parse(item.colorIds);
+                                    if (Array.isArray(colorIds)) {
+                                      const colorNames = colorIds.map(colorId => {
+                                        const colorInfo = products
+                                          ?.flatMap((p) =>
+                                            p.id === item.productId
+                                              ? (p as any).colors || []
+                                              : [],
+                                          )
+                                          .find((c) => c?.id === colorId);
+                                        return colorInfo?.name || `Farbe ${colorId}`;
+                                      });
+                                      return colorNames.join(", ");
+                                    }
+                                  } catch (e) {
+                                    console.error("Error parsing colorIds:", e);
+                                  }
+                                  return item.colorName || "Ausgewählte Farben";
+                                })()}
                               </div>
 
                               {/* Prikaz indikatori boja */}
