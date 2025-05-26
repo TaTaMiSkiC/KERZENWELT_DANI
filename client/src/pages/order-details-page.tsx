@@ -440,7 +440,7 @@ export default function OrderDetailsPage() {
       doc.setTextColor(0, 0, 0); // Vraćanje na crnu boju
       doc.setFont("helvetica", "normal");
       doc.text("Ossiacher Zeile 30, 9500 Villach, Österreich", 55, 30);
-      doc.text("Email: daniela.svoboda2@gmail.com", 55, 35);
+      doc.text("Email: info@kerzenweltbydani.com", 55, 35);
 
       // Naslov i broj računa na desnoj strani
       doc.setTextColor(0, 0, 0);
@@ -563,12 +563,21 @@ export default function OrderDetailsPage() {
               const colorIds = JSON.parse(item.colorIds);
               if (Array.isArray(colorIds)) {
                 const colorMap = {
-                  1: "Weiß", 2: "Beige", 3: "Golden", 5: "Rot",
-                  6: "Grün", 7: "Blau", 8: "Gelb", 9: "Lila",
-                  10: "Rosa", 11: "Schwarz", 12: "Orange", 13: "Braun"
+                  1: "Weiß",
+                  2: "Beige",
+                  3: "Golden",
+                  5: "Rot",
+                  6: "Grün",
+                  7: "Blau",
+                  8: "Gelb",
+                  9: "Lila",
+                  10: "Rosa",
+                  11: "Schwarz",
+                  12: "Orange",
+                  13: "Braun",
                 };
-                const colorNames = colorIds.map(colorId => 
-                  colorMap[colorId] || `Farbe ${colorId}`
+                const colorNames = colorIds.map(
+                  (colorId) => colorMap[colorId] || `Farbe ${colorId}`,
                 );
                 colorText = colorNames.join(", ");
               }
@@ -1061,9 +1070,9 @@ export default function OrderDetailsPage() {
                     scentName: item.scentName,
                     colorName: item.colorName,
                     colorIds: item.colorIds,
-                    hasMultipleColors: item.hasMultipleColors
+                    hasMultipleColors: item.hasMultipleColors,
                   });
-                  
+
                   const productName = item.product?.name || t("orders.product");
                   const scent = item.scentName || "";
                   const color = item.colorName || "";
@@ -1135,14 +1144,14 @@ export default function OrderDetailsPage() {
                                 <span className="font-medium text-purple-800 mr-1">
                                   {t("orders.colors")}:
                                 </span>
-{(() => {
+                                {(() => {
                                   try {
                                     const colorIds = JSON.parse(item.colorIds);
                                     if (Array.isArray(colorIds)) {
                                       // Jednostavno mapiranje za poznate boje
                                       const colorMap = {
                                         1: "Weiß",
-                                        2: "Beige", 
+                                        2: "Beige",
                                         3: "Golden",
                                         5: "Rot",
                                         6: "Grün",
@@ -1152,10 +1161,12 @@ export default function OrderDetailsPage() {
                                         10: "Rosa",
                                         11: "Schwarz",
                                         12: "Orange",
-                                        13: "Braun"
+                                        13: "Braun",
                                       };
-                                      const colorNames = colorIds.map(colorId => 
-                                        colorMap[colorId] || `Farbe ${colorId}`
+                                      const colorNames = colorIds.map(
+                                        (colorId) =>
+                                          colorMap[colorId] ||
+                                          `Farbe ${colorId}`,
                                       );
                                       return colorNames.join(", ");
                                     }

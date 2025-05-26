@@ -3407,6 +3407,228 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // Endpoint za automatsko generiranje i slanje PDF računa preko email-a
+  app.post("/api/orders/:id/send-invoice", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      if (isNaN(orderId)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+
+      // Dohvati podatke o narudžbi
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Dohvati korisnika
+      const user = await storage.getUser(order.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Generiraj PDF račun (koristim postojeći kod iz invoice servisa)
+      const invoiceId = await generateInvoiceFromOrder(orderId);
+      if (!invoiceId) {
+        return res.status(500).json({ message: "Failed to generate invoice" });
+      }
+
+      // Dohvati generiranu fakturu
+      const invoice = await storage.getInvoice(invoiceId);
+      if (!invoice) {
+        return res.status(500).json({ message: "Invoice not found after generation" });
+      }
+
+      // Dohvati stavke narudžbe
+      const orderItems = await storage.getOrderItems(orderId);
+
+      // Generiraj PDF sadržaj (kopiram logiku iz frontend-a)
+      const jsPDF = (await import("jspdf")).default;
+      const autoTable = (await import("jspdf-autotable")).default;
+      
+      const doc = new jsPDF();
+
+      // Postavi font
+      doc.setFont("helvetica");
+
+      // Header sa poslovnim podacima
+      doc.setFontSize(20);
+      doc.setTextColor(33, 37, 41);
+      doc.text("Kerzenwelt by Dani", 20, 30);
+      
+      doc.setFontSize(28);
+      doc.setTextColor(212, 175, 55);
+      doc.text("RECHNUNG", 150, 30);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Ossiacher Zeile 30, 9500 Villach, Österreich", 20, 40);
+      doc.text(`Rechnungsnummer: ${invoice.invoiceNumber}`, 150, 40);
+      doc.text("Email: daniela.svoboda2@gmail.com", 20, 50);
+      doc.text(`Rechnungsdatum: ${new Date(invoice.createdAt).toLocaleDateString('de-DE')}`, 150, 50);
+
+      // Informacije o kupcu
+      doc.setFontSize(12);
+      doc.setTextColor(33, 37, 41);
+      doc.text("Käuferinformationen:", 20, 70);
+      
+      doc.setFontSize(10);
+      doc.text(`${user.firstName || ''} ${user.lastName || ''}`, 20, 80);
+      doc.text(`Email: ${user.email}`, 20, 90);
+      doc.text("Lieferadresse: " + (order.shippingAddress || "Nicht angegeben"), 20, 100);
+      doc.text((order.shippingCity || ""), 20, 110);
+      doc.text((order.shippingCountry || ""), 20, 120);
+
+      // Tabela proizvoda
+      doc.setFontSize(12);
+      doc.text("Bestellpositionen:", 20, 140);
+
+      const items = orderItems.map((item) => {
+        let productName = item.productName || "Nepoznat proizvod";
+        let details = [];
+
+        // Dodaj miris ako postoji
+        if (item.scentName) {
+          details.push(`Duft: ${item.scentName}`);
+        }
+
+        // Dodaj boju/boje
+        let colorText = null;
+        if (item.hasMultipleColors && item.colorIds) {
+          try {
+            const colorIds = JSON.parse(item.colorIds);
+            if (Array.isArray(colorIds)) {
+              const colorMap = {
+                1: "Weiß", 2: "Beige", 3: "Golden", 5: "Rot",
+                6: "Grün", 7: "Blau", 8: "Gelb", 9: "Lila",
+                10: "Rosa", 11: "Schwarz", 12: "Orange", 13: "Braun"
+              };
+              const colorNames = colorIds.map(colorId => 
+                colorMap[colorId] || `Farbe ${colorId}`
+              );
+              colorText = colorNames.join(", ");
+            }
+          } catch (e) {
+            console.error("Error parsing colorIds in PDF:", e);
+          }
+        } else if (item.colorName) {
+          colorText = item.colorName;
+        }
+
+        if (colorText) {
+          const colorLabel = item.hasMultipleColors ? "Farben" : "Farbe";
+          details.push(`${colorLabel}: ${colorText}`);
+        }
+
+        // Spoji naziv proizvoda s detaljima
+        const detailsText = details.length > 0 ? `\n${details.join("\n")}` : "";
+        const fullName = `${productName}${detailsText}`;
+        const price = parseFloat(item.price).toFixed(2);
+        const total = (parseFloat(item.price) * item.quantity).toFixed(2);
+
+        return [fullName, item.quantity, `${price} €`, `${total} €`];
+      });
+
+      autoTable(doc, {
+        head: [["Produkt", "Menge", "Preis/Stück", "Gesamt"]],
+        body: items,
+        startY: 150,
+        theme: "grid",
+        headStyles: {
+          fillColor: [212, 175, 55],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 5,
+        },
+      });
+
+      // Izračunaj totale
+      const subtotal = parseFloat(order.totalAmount);
+      const shipping = parseFloat(order.shippingCost || "0");
+      const tax = 0; // Bez PDV-a
+      const total = subtotal + shipping;
+
+      const finalY = (doc as any).lastAutoTable.finalY + 20;
+
+      // Totali
+      doc.setFontSize(10);
+      doc.text(`Zwischensumme: ${subtotal.toFixed(2)} €`, 130, finalY);
+      doc.text(`Versand: ${shipping.toFixed(2)} €`, 130, finalY + 10);
+      doc.text(`MwSt. (0%): ${tax.toFixed(2)} €`, 130, finalY + 20);
+      
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(`GESAMTBETRAG: ${total.toFixed(2)} €`, 130, finalY + 35);
+
+      // Zahlungsinformationen
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text("Zahlungsinformationen:", 20, finalY + 60);
+      doc.text(`Zahlungsmethode: ${order.paymentMethod || "Nicht angegeben"}`, 20, finalY + 70);
+      doc.text(`Zahlungsstatus: ${order.status === "completed" ? "Bezahlt" : "In Bearbeitung"}`, 20, finalY + 80);
+
+      // Footer
+      doc.setFontSize(12);
+      doc.setTextColor(212, 175, 55);
+      doc.text("Vielen Dank für Ihre Bestellung!", 105, finalY + 110, { align: "center" });
+
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Kerzenwelt by Dani | Ossiacher Zeile 30, 9500 Villach, Österreich | Email: info@kerzenweltbydani.com | Telefon: 004366038787621", 105, finalY + 125, { align: "center" });
+      doc.text("Dies ist eine automatisch generierte Rechnung und ist ohne Unterschrift und Stempel gültig.", 105, finalY + 135, { align: "center" });
+      doc.text("Steuernummer: 61 154/7175", 105, finalY + 145, { align: "center" });
+      doc.text("Der Unternehmer ist nicht im Mehrwertsteuersystem, MwSt. wird nicht berechnet gemäß den Bestimmungen des Kleinunternehmerregelung.", 105, finalY + 155, { align: "center" });
+
+      // Generiraj PDF kao base64
+      const pdfBuffer = doc.output('arraybuffer');
+      const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
+
+      // Pošalji email sa PDF prilogom
+      const { sendEmail } = await import("./sendgrid");
+      
+      const emailSent = await sendEmail({
+        to: user.email,
+        from: "info@kerzenweltbydani.com",
+        subject: `Rechnung ${invoice.invoiceNumber} - Kerzenwelt by Dani`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #D4AF37;">Kerzenwelt by Dani</h1>
+            <h2>Ihre Rechnung ist bereit!</h2>
+            <p>Sehr geehrte/r ${user.firstName || ''} ${user.lastName || ''},</p>
+            <p>vielen Dank für Ihre Bestellung. Ihre Rechnung ${invoice.invoiceNumber} finden Sie im Anhang.</p>
+            <p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>
+            <p>Mit freundlichen Grüßen,<br>Ihr Team von Kerzenwelt by Dani</p>
+          </div>
+        `,
+        attachments: [{
+          content: pdfBase64,
+          filename: `Rechnung_${invoice.invoiceNumber}.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment'
+        }]
+      });
+
+      if (emailSent) {
+        console.log(`PDF invoice sent via email to ${user.email} for order ${orderId}`);
+        res.json({ 
+          success: true, 
+          message: "Invoice generated and sent via email",
+          invoiceId: invoiceId,
+          invoiceNumber: invoice.invoiceNumber
+        });
+      } else {
+        res.status(500).json({ message: "Invoice generated but email sending failed" });
+      }
+
+    } catch (error) {
+      console.error("Error generating and sending invoice:", error);
+      res.status(500).json({ message: "Failed to generate and send invoice" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
   return httpServer;

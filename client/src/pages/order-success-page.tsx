@@ -84,6 +84,19 @@ export default function OrderSuccessPage() {
           );
           setOrder(orderDetails);
           setOrderItems(orderDetails.orderItems || []);
+          
+          // Automatski generiraj i pošalji PDF račun na email
+          if (orderDetails && orderDetails.id) {
+            try {
+              console.log(`Automatsko slanje PDF računa za narudžbu ${orderDetails.id}`);
+              await apiRequest("POST", `/api/orders/${orderDetails.id}/send-invoice`);
+              console.log("PDF račun je uspešno poslan na email");
+            } catch (invoiceError) {
+              console.warn("Greška pri slanju PDF računa na email:", invoiceError);
+              // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
+            }
+          }
+          
           // Ovdje možete dodati provjeru statusa narudžbe.
           // Ako je status 'pending', možete prikazati poruku da se čeka potvrda plaćanja.
         } catch (err: any) {
@@ -117,6 +130,18 @@ export default function OrderSuccessPage() {
                 `/api/orders/${latestOrder.id}/items`,
               );
               setOrderItems(orderItems || []);
+              
+              // Automatski generiraj i pošalji PDF račun na email
+              if (latestOrder && latestOrder.id) {
+                try {
+                  console.log(`Automatsko slanje PDF računa za zadnju narudžbu ${latestOrder.id}`);
+                  await apiRequest("POST", `/api/orders/${latestOrder.id}/send-invoice`);
+                  console.log("PDF račun je uspešno poslan na email");
+                } catch (invoiceError) {
+                  console.warn("Greška pri slanju PDF računa na email:", invoiceError);
+                  // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
+                }
+              }
             } else {
               setOrder({
                 id: "N/A",

@@ -18,6 +18,12 @@ interface EmailParams {
   subject: string;
   text?: string;
   html?: string;
+  attachments?: Array<{
+    content: string;
+    filename: string;
+    type: string;
+    disposition: string;
+  }>;
 }
 
 /**
@@ -31,6 +37,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       subject: params.subject,
       text: params.text || "",
       html: params.html || "",
+      attachments: params.attachments || [],
     });
     console.log(`Email sent to ${params.to} with subject: ${params.subject}`);
     return true;
