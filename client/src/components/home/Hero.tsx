@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import candleBackground from "@/assets/candle-background.jpg";
 import { useLanguage } from "@/hooks/use-language";
+import { useLocation } from "wouter";
 
 // Define TitleItem interface
 type TitleItem = {
@@ -24,6 +25,7 @@ type HeroSettings = {
 
 export default function Hero() {
   const { t, language } = useLanguage();
+  const [, setLocation] = useLocation();
   
   // Fetch hero settings from API
   const { data: heroSettings } = useQuery<HeroSettings | null>({
@@ -41,6 +43,24 @@ export default function Hero() {
       }
     }
   });
+
+  // Funkcija za detektiranje mobilnog uređaja
+  const isMobile = () => {
+    return window.innerWidth <= 768;
+  };
+
+  // Funkcija za navigaciju na products stranicu s kategoriazacijom
+  const handleExploreCollection = () => {
+    if (isMobile()) {
+      // Za mobilne uređaje, idi na products stranicu i postavi sessionStorage za kategoriju filtriranje
+      sessionStorage.setItem('categoryFilter', 'all');
+      sessionStorage.setItem('showAllCategories', 'true');
+      setLocation('/products');
+    } else {
+      // Za desktop, koristi običnu navigaciju
+      setLocation('/products');
+    }
+  };
   
   // Get title array for the current language
   const getTitleItemsArray = (): TitleItem[] => {
@@ -159,14 +179,13 @@ export default function Hero() {
             {getSubtitleText()}
           </p>
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-            <Link href="/products">
-              <Button 
-                size="lg" 
-                className="w-full sm:w-auto"
-              >
-                {t('home.exploreCollection')}
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="w-full sm:w-auto"
+              onClick={handleExploreCollection}
+            >
+              {t('home.exploreCollection')}
+            </Button>
             <Link href="/about">
               <Button 
                 size="lg" 

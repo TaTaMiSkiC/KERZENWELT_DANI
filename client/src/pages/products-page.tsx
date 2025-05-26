@@ -70,6 +70,18 @@ export default function ProductsPage() {
   
   // Set initial category from URL and sessionStorage
   useEffect(() => {
+    // Provjeri sessionStorage za mobilno filtriranje kategorija
+    const mobileCategory = sessionStorage.getItem('categoryFilter');
+    const showAllCategories = sessionStorage.getItem('showAllCategories');
+    
+    if (mobileCategory && showAllCategories === 'true') {
+      // Ako je postavljeno iz mobilne navigacije, postavi filter na "all" i očisti sessionStorage
+      setFilters(prev => ({ ...prev, category: 'all' }));
+      sessionStorage.removeItem('categoryFilter');
+      sessionStorage.removeItem('showAllCategories');
+      return;
+    }
+    
     // Check for URL parameter first
     if (categoryParam) {
       console.log("Setting category filter from URL parameter:", categoryParam);
