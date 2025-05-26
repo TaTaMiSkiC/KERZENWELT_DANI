@@ -10,8 +10,11 @@ export default function CategoryCard({ category }: CategoryCardProps) {
   const { id, name, description, imageUrl = '' } = category;
   
   const handleCategoryClick = () => {
+    const url = `/products?category=${id}`;
+    console.log("CategoryCard: Navigating to URL:", url);
+    console.log("CategoryCard: Category ID:", id);
     // Force a full page reload with the category parameter for better mobile compatibility
-    window.location.assign(`/products?category=${id}`);
+    window.location.assign(url);
   };
   
   return (
