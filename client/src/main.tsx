@@ -5,7 +5,7 @@ import "./index.css";
 // Lazy load App component for better initial loading performance
 const App = lazy(() => import("./App"));
 
-// Dodajemo komponentu za učitavanje koja će se prikazati dok se glavna aplikacija učitava
+// Loading component while main app is loading
 const LoadingFallback = () => (
   <div style={{ 
     display: 'flex', 
