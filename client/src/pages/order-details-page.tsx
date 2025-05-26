@@ -553,13 +553,35 @@ export default function OrderDetailsPage() {
 
           // Dodaj miris ako postoji
           if (item.scentName) {
-            details.push(`${t.scent}: ${item.scentName}`);
+            details.push(`Duft: ${item.scentName}`);
           }
 
-          // Dodaj boju/boje
-          if (item.colorName) {
-            const colorLabel = item.hasMultipleColors ? t.colors : t.color;
-            details.push(`${colorLabel}: ${item.colorName}`);
+          // Dodaj boju/boje - prvo proverim colorIds za višestruke boje
+          let colorText = null;
+          if (item.hasMultipleColors && item.colorIds) {
+            try {
+              const colorIds = JSON.parse(item.colorIds);
+              if (Array.isArray(colorIds)) {
+                const colorMap = {
+                  1: "Weiß", 2: "Beige", 3: "Golden", 5: "Rot",
+                  6: "Grün", 7: "Blau", 8: "Gelb", 9: "Lila",
+                  10: "Rosa", 11: "Schwarz", 12: "Orange", 13: "Braun"
+                };
+                const colorNames = colorIds.map(colorId => 
+                  colorMap[colorId] || `Farbe ${colorId}`
+                );
+                colorText = colorNames.join(", ");
+              }
+            } catch (e) {
+              console.error("Error parsing colorIds in PDF:", e);
+            }
+          } else if (item.colorName) {
+            colorText = item.colorName;
+          }
+
+          if (colorText) {
+            const colorLabel = item.hasMultipleColors ? "Farben" : "Farbe";
+            details.push(`${colorLabel}: ${colorText}`);
           }
 
           // Spoji naziv proizvoda s detaljima
