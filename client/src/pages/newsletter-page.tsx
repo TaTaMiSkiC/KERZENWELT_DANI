@@ -17,12 +17,12 @@ export default function NewsletterPage() {
         </div>
         
         <div className="mt-12 bg-gray-50 p-6 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Why Subscribe?</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("newsletter.whySubscribe")}</h2>
           <ul className="list-disc pl-6 space-y-2">
-            <li>Get a 10% discount on your first order</li>
-            <li>Be the first to know about new product launches</li>
-            <li>Receive exclusive offers and promotions</li>
-            <li>Get seasonal gift ideas and inspiration</li>
+            <li>{t("newsletter.benefit1")}</li>
+            <li>{t("newsletter.benefit2")}</li>
+            <li>{t("newsletter.benefit3")}</li>
+            <li>{t("newsletter.benefit4")}</li>
           </ul>
         </div>
       </div>
