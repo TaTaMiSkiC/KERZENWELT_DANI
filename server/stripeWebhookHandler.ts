@@ -379,19 +379,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         
         console.log(`[Webhook] Final payment method: ${paymentMethodType} -> ${actualPaymentMethod}`);
         
-        // Find and update the most recent pending order for this payment intent
-        const allOrders = await storage.getAllOrders();
-        const recentOrder = allOrders
-          .filter(order => order.paymentStatus === 'paid' && order.status === 'pending')
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-        
-        if (recentOrder) {
-          console.log(`[Webhook] Updating payment method for order ${recentOrder.id} to: ${actualPaymentMethod}`);
-          await storage.updateOrderPaymentMethod(recentOrder.id, actualPaymentMethod);
-          console.log(`[Webhook] Order ${recentOrder.id} payment method updated successfully`);
-        } else {
-          console.warn(`[Webhook] No recent order found to update payment method`);
-        }
+        // Note: Orders are created with correct payment method in checkout.session.completed
+        // No need to update existing orders here
         
       } catch (updateError) {
         console.error(`[Webhook] Error updating payment method:`, updateError);
@@ -448,19 +437,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         
         console.log(`[Webhook] Final payment method from charge: ${paymentMethodType} -> ${actualPaymentMethod}`);
         
-        // Find and update the most recent pending order
-        const allOrders = await storage.getAllOrders();
-        const recentOrder = allOrders
-          .filter(order => order.paymentStatus === 'paid' && order.status === 'pending')
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-        
-        if (recentOrder) {
-          console.log(`[Webhook] Updating payment method for order ${recentOrder.id} to: ${actualPaymentMethod}`);
-          await storage.updateOrderPaymentMethod(recentOrder.id, actualPaymentMethod);
-          console.log(`[Webhook] Order ${recentOrder.id} payment method updated successfully via charge.succeeded`);
-        } else {
-          console.warn(`[Webhook] No recent order found to update payment method from charge`);
-        }
+        // Note: Orders are created with correct payment method in checkout.session.completed
+        // No need to update existing orders here either
         
       } catch (updateError) {
         console.error(`[Webhook] Error updating payment method from charge:`, updateError);
