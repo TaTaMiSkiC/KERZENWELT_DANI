@@ -488,9 +488,9 @@ export default function CheckoutForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email *</FormLabel>
+                  <FormLabel>{t("checkout.email")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="vasa.email@primjer.com" {...field} />
+                    <Input placeholder={t("checkout.email")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -502,9 +502,9 @@ export default function CheckoutForm() {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Telefon *</FormLabel>
+                  <FormLabel>{t("checkout.phone")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Vaš telefonski broj" {...field} />
+                    <Input placeholder={t("checkout.phone")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -516,9 +516,9 @@ export default function CheckoutForm() {
               name="address"
               render={({ field }) => (
                 <FormItem className="col-span-2">
-                  <FormLabel>Adresa *</FormLabel>
+                  <FormLabel>{t("checkout.address")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ulica i kućni broj" {...field} />
+                    <Input placeholder={t("checkout.address")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
