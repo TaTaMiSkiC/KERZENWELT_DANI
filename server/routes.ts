@@ -3614,6 +3614,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         to: user.email,
         from: "info@kerzenweltbydani.com",
         subject: `Rechnung ${invoiceNumber} - Kerzenwelt by Dani`,
+        text: `Kerzenwelt by Dani
+
+Ihre Rechnung ist bereit!
+
+Sehr geehrte/r ${user.firstName || ''} ${user.lastName || ''},
+
+vielen Dank für Ihre Bestellung. Ihre Rechnung ${invoiceNumber} finden Sie im Anhang.
+
+Bei Fragen stehen wir Ihnen gerne zur Verfügung.
+
+Mit freundlichen Grüßen,
+Ihr Team von Kerzenwelt by Dani`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #D4AF37;">Kerzenwelt by Dani</h1>
