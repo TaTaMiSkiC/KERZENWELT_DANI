@@ -15,13 +15,21 @@ type CartContextType = {
   error: Error | null;
   cartTotal: number;
   cartItemCount: number;
-  addToCart: UseMutationResult<any, Error, { 
-    productId: number; 
-    quantity: number;
-    scentId?: number;
-    colorId?: number;
-  }>;
-  updateCartItem: UseMutationResult<any, Error, { id: number; quantity: number }>;
+  addToCart: UseMutationResult<
+    any,
+    Error,
+    {
+      productId: number;
+      quantity: number;
+      scentId?: number;
+      colorId?: number;
+    }
+  >;
+  updateCartItem: UseMutationResult<
+    any,
+    Error,
+    { id: number; quantity: number }
+  >;
   removeFromCart: UseMutationResult<any, Error, number>;
   clearCart: UseMutationResult<any, Error, void>;
 };
@@ -42,10 +50,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     onSuccess: (data) => {
       // Dodatno logiranje kada su podaci košarice uspješno dohvaćeni
       console.log("Dohvaćeni podaci košarice:", data);
-      
+
       // Provjeri sadrže li stavke košarice potrebne informacije o mirisima i bojama
       if (data && data.length > 0) {
-        data.forEach(item => {
+        data.forEach((item) => {
           console.log(`Stavka košarice ID ${item.id}:`, {
             productId: item.productId,
             productName: item.product?.name,
@@ -55,26 +63,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
             colorInfo: item.color,
             hasMultipleColors: item.hasMultipleColors,
             selectedColors: item.selectedColors,
-            colorIds: item.colorIds
+            colorIds: item.colorIds,
           });
         });
       }
-    }
+    },
   });
 
-  const cartTotal = cartItems?.reduce(
-    (total, item) => total + parseFloat(item.product.price) * item.quantity,
-    0
-  ) || 0;
+  const cartTotal =
+    cartItems?.reduce(
+      (total, item) => total + parseFloat(item.product.price) * item.quantity,
+      0,
+    ) || 0;
 
-  const cartItemCount = cartItems?.reduce(
-    (count, item) => count + item.quantity,
-    0
-  ) || 0;
+  const cartItemCount =
+    cartItems?.reduce((count, item) => count + item.quantity, 0) || 0;
 
   const addToCart = useMutation({
-    mutationFn: async (data: { 
-      productId: number; 
+    mutationFn: async (data: {
+      productId: number;
       quantity: number;
       scentId?: number;
       colorId?: number;
@@ -87,8 +94,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     },
     onError: (error: Error) => {
       toast({
-        title: "Greška",
-        description: error.message || "Nije moguće dodati proizvod u košaricu.",
+        title: "Fehler",
+        description:
+          error.message ||
+          "Produkt konnte nicht zum Warenkorb hinzugefügt werden.",
         variant: "destructive",
       });
     },
@@ -96,7 +105,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateCartItem = useMutation({
     mutationFn: async (data: { id: number; quantity: number }) => {
-      const res = await apiRequest("PUT", `/api/cart/${data.id}`, { quantity: data.quantity });
+      const res = await apiRequest("PUT", `/api/cart/${data.id}`, {
+        quantity: data.quantity,
+      });
       return await res.json();
     },
     onSuccess: () => {
@@ -104,8 +115,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     },
     onError: (error: Error) => {
       toast({
-        title: "Greška",
-        description: error.message || "Nije moguće ažurirati proizvod u košarici.",
+        title: "Fehler",
+        description:
+          error.message ||
+          "Produkt im Warenkorb kann nicht aktualisiert werden.",
         variant: "destructive",
       });
     },
@@ -118,14 +131,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
-        title: "Uklonjeno iz košarice",
-        description: "Proizvod je uklonjen iz vaše košarice.",
+        title: "Aus dem Warenkorb entfernt",
+        description: "Das Produkt wurde aus Ihrem Warenkorb entfernt.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Greška",
-        description: error.message || "Nije moguće ukloniti proizvod iz košarice.",
+        title: "Fehler",
+        description:
+          error.message ||
+          "Produkt kann nicht aus dem Warenkorb entfernt werden.",
         variant: "destructive",
       });
     },
@@ -138,14 +153,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
-        title: "Košarica ispražnjena",
-        description: "Svi proizvodi su uklonjeni iz vaše košarice.",
+        title: "Warenkorb geleert",
+        description: "Alle Produkte wurden aus Ihrem Warenkorb entfernt.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Greška",
-        description: error.message || "Nije moguće isprazniti košaricu.",
+        title: "Fehler",
+        description:
+          error.message || "Einkaufswagen kann nicht geleert werden.",
         variant: "destructive",
       });
     },
