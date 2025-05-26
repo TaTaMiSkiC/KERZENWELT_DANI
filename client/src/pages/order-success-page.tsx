@@ -190,6 +190,14 @@ export default function OrderSuccessPage() {
                     "📞 CLIENT - Pozivam endpoint:",
                     `/api/orders/${latestOrder.id}/generate-pdf`,
                   );
+
+                  // TEST KOMANDA - pozovi sa trenutnom narudžbom
+                  console.log(`🧪 TEST: Pozivam PDF za narudžbu ${latestOrder.id}`);
+                  fetch(`/api/orders/${latestOrder.id}/generate-pdf`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                  }).then(r => r.json()).then(console.log);
                   const pdfResponse = await fetch(
                     `/api/orders/${latestOrder.id}/generate-pdf`,
                     {
