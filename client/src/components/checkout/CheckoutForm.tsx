@@ -453,16 +453,16 @@ export default function CheckoutForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Billing information */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Podaci za dostavu</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("checkout.personalInfo")}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ime *</FormLabel>
+                  <FormLabel>{t("checkout.firstName")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Vaše ime" {...field} />
+                    <Input placeholder={t("checkout.firstName")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -474,9 +474,9 @@ export default function CheckoutForm() {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Prezime *</FormLabel>
+                  <FormLabel>{t("checkout.lastName")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Vaše prezime" {...field} />
+                    <Input placeholder={t("checkout.lastName")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
