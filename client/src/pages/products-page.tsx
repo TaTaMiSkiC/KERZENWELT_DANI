@@ -70,14 +70,16 @@ export default function ProductsPage() {
   
   // Set initial category from URL parameters - watch for changes
   useEffect(() => {
+    console.log("ProductsPage: Current location:", location);
     const urlParams = new URLSearchParams(location.split("?")[1] || "");
     const currentCategoryParam = urlParams.get("category");
+    console.log("ProductsPage: Parsed category parameter:", currentCategoryParam);
     
     if (currentCategoryParam) {
-      console.log("Setting category filter from URL parameter:", currentCategoryParam);
+      console.log("ProductsPage: Setting category filter from URL parameter:", currentCategoryParam);
       setFilters(prev => {
         if (prev.category !== currentCategoryParam) {
-          console.log("Current category:", prev.category, "New category:", currentCategoryParam);
+          console.log("ProductsPage: Current category:", prev.category, "New category:", currentCategoryParam);
           return { ...prev, category: currentCategoryParam };
         }
         return prev;
@@ -86,7 +88,7 @@ export default function ProductsPage() {
       // Reset to "all" if no category parameter
       setFilters(prev => {
         if (prev.category !== "all") {
-          console.log("No category parameter, resetting to 'all'");
+          console.log("ProductsPage: No category parameter, resetting to 'all'");
           return { ...prev, category: "all" };
         }
         return prev;
