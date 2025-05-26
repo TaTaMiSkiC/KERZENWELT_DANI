@@ -800,6 +800,8 @@ export class DatabaseStorage implements IStorage {
           // ako postoji, inače fallback na proizvod
           hasMultipleColors:
             hasMultipleColors || !!productData.allowMultipleColors,
+          // Dodajemo colorIds polje koje nedostaje
+          colorIds: item.color_ids || null,
         };
       });
 
