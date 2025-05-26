@@ -50,6 +50,52 @@ export async function handleStripeWebhook(req: Request, res: Response) {
           try {
             console.log(`[Webhook] Kreiram narudžbu za korisnika ${userId}`);
             
+            // Get actual payment method from payment intent
+            let actualPaymentMethod = "stripe"; // Default fallback
+            if (session.payment_intent) {
+              try {
+                const paymentIntent = await stripe.paymentIntents.retrieve(
+                  typeof session.payment_intent === 'string' 
+                    ? session.payment_intent 
+                    : session.payment_intent.id
+                );
+                
+                const paymentMethodType = paymentIntent.payment_method?.type || 
+                                        paymentIntent.charges?.data[0]?.payment_method_details?.type;
+                
+                // Map Stripe payment method types to user-friendly names
+                switch (paymentMethodType) {
+                  case 'card':
+                    actualPaymentMethod = "Kreditkarte";
+                    break;
+                  case 'klarna':
+                    actualPaymentMethod = "Klarna";
+                    break;
+                  case 'eps':
+                    actualPaymentMethod = "EPS";
+                    break;
+                  case 'sofort':
+                    actualPaymentMethod = "Sofort";
+                    break;
+                  case 'bancontact':
+                    actualPaymentMethod = "Bancontact";
+                    break;
+                  case 'ideal':
+                    actualPaymentMethod = "iDEAL";
+                    break;
+                  case 'giropay':
+                    actualPaymentMethod = "Giropay";
+                    break;
+                  default:
+                    actualPaymentMethod = paymentMethodType || "Online Payment";
+                }
+                
+                console.log(`[Webhook] Detected payment method: ${paymentMethodType} -> ${actualPaymentMethod}`);
+              } catch (paymentIntentError) {
+                console.warn(`[Webhook] Could not retrieve payment method details:`, paymentIntentError);
+              }
+            }
+            
             // Dohvati podatke iz korisničke košarice
             const { storage } = await import('./storage');
             const cartItems = await storage.getCartItems(parseInt(userId));
@@ -91,7 +137,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               subtotal: cartTotal.toString(),
               discountAmount: "0",
               shippingCost: "0",
-              paymentMethod: "stripe",
+              paymentMethod: actualPaymentMethod,
               status: "pending",
               paymentStatus: "paid",
               shippingAddress: user.address || "",
