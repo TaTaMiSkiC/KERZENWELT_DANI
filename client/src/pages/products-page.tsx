@@ -61,7 +61,13 @@ export default function ProductsPage() {
       
       return response.json();
     },
+    enabled: true, // Always enabled
   });
+
+  // Force refetch when category filter changes
+  useEffect(() => {
+    refetch();
+  }, [filters.category, refetch]);
   
   // Fetch all categories
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
