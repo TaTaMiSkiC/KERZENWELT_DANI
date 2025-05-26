@@ -1107,7 +1107,12 @@ export default function OrderDetailsPage() {
                           )}
 
                           {/* Prikaz višestrukih boja */}
-                          {item.hasMultipleColors && item.colorName && (
+                          {console.log("Checking multiple colors for item:", {
+                            hasMultipleColors: item.hasMultipleColors,
+                            colorName: item.colorName,
+                            colorIds: item.colorIds
+                          })}
+                          {item.hasMultipleColors && item.colorIds && (
                             <div className="flex flex-col gap-1">
                               <div className="inline-flex items-center text-sm bg-purple-50 rounded-full px-2 py-0.5 border border-purple-100">
                                 <span className="font-medium text-purple-800 mr-1">
