@@ -1,13 +1,15 @@
 import { NewsletterSubscribe } from "@/components/NewsletterSubscribe";
+import { useLanguage } from "@/hooks/use-language";
 
 export default function NewsletterPage() {
+  const { t } = useLanguage();
+  
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-6">Join Our Newsletter</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">{t("newsletter.title")}</h1>
         <p className="text-center mb-8 text-gray-600">
-          Subscribe to our newsletter to get exclusive offers, new product announcements, 
-          and a special discount code for your first purchase.
+          {t("newsletter.subtitle")}
         </p>
         
         <div className="mt-8">

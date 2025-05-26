@@ -1659,6 +1659,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.discountMinimumOrder":
       "Der Mindestbestellwert für diesen Gutscheincode beträgt {amount}€.",
     "checkout.securePayment": "Sichere Zahlung",
+    
+    // Newsletter - Deutsch
+    "newsletter.title": "Newsletter abonnieren",
+    "newsletter.subtitle": "Abonnieren Sie unseren Newsletter für exklusive Angebote, neue Produktankündigungen und einen speziellen Rabattcode für Ihren ersten Einkauf.",
+    "newsletter.whySubscribe": "Warum abonnieren?",
+    "newsletter.benefit1": "Erhalten Sie 10% Rabatt auf Ihre erste Bestellung",
+    "newsletter.benefit2": "Seien Sie der Erste, der von neuen Produkteinführungen erfährt",
+    "newsletter.benefit3": "Erhalten Sie exklusive Angebote und Aktionen",
+    "newsletter.benefit4": "Holen Sie sich saisonale Geschenkideen und Inspiration",
     "checkout.securePaymentDescription":
       "Ihre Zahlungsinformationen sind sicher und verschlüsselt.",
 
@@ -2013,6 +2022,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.securePayment": "Sigurno plaćanje",
     "checkout.securePaymentDescription":
       "Vaši podaci za plaćanje su sigurni i šifrirani.",
+    
+    // Newsletter - Hrvatski
+    "newsletter.title": "Pretplatite se na newsletter",
+    "newsletter.subtitle": "Pretplatite se na naš newsletter za ekskluzivne ponude, najave novih proizvoda i poseban kod popusta za vašu prvu kupovinu.",
+    "newsletter.whySubscribe": "Zašto se pretplatiti?",
+    "newsletter.benefit1": "Dobijte 10% popusta na vašu prvu narudžbu",
+    "newsletter.benefit2": "Budite prvi koji će saznati o novim proizvodima",
+    "newsletter.benefit3": "Primajte ekskluzivne ponude i promocije",
+    "newsletter.benefit4": "Dobijte sezonske ideje za darove i inspiraciju",
 
     // Auth Success/Error Messages
     "auth.loginSuccessTitle": "Prijava uspješna",
