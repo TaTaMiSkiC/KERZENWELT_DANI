@@ -54,14 +54,23 @@ export default function ProductsPage() {
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
-  // Fetch products with category filtering
+  // Fetch all categories first
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  // Fetch products with category filtering - only after categories are loaded
   const { data: products, isLoading: productsLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["/api/products", filters.category],
+    queryKey: ["/api/products", filters.category, categories?.length],
     queryFn: async () => {
       // Build URL with category parameter if not "all"
       let url = "/api/products";
-      if (filters.category && filters.category !== "all") {
-        url += `?category=${encodeURIComponent(filters.category)}`;
+      if (filters.category && filters.category !== "all" && categories) {
+        // Find the category ID by name
+        const category = categories.find(cat => cat.name === filters.category);
+        if (category) {
+          url += `?category=${category.id}`;
+        }
       }
       
       console.log("Fetching products with URL:", url, "Filter category:", filters.category);
@@ -73,11 +82,7 @@ export default function ProductsPage() {
       
       return response.json();
     },
-  });
-  
-  // Fetch all categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+    enabled: !categoriesLoading, // Wait for categories to load
   });
   
   // Remove the problematic useEffect to avoid conflicts
