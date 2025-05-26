@@ -133,8 +133,9 @@ export default function OrderSuccessPage() {
       } else {
         // Ako nema orderId u URL-u, pokušavamo dohvatiti zadnju narudžbu korisnika
         console.log(
-          "Nema orderId u URL-u. Pokušavam dohvatiti zadnju narudžbu korisnika.",
+          "🔍 CLIENT - Nema orderId u URL-u. Pokušavam dohvatiti zadnju narudžbu korisnika.",
         );
+        console.log("🔍 CLIENT - user?.id:", user?.id);
         if (user?.id) {
           try {
             const userOrders = await apiRequest("GET", `/api/orders`);
