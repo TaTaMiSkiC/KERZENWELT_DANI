@@ -342,7 +342,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.home": "Startseite",
     "nav.products": "Produkte",
     "nav.about": "Über uns",
-    "nav.contact": "Kontakt",
+    "nav.contact": "Info",
     "nav.cart": "Warenkorb",
     "nav.login": "Anmelden",
     "nav.account": "Mein Konto",
@@ -1661,11 +1661,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.securePayment": "Sichere Zahlung",
     "checkout.securePaymentDescription":
       "Ihre Zahlungsinformationen sind sicher und verschlüsselt.",
-    
+
     // Checkout Form - Nemački
     "checkout.personalInfo": "Persönliche Daten",
     "checkout.firstName": "Vorname",
-    "checkout.lastName": "Nachname", 
+    "checkout.lastName": "Nachname",
     "checkout.email": "E-Mail-Adresse",
     "checkout.phone": "Telefonnummer",
     "checkout.billingAddress": "Rechnungsadresse",
@@ -1677,6 +1677,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.selectPaymentMethod": "Zahlungsmethode auswählen",
     "checkout.orderNotes": "Anmerkungen zur Bestellung",
     "checkout.orderNotesPlaceholder": "Besondere Wünsche oder Anmerkungen...",
+    "checkout.orderNotesDescription":
+      "Die angegebenen Informationen werden zur Bearbeitung Ihrer Bestellung verwendet.",
     "checkout.placeOrder": "Bestellung aufgeben",
     "checkout.processing": "Verarbeitung läuft...",
     "checkout.orderTotal": "Gesamtsumme",
@@ -1700,12 +1702,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.cvv": "CVV",
     "checkout.cardholderName": "Name des Karteninhabers",
     "checkout.firstNameRequired": "Vorname ist erforderlich",
-    "checkout.lastNameRequired": "Nachname ist erforderlich", 
+    "checkout.lastNameRequired": "Nachname ist erforderlich",
     "checkout.phoneRequired": "Telefonnummer ist erforderlich",
     "checkout.addressRequired": "Adresse ist erforderlich",
     "checkout.cityRequired": "Stadt ist erforderlich",
     "checkout.postalCodeRequired": "Postleitzahl ist erforderlich",
     "checkout.countryRequired": "Land ist erforderlich",
+    "checkout.mondayToFriday": "Montag - Freitag",
     "admin.invoiceCreated": "Rechnung erstellt",
     "admin.invoiceCreatedDescription":
       "Die Rechnung wurde erfolgreich erstellt und kann jetzt heruntergeladen werden.",
@@ -1726,14 +1729,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.orders.paymentDetails": "Zahlungsdetails",
     "orderSuccessPage.processingPaymentNote":
       "Ihre Bestellung wurde erfolgreich aufgegeben und Ihre Zahlung wird derzeit verarbeitet. Sie erhalten eine Bestätigungs-E-Mail, sobald die Zahlung abgeschlossen ist.",
-    
+
     // Order Success Page Stripe translations
     "orderSuccessPage.title": "Bestellbestätigung",
     "orderSuccessPage.loadingOrder": "Bestellung wird geladen...",
     "orderSuccessPage.errorTitle": "Fehler bei der Bestellung",
     "orderSuccessPage.continueShopping": "Weiter einkaufen",
     "orderSuccessPage.orderConfirmed": "Bestellung bestätigt!",
-    "orderSuccessPage.thankYou": "Vielen Dank für Ihre Bestellung. Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet.",
+    "orderSuccessPage.thankYou":
+      "Vielen Dank für Ihre Bestellung. Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet.",
     "orderSuccessPage.orderNumber": "Bestellnummer",
     "orderSuccessPage.total": "Gesamt",
     "orderSuccessPage.paymentMethod": "Zahlungsmethode",
@@ -1748,11 +1752,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.scent": "Duft",
     "orderSuccessPage.color": "Farbe",
     "orderSuccessPage.stripePaymentSuccess": "Zahlung erfolgreich!",
-    "orderSuccessPage.stripeThankYou": "Vielen Dank für Ihr Vertrauen! Ihre Zahlung wurde erfolgreich verarbeitet und Ihre Bestellung ist nun bestätigt.",
-    "orderSuccessPage.stripeConfirmation": "Ihre Bestellung wurde erfolgreich aufgenommen",
-    "orderSuccessPage.stripeProcessing": "Wir beginnen sofort mit der Bearbeitung Ihrer Kerzen",
-    "orderSuccessPage.stripeContact": "Eine Bestätigungs-E-Mail wurde an Ihre Adresse gesendet",
-    "orderSuccessPage.stripeNextSteps": "Wir werden Sie über den Versandstatus informieren, sobald Ihre Bestellung unterwegs ist.",
+    "orderSuccessPage.stripeThankYou":
+      "Vielen Dank für Ihr Vertrauen! Ihre Zahlung wurde erfolgreich verarbeitet und Ihre Bestellung ist nun bestätigt.",
+    "orderSuccessPage.stripeConfirmation":
+      "Ihre Bestellung wurde erfolgreich aufgenommen",
+    "orderSuccessPage.stripeProcessing":
+      "Wir beginnen sofort mit der Bearbeitung Ihrer Kerzen",
+    "orderSuccessPage.stripeContact":
+      "Eine Bestätigungs-E-Mail wurde an Ihre Adresse gesendet",
+    "orderSuccessPage.stripeNextSteps":
+      "Wir werden Sie über den Versandstatus informieren, sobald Ihre Bestellung unterwegs ist.",
     "orderSuccessPage.myOrders": "Meine Bestellungen",
     "orderSuccessPage.continueShoppingButton": "Weiter einkaufen",
     //"checkout.browseProducts": "Produkte durchsuchen",
@@ -1895,7 +1904,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Handgefertigte Kerzen aus natürlichen Inhaltsstoffen. Von unserer Familie zu Ihrem Zuhause.",
     "footer.quickLinks": "Schnelllinks",
     "footer.customerSupport": "Kundenservice",
-    "footer.contact": "Kontakt",
+    "footer.contact": "Info",
     "footer.followUs": "Folgen Sie uns",
     "footer.copyright": "Alle Rechte vorbehalten.",
     "footer.tagline":
@@ -1950,7 +1959,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.paymentMethods.bank.title": "Bankovna uplata",
     "checkout.paymentMethods.bank.description":
       "Podaci za uplatu bit će poslani na vaš email",
-    
+
     // Checkout Form - Hrvatski
     "checkout.personalInfo": "Osobni podaci",
     "checkout.firstName": "Ime",
@@ -1995,12 +2004,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.cityRequired": "Grad je obavezan",
     "checkout.postalCodeRequired": "Poštanski broj je obavezan",
     "checkout.countryRequired": "Zemlja je obavezna",
-    "checkout.metaDescription": "Pregledajte svoju narudžbu i unesite podatke za plaćanje.",
+    "checkout.metaDescription":
+      "Pregledajte svoju narudžbu i unesite podatke za plaćanje.",
     "checkout.discountApplied": "Kod za popust je uspješno primijenjen!",
     "checkout.discountNotApplied": "Kod za popust se ne može primijeniti.",
-    "checkout.discountMinimumOrder": "Minimalna vrijednost narudžbe za ovaj kod je {amount}€.",
+    "checkout.discountMinimumOrder":
+      "Minimalna vrijednost narudžbe za ovaj kod je {amount}€.",
     "checkout.securePayment": "Sigurno plaćanje",
-    "checkout.securePaymentDescription": "Vaši podaci za plaćanje su sigurni i šifrirani.",
+    "checkout.securePaymentDescription":
+      "Vaši podaci za plaćanje su sigurni i šifrirani.",
 
     // Auth Success/Error Messages
     "auth.loginSuccessTitle": "Prijava uspješna",
@@ -2922,7 +2934,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.errorTitle": "Greška s narudžbom",
     "orderSuccessPage.continueShopping": "Nastavi kupovinu",
     "orderSuccessPage.orderConfirmed": "Narudžba potvrđena!",
-    "orderSuccessPage.thankYou": "Hvala vam na narudžbi. Potvrda je poslana na vašu e-mail adresu.",
+    "orderSuccessPage.thankYou":
+      "Hvala vam na narudžbi. Potvrda je poslana na vašu e-mail adresu.",
     "orderSuccessPage.orderNumber": "Broj narudžbe",
     "orderSuccessPage.total": "Ukupno",
     "orderSuccessPage.paymentMethod": "Način plaćanja",
@@ -2937,11 +2950,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.scent": "Miris",
     "orderSuccessPage.color": "Boja",
     "orderSuccessPage.stripePaymentSuccess": "Plaćanje uspješno!",
-    "orderSuccessPage.stripeThankYou": "Hvala vam na povjerenju! Vaše plaćanje je uspješno obrađeno i vaša narudžba je sada potvrđena.",
-    "orderSuccessPage.stripeConfirmation": "Vaša narudžba je uspješno zaprimljena",
-    "orderSuccessPage.stripeProcessing": "Odmah počinjemo s izradom vaših svijeća",
-    "orderSuccessPage.stripeContact": "E-mail s potvrdom je poslan na vašu adresu",
-    "orderSuccessPage.stripeNextSteps": "Obavijestit ćemo vas o statusu dostave čim vaša narudžba bude na putu.",
+    "orderSuccessPage.stripeThankYou":
+      "Hvala vam na povjerenju! Vaše plaćanje je uspješno obrađeno i vaša narudžba je sada potvrđena.",
+    "orderSuccessPage.stripeConfirmation":
+      "Vaša narudžba je uspješno zaprimljena",
+    "orderSuccessPage.stripeProcessing":
+      "Odmah počinjemo s izradom vaših svijeća",
+    "orderSuccessPage.stripeContact":
+      "E-mail s potvrdom je poslan na vašu adresu",
+    "orderSuccessPage.stripeNextSteps":
+      "Obavijestit ćemo vas o statusu dostave čim vaša narudžba bude na putu.",
     "orderSuccessPage.myOrders": "Moje narudžbe",
     "orderSuccessPage.continueShoppingButton": "Nastavi kupovinu",
 
@@ -3188,7 +3206,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.payments.deleteConfirmation":
       "Jeste li sigurni da želite obrisati ovaj način plaćanja?",
     "admin.payments.cancelDelete": "Odustani",
-    "admin.payments.confirmDelete": "Da, obriši",
+    "admin.payments.confirmDelete": "Da, obri �i",
     "admin.payments.methodDeleted": "Način plaćanja je uspješno obrisan",
     "admin.payments.deleteError": "Greška prilikom brisanja načina plaćanja",
     // Mjeseci
@@ -3214,7 +3232,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.home": "Početna",
     "nav.products": "Proizvodi",
     "nav.about": "O nama",
-    "nav.contact": "Kontakt",
+    "nav.contact": "Info",
     "nav.cart": "Košarica",
     "nav.login": "Prijava",
     "nav.account": "Moj račun",
@@ -3609,7 +3627,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Ručno izrađene svijeće od prirodnih sastojaka. Od naše obitelji do vašeg doma.",
     "footer.quickLinks": "Brzi linkovi",
     "footer.customerSupport": "Korisnička podrška",
-    "footer.contact": "Kontakt",
+    "footer.contact": "Info",
     "footer.followUs": "Pratite nas",
     "footer.copyright": "Sva prava pridržana.",
     "footer.tagline":
@@ -3759,7 +3777,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.paymentMethods.bank.title": "Bank Transfer",
     "checkout.paymentMethods.bank.description":
       "Payment details will be sent to your email",
-    
+
     // Checkout Form - English
     "checkout.personalInfo": "Personal Information",
     "checkout.firstName": "First Name",
@@ -3804,12 +3822,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.cityRequired": "City is required",
     "checkout.postalCodeRequired": "Postal code is required",
     "checkout.countryRequired": "Country is required",
-    "checkout.metaDescription": "Review your order and enter your payment information.",
+    "checkout.metaDescription":
+      "Review your order and enter your payment information.",
     "checkout.discountApplied": "Discount code applied successfully!",
     "checkout.discountNotApplied": "Discount code could not be applied.",
-    "checkout.discountMinimumOrder": "Minimum order value for this discount code is {amount}€.",
+    "checkout.discountMinimumOrder":
+      "Minimum order value for this discount code is {amount}€.",
     "checkout.securePayment": "Secure Payment",
-    "checkout.securePaymentDescription": "Your payment information is secure and encrypted.",
+    "checkout.securePaymentDescription":
+      "Your payment information is secure and encrypted.",
 
     // Auth Success/Error Messages
     "auth.loginSuccessTitle": "Login successful",
@@ -3848,7 +3869,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.errorTitle": "Order Error",
     "orderSuccessPage.continueShopping": "Continue Shopping",
     "orderSuccessPage.orderConfirmed": "Order Confirmed!",
-    "orderSuccessPage.thankYou": "Thank you for your order. A confirmation has been sent to your email address.",
+    "orderSuccessPage.thankYou":
+      "Thank you for your order. A confirmation has been sent to your email address.",
     "orderSuccessPage.orderNumber": "Order Number",
     "orderSuccessPage.total": "Total",
     "orderSuccessPage.paymentMethod": "Payment Method",
@@ -3863,11 +3885,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.scent": "Scent",
     "orderSuccessPage.color": "Color",
     "orderSuccessPage.stripePaymentSuccess": "Payment Successful!",
-    "orderSuccessPage.stripeThankYou": "Thank you for your trust! Your payment has been successfully processed and your order is now confirmed.",
-    "orderSuccessPage.stripeConfirmation": "Your order has been successfully received",
-    "orderSuccessPage.stripeProcessing": "We are starting to craft your candles immediately",
-    "orderSuccessPage.stripeContact": "A confirmation email has been sent to your address",
-    "orderSuccessPage.stripeNextSteps": "We will notify you about the shipping status as soon as your order is on its way.",
+    "orderSuccessPage.stripeThankYou":
+      "Thank you for your trust! Your payment has been successfully processed and your order is now confirmed.",
+    "orderSuccessPage.stripeConfirmation":
+      "Your order has been successfully received",
+    "orderSuccessPage.stripeProcessing":
+      "We are starting to craft your candles immediately",
+    "orderSuccessPage.stripeContact":
+      "A confirmation email has been sent to your address",
+    "orderSuccessPage.stripeNextSteps":
+      "We will notify you about the shipping status as soon as your order is on its way.",
     "orderSuccessPage.myOrders": "My Orders",
     "orderSuccessPage.continueShoppingButton": "Continue Shopping",
 
@@ -4588,7 +4615,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.home": "Home",
     "nav.products": "Products",
     "nav.about": "About",
-    "nav.contact": "Contact",
+    "nav.contact": "Info",
     "nav.cart": "Cart",
     "nav.login": "Login",
     "nav.account": "My Account",
@@ -4964,7 +4991,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Handmade candles with natural ingredients. From our family to your home.",
     "footer.quickLinks": "Quick Links",
     "footer.customerSupport": "Customer Support",
-    "footer.contact": "Contact",
+    "footer.contact": "Info",
     "footer.followUs": "Follow Us",
     "footer.copyright": "All rights reserved.",
     "footer.tagline":
@@ -5014,7 +5041,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.paymentMethods.bank.title": "Bonifico Bancario",
     "checkout.paymentMethods.bank.description":
       "I dettagli per il pagamento saranno inviati via email",
-    
+
     // Checkout Form - Italiano
     "checkout.personalInfo": "Informazioni Personali",
     "checkout.firstName": "Nome",
@@ -5039,7 +5066,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.total": "Totale",
     "checkout.tax": "IVA",
     "checkout.saveAddress": "Salva indirizzo per ordini futuri",
-    "checkout.sameAsBilling": "Indirizzo di spedizione = indirizzo di fatturazione",
+    "checkout.sameAsBilling":
+      "Indirizzo di spedizione = indirizzo di fatturazione",
     "checkout.shippingAddress": "Indirizzo di Spedizione",
     "checkout.requiredField": "Campo obbligatorio",
     "checkout.invalidEmail": "Indirizzo email non valido",
@@ -5059,12 +5087,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.cityRequired": "La città è obbligatoria",
     "checkout.postalCodeRequired": "Il codice postale è obbligatorio",
     "checkout.countryRequired": "Il paese è obbligatorio",
-    "checkout.metaDescription": "Rivedi il tuo ordine e inserisci le informazioni di pagamento.",
+    "checkout.metaDescription":
+      "Rivedi il tuo ordine e inserisci le informazioni di pagamento.",
     "checkout.discountApplied": "Codice sconto applicato con successo!",
     "checkout.discountNotApplied": "Il codice sconto non può essere applicato.",
-    "checkout.discountMinimumOrder": "Il valore minimo dell'ordine per questo codice sconto è {amount}€.",
+    "checkout.discountMinimumOrder":
+      "Il valore minimo dell'ordine per questo codice sconto è {amount}€.",
     "checkout.securePayment": "Pagamento Sicuro",
-    "checkout.securePaymentDescription": "Le tue informazioni di pagamento sono sicure e crittografate.",
+    "checkout.securePaymentDescription":
+      "Le tue informazioni di pagamento sono sicure e crittografate.",
 
     // Search
     "search.title": "Cerca prodotti",
@@ -5105,7 +5136,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.errorTitle": "Errore Ordine",
     "orderSuccessPage.continueShopping": "Continua Shopping",
     "orderSuccessPage.orderConfirmed": "Ordine Confermato!",
-    "orderSuccessPage.thankYou": "Grazie per il tuo ordine. Una conferma è stata inviata al tuo indirizzo email.",
+    "orderSuccessPage.thankYou":
+      "Grazie per il tuo ordine. Una conferma è stata inviata al tuo indirizzo email.",
     "orderSuccessPage.orderNumber": "Numero Ordine",
     "orderSuccessPage.total": "Totale",
     "orderSuccessPage.paymentMethod": "Metodo di Pagamento",
@@ -5120,11 +5152,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.scent": "Profumo",
     "orderSuccessPage.color": "Colore",
     "orderSuccessPage.stripePaymentSuccess": "Pagamento Riuscito!",
-    "orderSuccessPage.stripeThankYou": "Grazie per la tua fiducia! Il tuo pagamento è stato processato con successo e il tuo ordine è ora confermato.",
-    "orderSuccessPage.stripeConfirmation": "Il tuo ordine è stato ricevuto con successo",
-    "orderSuccessPage.stripeProcessing": "Iniziamo subito a creare le tue candele",
-    "orderSuccessPage.stripeContact": "Un'email di conferma è stata inviata al tuo indirizzo",
-    "orderSuccessPage.stripeNextSteps": "Ti informeremo sullo stato della spedizione non appena il tuo ordine sarà in viaggio.",
+    "orderSuccessPage.stripeThankYou":
+      "Grazie per la tua fiducia! Il tuo pagamento è stato processato con successo e il tuo ordine è ora confermato.",
+    "orderSuccessPage.stripeConfirmation":
+      "Il tuo ordine è stato ricevuto con successo",
+    "orderSuccessPage.stripeProcessing":
+      "Iniziamo subito a creare le tue candele",
+    "orderSuccessPage.stripeContact":
+      "Un'email di conferma è stata inviata al tuo indirizzo",
+    "orderSuccessPage.stripeNextSteps":
+      "Ti informeremo sullo stato della spedizione non appena il tuo ordine sarà in viaggio.",
     "orderSuccessPage.myOrders": "I miei ordini",
     "orderSuccessPage.continueShoppingButton": "Continua Shopping",
 
@@ -5460,7 +5497,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.home": "Home",
     "nav.products": "Prodotti",
     "nav.about": "Chi siamo",
-    "nav.contact": "Contatti",
+    "nav.contact": "Info",
     "nav.cart": "Carrello",
     "nav.login": "Accedi",
     "nav.account": "Il mio account",
@@ -6394,7 +6431,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.meta.description":
       "Gestisci il tuo account, visualizza i tuoi ordini e aggiorna le tue informazioni personali.",
     "footer.customerSupport": "Assistenza clienti",
-    "footer.contact": "Contatti",
+    "footer.contact": "Info",
     "footer.followUs": "Seguici",
     "footer.copyright": "Tutti i diritti riservati.",
     "footer.tagline":
@@ -6810,7 +6847,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.home": "Domov",
     "nav.products": "Izdelki",
     "nav.about": "O nas",
-    "nav.contact": "Kontakt",
+    "nav.contact": "Info",
     "nav.cart": "Košarica",
     "nav.login": "Prijava",
     "nav.account": "Moj račun",
@@ -7561,7 +7598,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Ročno izdelane sveče iz naravnih sestavin. Od naše družine do vašega doma.",
     "footer.quickLinks": "Hitre povezave",
     "footer.customerSupport": "Podpora strankam",
-    "footer.contact": "Kontakt",
+    "footer.contact": "Info",
     "footer.followUs": "Sledite nam",
     "footer.copyright": "Vse pravice pridržane.",
     "footer.tagline":

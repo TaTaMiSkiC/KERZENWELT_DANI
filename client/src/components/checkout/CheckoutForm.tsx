@@ -303,8 +303,11 @@ export default function CheckoutForm() {
       ) {
         // Za Stripe plaćanje - NE kreiraj narudžbu odmah!
         // Pohrani podatke u sessionStorage za Stripe webhook
-        window.sessionStorage.setItem('stripeOrderData', JSON.stringify(orderData));
-        
+        window.sessionStorage.setItem(
+          "stripeOrderData",
+          JSON.stringify(orderData),
+        );
+
         // Iniciraj Stripe checkout bez kreiranja narudžbe
         await initiateStripeCheckout(
           total,
@@ -315,7 +318,11 @@ export default function CheckoutForm() {
       } else {
         // Za ostale metode plaćanja - kreiraj narudžbu odmah
         console.log("Kreiram narudžbu za metodu plaćanja:", data.paymentMethod);
-        const orderResponse = await apiRequest("POST", "/api/orders", orderData);
+        const orderResponse = await apiRequest(
+          "POST",
+          "/api/orders",
+          orderData,
+        );
         const order = await orderResponse.json();
 
         if (!order.id) {
@@ -347,9 +354,9 @@ export default function CheckoutForm() {
         error,
       );
       toast({
-        title: "Greška",
+        title: "Fehler",
         description:
-          "Došlo je do greške prilikom kreiranja narudžbe. Pokušajte ponovno.",
+          "Beim Erstellen der Bestellung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     } finally {
@@ -419,8 +426,8 @@ export default function CheckoutForm() {
 
       // Poruka o uspjehu
       toast({
-        title: "Narudžba uspješno kreirana",
-        description: `Vaša narudžba #${order.id} je uspješno zaprimljena. Zahvaljujemo na plaćanju.`,
+        title: "Bestellung erfolgreich erstellt",
+        description: `Ihre Bestellung #${order.id} wurde erfolgreich empfangen. Vielen Dank für Ihre Zahlung..`,
       });
 
       // Preusmjeravanje na stranicu uspjeha
@@ -428,9 +435,9 @@ export default function CheckoutForm() {
     } catch (error) {
       console.error("Error creating order after Stripe payment:", error);
       toast({
-        title: "Greška pri kreiranju narudžbe",
+        title: "Fehler beim Erstellen der Bestellung",
         description:
-          "Plaćanje je bilo uspješno, ali došlo je do greške prilikom kreiranja narudžbe. Kontaktirajte nas za pomoć.",
+          "Die Zahlung war erfolgreich, jedoch ist beim Erstellen der Bestellung ein Fehler aufgetreten. Kontaktieren Sie uns, wenn Sie Hilfe benötigen.",
         variant: "destructive",
       });
     } finally {
@@ -441,9 +448,9 @@ export default function CheckoutForm() {
   const handleStripeError = (error: any) => {
     console.error("Stripe payment error", error);
     toast({
-      title: "Greška pri plaćanju",
+      title: "Zahlungsfehler",
       description:
-        "Došlo je do greške prilikom procesiranja plaćanja. Molimo pokušajte ponovno.",
+        "Bei der Zahlungsabwicklung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       variant: "destructive",
     });
   };
@@ -453,7 +460,9 @@ export default function CheckoutForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Billing information */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">{t("checkout.personalInfo")}</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            {t("checkout.personalInfo")}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -530,9 +539,9 @@ export default function CheckoutForm() {
               name="city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Grad *</FormLabel>
+                  <FormLabel>{t("checkout.city")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Grad" {...field} />
+                    <Input placeholder={t("checkout.city")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -544,9 +553,9 @@ export default function CheckoutForm() {
               name="postalCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Poštanski broj *</FormLabel>
+                  <FormLabel>{t("checkout.postalCode")} *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Poštanski broj" {...field} />
+                    <Input placeholder={t("checkout.postalCode")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -558,22 +567,22 @@ export default function CheckoutForm() {
               name="country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Država *</FormLabel>
+                  <FormLabel>{t("checkout.country")} *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Odaberite državu" />
+                        <SelectValue placeholder={t("checkout.country")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Hrvatska">Hrvatska</SelectItem>
-                      <SelectItem value="Slovenija">Slovenija</SelectItem>
-                      <SelectItem value="Austrija">Austrija</SelectItem>
-                      <SelectItem value="Njemačka">Njemačka</SelectItem>
-                      <SelectItem value="Italija">Italija</SelectItem>
+                      <SelectItem value="Kroatien">Kroatien</SelectItem>
+                      <SelectItem value="Slovenien">Slovenien</SelectItem>
+                      <SelectItem value="Österreich">Österreich</SelectItem>
+                      <SelectItem value="Deutschland">Deutschland</SelectItem>
+                      <SelectItem value="Italien">Italien</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -589,16 +598,16 @@ export default function CheckoutForm() {
               name="customerNote"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Napomena (opcionalno)</FormLabel>
+                  <FormLabel>{t("checkout.orderNotes")}</FormLabel>
                   <FormControl>
                     <textarea
                       className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Dodajte napomenu za narudžbu (npr. specifične upute za dostavu ili dodatne zahtjeve)"
+                      placeholder={t("checkout.orderNotesPlaceholder")}
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Napomena će biti vidljiva na vašoj narudžbi i računu.
+                    {/* {t("checkout.orderNotesDescription")} */}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -619,7 +628,7 @@ export default function CheckoutForm() {
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Spremi adresu za buduće narudžbe</FormLabel>
+                    <FormLabel>{t("checkout.saveAddress")}</FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -631,7 +640,9 @@ export default function CheckoutForm() {
 
         {/* Payment method */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Način plaćanja</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            {t("checkout.paymentMethod")}
+          </h2>
 
           <FormField
             control={form.control}
@@ -658,7 +669,7 @@ export default function CheckoutForm() {
                       >
                         <CreditCard className="mr-2 h-5 w-5 text-primary" />
                         <div className="flex-1">
-                          <span className="font-medium">Kreditkarte</span>
+                          <span className="font-medium">Online Banking</span>
                           <p className="text-sm text-gray-500">
                             Visa, Mastercard, American Express
                           </p>
@@ -799,7 +810,7 @@ export default function CheckoutForm() {
                     </div>
 
                     {/* Online Banking */}
-                    <div
+                    {/* <div
                       className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "sofort" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
                       <RadioGroupItem value="sofort" id="sofort" />
@@ -829,7 +840,7 @@ export default function CheckoutForm() {
                           </p>
                         </div>
                       </label>
-                    </div>
+                    </div> */}
 
                     {/* Bankovna transakcija */}
                     {/* <div
@@ -851,7 +862,7 @@ export default function CheckoutForm() {
                     </div> */}
 
                     {/* Gotovina */}
-                    {form.watch("country") === "Austrija" && (
+                    {form.watch("country") === "Österreich" && (
                       <div
                         className={`flex items-center space-x-2 border rounded-lg p-4 ${
                           field.value === "nachnahme"
@@ -890,7 +901,7 @@ export default function CheckoutForm() {
                     )}
 
                     {/* Preuzimanje u trgovini */}
-                    <div
+                    {/* <div
                       className={`flex items-center space-x-2 border rounded-lg p-4 ${field.value === "pickup" ? "border-primary bg-accent bg-opacity-10" : "border-gray-200"}`}
                     >
                       <RadioGroupItem value="pickup" id="pickup" />
@@ -923,7 +934,7 @@ export default function CheckoutForm() {
                           </p>
                         </div>
                       </label>
-                    </div>
+                    </div> */}
                   </RadioGroup>
                 </FormControl>
                 <FormMessage />
@@ -933,64 +944,62 @@ export default function CheckoutForm() {
 
           {/* Payment method specific forms */}
           <div className="mt-4">
-            {(watchPaymentMethod === "stripe" ||
-              watchPaymentMethod === "paypal" ||
-              watchPaymentMethod === "klarna" ||
-              watchPaymentMethod === "eps" ||
-              watchPaymentMethod === "sofort") && (
-              <div className="space-y-4">
-                <div className="mt-4">
+            {
+              watchPaymentMethod === "stripe" ||
+                watchPaymentMethod === "paypal" ||
+                watchPaymentMethod === "klarna" ||
+                watchPaymentMethod === "eps" ||
+                watchPaymentMethod === "sofort"
+              // <div className="space-y-4">
+              //   <div className="mt-4">
+              //     {watchPaymentMethod === "paypal" && (
+              //       <PayPalButton
+              //         amount={total.toFixed(2)}
+              //         currency="EUR"
+              //         intent="CAPTURE"
+              //         onPaymentSuccess={(data) => {
+              //           console.log("PayPal payment successful", data);
+              //           toast({
+              //             title: "Zahlung erfolgreich",
+              //             description:
+              //               "Ihre Bestellung wurde erfolgreich aufgegeben.",
+              //           });
 
-                    {watchPaymentMethod === "paypal" && (
-                      <PayPalButton
-                        amount={total.toFixed(2)}
-                        currency="EUR"
-                        intent="CAPTURE"
-                        onPaymentSuccess={(data) => {
-                          console.log("PayPal payment successful", data);
-                          toast({
-                            title: "Zahlung erfolgreich",
-                            description:
-                              "Ihre Bestellung wurde erfolgreich aufgegeben.",
-                          });
+              //           // Get the form values
+              //           const formValues = form.getValues();
 
-                          // Get the form values
-                          const formValues = form.getValues();
+              //           // Create order with PayPal payment info
+              //           const orderData = {
+              //             ...formValues,
+              //             paymentMethod: "paypal",
+              //             paymentStatus: "paid",
+              //             paypalOrderId: data.id,
+              //           };
 
-                          // Create order with PayPal payment info
-                          const orderData = {
-                            ...formValues,
-                            paymentMethod: "paypal",
-                            paymentStatus: "paid",
-                            paypalOrderId: data.id,
-                          };
-
-                          // Submit order
-                          submitOrder(orderData, "paypal").then((result) => {
-                            if (result && result.id) {
-                              // Navigate to success page with order ID
-                              navigate(
-                                `/order-success/${result.id}?paymentMethod=paypal`,
-                              );
-                            }
-                          });
-                        }}
-                        onPaymentError={(error) => {
-                          console.error("PayPal payment error", error);
-                          toast({
-                            title: "Fehler",
-                            description:
-                              "Bei der Verarbeitung Ihrer PayPal-Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
-                            variant: "destructive",
-                          });
-                        }}
-                      />
-                    )}
-
-
-                </div>
-              </div>
-            )}
+              //           // Submit order
+              //           submitOrder(orderData, "paypal").then((result) => {
+              //             if (result && result.id) {
+              //               // Navigate to success page with order ID
+              //               navigate(
+              //                 `/order-success/${result.id}?paymentMethod=paypal`,
+              //               );
+              //             }
+              //           });
+              //         }}
+              //         onPaymentError={(error) => {
+              //           console.error("PayPal payment error", error);
+              //           toast({
+              //             title: "Fehler",
+              //             description:
+              //               "Bei der Verarbeitung Ihrer PayPal-Zahlung ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+              //             variant: "destructive",
+              //           });
+              //         }}
+              //       />
+              //     )}
+              //   </div>
+              // </div>
+            }
 
             {watchPaymentMethod === "cash" && (
               <div className="border rounded-lg p-4 bg-neutral">
@@ -1013,7 +1022,7 @@ export default function CheckoutForm() {
                 <div className="space-y-2 text-sm">
                   <div className="flex">
                     <span className="font-medium w-32">
-                      {t("checkout.storeLocation")}:
+                      {t("admin.shopName")}:
                     </span>
                     <span>Kerzenwelt by Dani</span>
                   </div>
@@ -1021,16 +1030,16 @@ export default function CheckoutForm() {
                     <span className="font-medium w-32">
                       {t("checkout.address")}:
                     </span>
-                    <span>Widmanngasse 37, 9500 Villach, Österreich</span>
+                    <span>Ossiacher Zeile 30, 9500 Villach, Österreich</span>
                   </div>
                   <div className="flex">
                     <span className="font-medium w-32">
-                      {t("checkout.businessHours")}:
+                      {t("checkout.mondayToFriday")}:
                     </span>
                     <span>
-                      {t("checkout.mondayToFriday")}: 9:00 - 18:00
-                      <br />
-                      {t("checkout.saturday")}: 9:00 - 13:00
+                      13:00 - 18:00
+                      {/* <br />
+                      {t("checkout.saturday")}: 9:00 - 13:00 */}
                     </span>
                   </div>
                 </div>
@@ -1078,22 +1087,26 @@ export default function CheckoutForm() {
 
         {/* Summary and submit */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Pregled narudžbe</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            {t("cart.orderSummary")}
+          </h2>
 
           <div className="bg-neutral rounded-lg p-4 space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">Međuzbroj:</span>
+              <span className="text-gray-600">{t("checkout.subtotal")}:</span>
               <span>{cartTotal.toFixed(2)} €</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Dostava:</span>
+              <span className="text-gray-600">Versand:</span>
               <span>
-                {shipping === 0 ? "Besplatno" : `${shipping.toFixed(2)} €`}
+                {shipping === 0
+                  ? t("cart.shippingFree")
+                  : `${shipping.toFixed(2)} €`}
               </span>
             </div>
             <Separator />
             <div className="flex justify-between font-bold text-lg">
-              <span>Ukupno:</span>
+              <span>{t("orders.itemTotal")}:</span>
               <span>{total.toFixed(2)} €</span>
             </div>
           </div>
@@ -1112,16 +1125,16 @@ export default function CheckoutForm() {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>
-                      Slažem se s{" "}
+                      Ich stimme zu{" "}
                       <a href="/terms" className="text-primary hover:underline">
-                        uvjetima korištenja
+                        Nutzungsbedingungen
                       </a>{" "}
-                      i{" "}
+                      und{" "}
                       <a
                         href="/privacy"
                         className="text-primary hover:underline"
                       >
-                        politikom privatnosti
+                        Datenschutzrichtlinie
                       </a>
                     </FormLabel>
                   </div>
@@ -1139,19 +1152,18 @@ export default function CheckoutForm() {
             {isSubmitting ? (
               <>
                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                Obrada...
+                Laden...
               </>
             ) : (
               <>
                 <CheckCircle className="mr-2 h-5 w-5" />
-                Potvrdi narudžbu
+                {t("checkout.placeOrder")}
               </>
             )}
           </Button>
 
           <p className="text-sm text-gray-500 text-center mt-4">
-            Vaši podaci su sigurni i šifrirani. Nikada nećemo dijeliti vaše
-            podatke s trećim stranama.
+            {t("checkout.securePaymentDescription")}
           </p>
         </div>
       </form>

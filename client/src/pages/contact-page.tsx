@@ -162,7 +162,7 @@ export default function ContactPage() {
             {/* Kontakt sadržaj */}
             <Card>
               <CardContent className="pt-6">
-                <h2 className="text-xl font-bold mb-6">Über uns</h2>
+                <h2 className="text-xl font-bold mb-6">Duftöle</h2>
 
                 {pageLoading ? (
                   <>
