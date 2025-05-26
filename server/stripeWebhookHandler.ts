@@ -194,7 +194,86 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       console.log(`[Webhook] PaymentIntent ${paymentIntent.id} succeeded!`);
-      // Ovdje možete dodati logiku za praćenje, ali checkout.session.completed je primaran
+      
+      // Update the payment method for the order
+      try {
+        const { storage } = await import('./storage');
+        
+        // Get payment method details
+        let actualPaymentMethod = "Online Payment";
+        let paymentMethodType = null;
+        
+        if (paymentIntent.payment_method) {
+          if (typeof paymentIntent.payment_method === 'object') {
+            paymentMethodType = paymentIntent.payment_method.type;
+          } else if (typeof paymentIntent.payment_method === 'string') {
+            // Retrieve the payment method details
+            try {
+              const pm = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+              paymentMethodType = pm.type;
+            } catch (pmError) {
+              console.warn(`[Webhook] Could not retrieve payment method: ${pmError}`);
+            }
+          }
+        }
+        
+        if (!paymentMethodType && paymentIntent.charges?.data?.[0]?.payment_method_details) {
+          paymentMethodType = paymentIntent.charges.data[0].payment_method_details.type;
+        }
+        
+        console.log(`[Webhook] Payment Intent payment method type: ${paymentMethodType}`);
+        
+        // Map Stripe payment method types to user-friendly names
+        switch (paymentMethodType) {
+          case 'card':
+            actualPaymentMethod = "Kreditkarte";
+            break;
+          case 'klarna':
+            actualPaymentMethod = "Klarna";
+            break;
+          case 'eps':
+            actualPaymentMethod = "EPS";
+            break;
+          case 'sofort':
+            actualPaymentMethod = "Sofort";
+            break;
+          case 'bancontact':
+            actualPaymentMethod = "Bancontact";
+            break;
+          case 'ideal':
+            actualPaymentMethod = "iDEAL";
+            break;
+          case 'giropay':
+            actualPaymentMethod = "Giropay";
+            break;
+          case 'sepa_debit':
+            actualPaymentMethod = "SEPA Lastschrift";
+            break;
+          default:
+            actualPaymentMethod = paymentMethodType ? paymentMethodType.charAt(0).toUpperCase() + paymentMethodType.slice(1) : "Online Payment";
+        }
+        
+        console.log(`[Webhook] Final payment method: ${paymentMethodType} -> ${actualPaymentMethod}`);
+        
+        // Find and update the most recent pending order for this payment intent
+        const allOrders = await storage.getAllOrders();
+        const recentOrder = allOrders
+          .filter(order => order.paymentStatus === 'paid' && order.status === 'pending')
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        
+        if (recentOrder) {
+          console.log(`[Webhook] Updating payment method for order ${recentOrder.id} to: ${actualPaymentMethod}`);
+          await storage.updateOrder(recentOrder.id, {
+            paymentMethod: actualPaymentMethod
+          });
+          console.log(`[Webhook] Order ${recentOrder.id} payment method updated successfully`);
+        } else {
+          console.warn(`[Webhook] No recent order found to update payment method`);
+        }
+        
+      } catch (updateError) {
+        console.error(`[Webhook] Error updating payment method:`, updateError);
+      }
       break;
 
     case "payment_intent.payment_failed":
