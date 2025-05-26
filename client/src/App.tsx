@@ -41,6 +41,7 @@ import { CartProvider } from "./hooks/use-cart";
 import { ThemeProvider } from "./hooks/use-theme";
 import { LanguageProvider } from "./hooks/use-language";
 import CookieConsent from "./components/CookieConsent";
+import { SecurityProvider } from "./components/SecurityProvider";
 
 function Router() {
   return (
@@ -168,13 +169,15 @@ function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
-            <CartProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Router />
-                <CookieConsent />
-              </TooltipProvider>
-            </CartProvider>
+            <SecurityProvider>
+              <CartProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Router />
+                  <CookieConsent />
+                </TooltipProvider>
+              </CartProvider>
+            </SecurityProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
