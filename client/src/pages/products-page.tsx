@@ -58,16 +58,17 @@ export default function ProductsPage() {
   const { data: products, isLoading: productsLoading, refetch } = useQuery<Product[]>({
     queryKey: ["/api/products", filters.category],
     queryFn: async () => {
-      const categoryId = filters.category !== "all" ? filters.category : null;
-      const url = categoryId 
-        ? `/api/products?category=${categoryId}` 
-        : "/api/products";
+      // Build URL with category parameter if not "all"
+      let url = "/api/products";
+      if (filters.category && filters.category !== "all") {
+        url += `?category=${encodeURIComponent(filters.category)}`;
+      }
       
-      console.log("Fetching products with URL:", url, "Category:", categoryId);
+      console.log("Fetching products with URL:", url, "Filter category:", filters.category);
       const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error(`Failed to fetch products: ${response.status}`);
       }
       
       return response.json();
