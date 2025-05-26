@@ -1034,6 +1034,14 @@ export default function OrderDetailsPage() {
               </TableHeader>
               <TableBody>
                 {orderWithItems.items.map((item) => {
+                  console.log("Order item debug:", {
+                    id: item.id,
+                    scentName: item.scentName,
+                    colorName: item.colorName,
+                    colorIds: item.colorIds,
+                    hasMultipleColors: item.hasMultipleColors
+                  });
+                  
                   const productName = item.product?.name || t("orders.product");
                   const scent = item.scentName || "";
                   const color = item.colorName || "";

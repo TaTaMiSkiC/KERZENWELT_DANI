@@ -79,28 +79,13 @@ export default function CartItem({ item }: CartItemProps) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 border-b">
       <div className="flex items-center flex-1">
-        <div className="w-20 h-20 mr-4 rounded overflow-hidden">
-          <Link href={`/products/${product.id}`}>
-            <picture>
-              <source 
-                srcSet={imageUrl ? imageUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp') : ""} 
-                type="image/webp" 
-              />
-              <img
-                src={imageUrl || "/placeholder-candle.jpg"}
-                alt={name}
-                className="w-full h-full object-cover bg-gray-100"
-                loading="lazy"
-                width="100"
-                height="100"
-                onError={(e) => {
-                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='12' fill='%236b7280'%3EKerze%3C/text%3E%3C/svg%3E";
-                }}
-              />
-            </picture>
-          </Link>
+        <div className="w-16 h-16 mr-4 rounded overflow-hidden">
+          <img
+            src={item.product.imageUrl}
+            alt={item.product.name}
+            className="w-full h-full object-cover"
+          />
         </div>
-        
         <div>
           <Link href={`/products/${product.id}`}>
             <h3 className="font-medium text-text-dark hover:text-primary transition cursor-pointer">
