@@ -62,9 +62,9 @@ export default function OrderSuccessPage() {
   console.log("Dohvaćen sessionId:", sessionId);
 
   useEffect(() => {
-    console.log("useEffect u OrderSuccessPage pokrenut.");
-    console.log("sessionId unutar useEffect:", sessionId);
-    console.log("orderIdFromUrl unutar useEffect:", orderIdFromUrl);
+    console.log("🔥🔥🔥 useEffect u OrderSuccessPage pokrenut!");
+    console.log("🔥🔥🔥 sessionId unutar useEffect:", sessionId);
+    console.log("🔥🔥🔥 orderIdFromUrl unutar useEffect:", orderIdFromUrl);
 
     const processOrder = async () => {
       setLoading(true);
