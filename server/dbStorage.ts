@@ -684,6 +684,18 @@ export class DatabaseStorage implements IStorage {
     return updatedOrder;
   }
 
+  async updateOrderPaymentMethod(
+    id: number,
+    paymentMethod: string,
+  ): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set({ paymentMethod })
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
+  }
+
   async addOrderItem(itemData: InsertOrderItem): Promise<OrderItem> {
     console.log("Dodavanje stavke narudžbe:", itemData);
 
