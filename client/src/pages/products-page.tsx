@@ -68,34 +68,31 @@ export default function ProductsPage() {
     queryKey: ["/api/categories"],
   });
   
-  // Set initial category from URL and sessionStorage
+  // Set initial category from URL parameters - watch for changes
   useEffect(() => {
-    // Check for URL parameter first
-    if (categoryParam) {
-      console.log("Setting category filter from URL parameter:", categoryParam);
-      
-      // Update the filter state with the category ID from the URL
+    const urlParams = new URLSearchParams(location.split("?")[1] || "");
+    const currentCategoryParam = urlParams.get("category");
+    
+    if (currentCategoryParam) {
+      console.log("Setting category filter from URL parameter:", currentCategoryParam);
       setFilters(prev => {
-        console.log("Current category:", prev.category, "New category:", categoryParam);
-        return { ...prev, category: categoryParam };
-      });
-    } 
-    // Then check sessionStorage as backup
-    else {
-      try {
-        const storedCategory = sessionStorage.getItem('selectedCategory');
-        if (storedCategory) {
-          console.log("Retrieved category from sessionStorage:", storedCategory);
-          setFilters(prev => ({ ...prev, category: storedCategory }));
-          
-          // Clear sessionStorage after use to avoid persisting the selection
-          sessionStorage.removeItem('selectedCategory');
+        if (prev.category !== currentCategoryParam) {
+          console.log("Current category:", prev.category, "New category:", currentCategoryParam);
+          return { ...prev, category: currentCategoryParam };
         }
-      } catch (error) {
-        console.log("Error accessing sessionStorage:", error);
-      }
+        return prev;
+      });
+    } else {
+      // Reset to "all" if no category parameter
+      setFilters(prev => {
+        if (prev.category !== "all") {
+          console.log("No category parameter, resetting to 'all'");
+          return { ...prev, category: "all" };
+        }
+        return prev;
+      });
     }
-  }, [categoryParam]);
+  }, [location]); // Watch location changes instead of just categoryParam
   
   // Log product data for debugging
   useEffect(() => {
