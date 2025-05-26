@@ -100,9 +100,9 @@ export default function OrderSuccessPage() {
                 `/api/orders/${orderDetails.id}/generate-pdf`,
               );
 
-              // TEST KOMANDA - pozovi sa narudžbom 50
-              console.log("🧪 TEST: Pozivam PDF za narudžbu 50");
-              fetch('/api/orders/50/generate-pdf', {
+              // TEST KOMANDA - pozovi sa narudžbom 51 (najnovija)
+              console.log("🧪 TEST: Pozivam PDF za narudžbu 51");
+              fetch('/api/orders/51/generate-pdf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
