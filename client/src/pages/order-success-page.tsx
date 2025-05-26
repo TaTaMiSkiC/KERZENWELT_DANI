@@ -110,9 +110,12 @@ export default function OrderSuccessPage() {
               const latestOrder = userOrders[0];
               console.log("Dohvaćena zadnja narudžba:", latestOrder);
               setOrder(latestOrder);
-              
+
               // Dohvati stavke narudžbe
-              const orderItems = await apiRequest("GET", `/api/orders/${latestOrder.id}/items`);
+              const orderItems = await apiRequest(
+                "GET",
+                `/api/orders/${latestOrder.id}/items`,
+              );
               setOrderItems(orderItems || []);
             } else {
               setOrder({
@@ -199,75 +202,73 @@ export default function OrderSuccessPage() {
                 <p className="text-gray-600 mb-6">
                   {t("orderSuccessPage.thankYou")}
                 </p>
-                {order && (
-                  <div className="bg-gray-100 p-4 rounded-lg inline-block text-left">
-                    <p className="text-lg font-medium mb-2">
-                      {t("orderSuccessPage.orderNumber")}: i{Math.max(450, order.id)}
-                    </p>
-                    <p className="text-gray-700">
-                      {t("orderSuccessPage.total")}:{" "}
-                      {order.total && !isNaN(parseFloat(order.total)) 
-                        ? parseFloat(order.total).toFixed(2) 
-                        : "0.00"} €
-                    </p>
-                    <p className="text-gray-700">
-                      {t("orderSuccessPage.paymentMethod")}:{" "}
-                      {order.paymentMethod === "stripe"
-                        ? t("orderSuccessPage.paymentMethodStripe")
-                        : order.paymentMethod === "paypal"
-                          ? t("orderSuccessPage.paymentMethodPaypal")
-                          : t("orderSuccessPage.paymentMethodPickup")}
-                    </p>
-                    {order.status === "pending" && (
-                      <p className="text-orange-500 mt-2 font-medium">
-                        <Clock className="inline-block h-4 w-4 mr-1" />
-                        {t("orderSuccessPage.statusPending")}
-                      </p>
-                    )}
-                    {order.status === "completed" && (
-                      <p className="text-green-500 mt-2 font-medium">
-                        <CheckCircle className="inline-block h-4 w-4 mr-1" />
-                        {t("orderSuccessPage.statusCompleted")}
-                      </p>
-                    )}
-                  </div>
-                )}
               </div>
-              {order && orderItems.length > 0 && (
+              {order && (
                 <div className="mt-8">
                   <h2 className="text-2xl font-bold text-gray-800 mb-4">
                     {t("orderSuccessPage.orderDetails")}
                   </h2>
-                  <div className="space-y-4">
-                    {orderItems.map((item: any) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between border-b pb-2"
-                      >
-                        <div>
-                          <p className="font-medium">{item.productName}</p>
-                          <p className="text-sm text-gray-500">
-                            {item.quantity} x{" "}
-                            {parseFloat(item.price).toFixed(2)} €
-                          </p>
-                          {item.scentName && (
-                            <p className="text-sm text-gray-500">
-                              {t("orderSuccessPage.scent")}: {item.scentName}
-                            </p>
-                          )}
-                          {item.colorName && (
-                            <p className="text-sm text-gray-500">
-                              {t("orderSuccessPage.color")}: {item.colorName}
-                            </p>
-                          )}
-                        </div>
-                        <p className="font-medium">
-                          {(item.quantity * parseFloat(item.price)).toFixed(2)}{" "}
-                          €
-                        </p>
+                  
+                  {/* Basic Order Information */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">{t("orderSuccessPage.orderNumber")}</p>
+                        <p className="font-semibold">#{order.id}</p>
                       </div>
-                    ))}
+                      <div>
+                        <p className="text-sm text-gray-600">{t("orderSuccessPage.total")}</p>
+                        <p className="font-semibold">{parseFloat(order.total || 0).toFixed(2)} €</p>
+                      </div>
+                      {order.status && (
+                        <div>
+                          <p className="text-sm text-gray-600">Status</p>
+                          <p className="font-semibold capitalize">{order.status}</p>
+                        </div>
+                      )}
+                      {order.createdAt && (
+                        <div>
+                          <p className="text-sm text-gray-600">{t("orderSuccessPage.orderDate")}</p>
+                          <p className="font-semibold">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Order Items */}
+                  {orderItems.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">{t("orderSuccessPage.orderedItems")}</h3>
+                      {orderItems.map((item: any) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between border-b pb-2"
+                        >
+                          <div>
+                            <p className="font-medium">{item.productName}</p>
+                            <p className="text-sm text-gray-500">
+                              {item.quantity} x{" "}
+                              {parseFloat(item.price).toFixed(2)} €
+                            </p>
+                            {item.scentName && (
+                              <p className="text-sm text-gray-500">
+                                {t("orderSuccessPage.scent")}: {item.scentName}
+                              </p>
+                            )}
+                            {item.colorName && (
+                              <p className="text-sm text-gray-500">
+                                {t("orderSuccessPage.color")}: {item.colorName}
+                              </p>
+                            )}
+                          </div>
+                          <p className="font-medium">
+                            {(item.quantity * parseFloat(item.price)).toFixed(2)}{" "}
+                            €
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               {/* Dodajte detalje za Stripe plaćanja */}
