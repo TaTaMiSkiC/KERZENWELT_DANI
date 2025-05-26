@@ -31,14 +31,24 @@ interface EmailParams {
  */
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
-    await mailService.send({
+    const emailData: any = {
       to: params.to,
       from: params.from || FROM_EMAIL,
       subject: params.subject,
-      text: params.text || "",
-      html: params.html || "",
       attachments: params.attachments || [],
-    });
+    };
+
+    // Only add text if it's provided and not empty
+    if (params.text && params.text.trim().length > 0) {
+      emailData.text = params.text;
+    }
+
+    // Only add html if it's provided and not empty  
+    if (params.html && params.html.trim().length > 0) {
+      emailData.html = params.html;
+    }
+
+    await mailService.send(emailData);
     console.log(`Email sent to ${params.to} with subject: ${params.subject}`);
     return true;
   } catch (error) {
