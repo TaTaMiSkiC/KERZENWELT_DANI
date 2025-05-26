@@ -297,8 +297,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             try {
               console.log(`[Webhook] Kreiram automatski račun za narudžbu ${newOrder.id}`);
               
-              // Importuj storage i direktno kreiraj račun
-              const { storage } = await import('./dbStorage.js');
+              // Koristi postojeći storage import iz početka fajla
+              const { storage } = await import('./storage.js');
               
               // Dohvati detalje narudžbe 
               const order = await storage.getOrder(newOrder.id);
