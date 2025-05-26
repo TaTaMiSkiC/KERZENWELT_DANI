@@ -31,61 +31,71 @@ export default function ProductsPage() {
   const [, params] = useRoute("/products/:category");
   const [location] = useLocation();
   
-  // Get category from URL and set it directly
   const urlParams = new URLSearchParams(location.split("?")[1] || "");
-  const categoryFromUrl = urlParams.get("category") || "all";
+  const categoryParam = urlParams.get("category");
   
   const [filters, setFilters] = useState({
-    category: categoryFromUrl,
+    category: categoryParam || "all",
     search: "",
     priceRange: [0, 100],
     sortBy: "newest",
   });
-
-  // Update filters when URL location changes
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.split("?")[1] || "");
-    const currentCategory = urlParams.get("category") || "all";
-    
-    if (currentCategory !== filters.category) {
-      setFilters(prev => ({ ...prev, category: currentCategory }));
-    }
-  }, [location, filters.category]);
   
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   
-  // Fetch all categories first
-  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
-  });
-
-  // Fetch products with category filtering - only after categories are loaded
+  // Fetch products with category filtering
   const { data: products, isLoading: productsLoading, refetch } = useQuery<Product[]>({
-    queryKey: ["/api/products", filters.category, categories?.length],
-    queryFn: async () => {
-      // Build URL with category parameter if not "all"
-      let url = "/api/products";
-      if (filters.category && filters.category !== "all" && categories) {
-        // Find the category ID by name
-        const category = categories.find(cat => cat.name === filters.category);
-        if (category) {
-          url += `?category=${category.id}`;
-        }
-      }
+    queryKey: ["/api/products", filters.category !== "all" ? filters.category : null],
+    queryFn: async ({ queryKey }) => {
+      const categoryId = queryKey[1];
+      const url = categoryId 
+        ? `/api/products?category=${categoryId}` 
+        : "/api/products";
       
-      console.log("Fetching products with URL:", url, "Filter category:", filters.category);
+      console.log("Fetching products with URL:", url);
       const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch products: ${response.status}`);
+        throw new Error('Network response was not ok');
       }
       
       return response.json();
     },
-    enabled: !categoriesLoading, // Wait for categories to load
   });
   
-  // Remove the problematic useEffect to avoid conflicts
+  // Fetch all categories
+  const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+  
+  // Set initial category from URL and sessionStorage
+  useEffect(() => {
+    // Check for URL parameter first
+    if (categoryParam) {
+      console.log("Setting category filter from URL parameter:", categoryParam);
+      
+      // Update the filter state with the category ID from the URL
+      setFilters(prev => {
+        console.log("Current category:", prev.category, "New category:", categoryParam);
+        return { ...prev, category: categoryParam };
+      });
+    } 
+    // Then check sessionStorage as backup
+    else {
+      try {
+        const storedCategory = sessionStorage.getItem('selectedCategory');
+        if (storedCategory) {
+          console.log("Retrieved category from sessionStorage:", storedCategory);
+          setFilters(prev => ({ ...prev, category: storedCategory }));
+          
+          // Clear sessionStorage after use to avoid persisting the selection
+          sessionStorage.removeItem('selectedCategory');
+        }
+      } catch (error) {
+        console.log("Error accessing sessionStorage:", error);
+      }
+    }
+  }, [categoryParam]);
   
   // Log product data for debugging
   useEffect(() => {
