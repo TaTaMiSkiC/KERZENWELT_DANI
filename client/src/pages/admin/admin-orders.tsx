@@ -731,11 +731,42 @@ export default function AdminOrders() {
                                     <div className="flex items-center">
                                       <span className="text-xs text-muted-foreground mr-1">
                                         {item.hasMultipleColors
-                                          ? "Farbe:"
+                                          ? "Farben:"
                                           : "Farbe:"}
                                       </span>
                                       <span className="text-xs font-medium">
                                         {item.colorName}
+                                      </span>
+                                    </div>
+                                  )}
+                                {/* Prikaz višestrukih boja iz colorIds - isto kao u PDF-u */}
+                                {!item.scent &&
+                                  !item.color &&
+                                  !item.colorName &&
+                                  item.hasMultipleColors &&
+                                  item.colorIds && (
+                                    <div className="flex items-center">
+                                      <span className="text-xs text-muted-foreground mr-1">
+                                        Farben:
+                                      </span>
+                                      <span className="text-xs font-medium">
+                                        {(() => {
+                                          try {
+                                            const colorIds = JSON.parse(item.colorIds);
+                                            if (Array.isArray(colorIds)) {
+                                              const colorMap = {
+                                                1: "Weiß", 2: "Beige", 3: "Golden", 5: "Rot", 6: "Grün",
+                                                7: "Blau", 8: "Gelb", 9: "Lila", 10: "Rosa", 11: "Schwarz",
+                                                12: "Orange", 13: "Braun"
+                                              };
+                                              const colorNames = colorIds.map(colorId => colorMap[colorId] || `Farbe ${colorId}`);
+                                              return colorNames.join(", ");
+                                            }
+                                          } catch (e) {
+                                            console.error("Error parsing colorIds:", e);
+                                          }
+                                          return "";
+                                        })()}
                                       </span>
                                     </div>
                                   )}

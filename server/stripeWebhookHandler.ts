@@ -293,6 +293,29 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
             console.log(`[Webhook] Nova narudžba kreirana sa ID: ${newOrder.id}`);
 
+            // AUTOMATSKI KREIRAJ RAČUN za novu narudžbu
+            try {
+              console.log(`[Webhook] Kreiram automatski račun za narudžbu ${newOrder.id}`);
+              
+              // Pozovi API endpoint za kreiranje PDF računa
+              const invoiceResponse = await fetch(`http://localhost:5000/api/orders/${newOrder.id}/generate-pdf`, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'Stripe-Webhook-Server'
+                }
+              });
+              
+              if (invoiceResponse.ok) {
+                const invoiceResult = await invoiceResponse.json();
+                console.log(`[Webhook SUCCESS] Račun automatski kreiran sa ID: ${invoiceResult.invoiceId}`);
+              } else {
+                console.error(`[Webhook ERROR] Neuspešno kreiranje računa: ${invoiceResponse.status}`);
+              }
+            } catch (invoiceError) {
+              console.error(`[Webhook ERROR] Greška pri automatskom kreiranju računa:`, invoiceError);
+            }
+
             // Obriši košaricu
             await storage.clearCart(parseInt(userId));
             console.log(`[Webhook SUCCESS] Košarica očišćena za korisnika ${userId}`);
