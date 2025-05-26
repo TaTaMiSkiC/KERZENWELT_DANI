@@ -30,6 +30,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   }
 
   // Handle the event
+  console.log(`[Webhook] Processing event type: "${event.type}"`);
   switch (event.type) {
     case "checkout.session.completed":
       const session = event.data.object as Stripe.Checkout.Session;
