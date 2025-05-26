@@ -293,57 +293,22 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
             console.log(`[Webhook] Nova narudžba kreirana sa ID: ${newOrder.id}`);
 
-            // AUTOMATSKI KREIRAJ RAČUN za novu narudžbu
+            // AUTOMATSKI KREIRAJ RAČUN za novu narudžbu - isti pristup kao u /api/orders
             try {
               console.log(`[Webhook] Kreiram automatski račun za narudžbu ${newOrder.id}`);
               
-              // Koristi postojeći storage import iz početka fajla
-              const { storage } = await import('./storage.js');
+              // Koristi istu funkciju kao u /api/orders endpoint-u
+              const { generateInvoiceFromOrder } = await import('./invoiceService.js');
               
-              // Dohvati detalje narudžbe 
-              const order = await storage.getOrder(newOrder.id);
-              const orderItems = await storage.getOrderItems(newOrder.id);
-              
-              if (order && orderItems.length > 0) {
-                // Kreiraj kratki invoice broj
-                const invoiceNumber = `i${newOrder.id}`;
-                
-                // Dohvati korisnika za potpune podatke
-                const user = await storage.getUser(order.userId);
-                const fullName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Nepoznat kupac';
-                
-                // Kreiraj račun direktno u bazi
-                const invoiceData = {
-                  invoiceNumber,
-                  orderId: order.id,
-                  userId: order.userId,
-                  customerName: fullName || 'Nepoznat kupac',
-                  customerEmail: user?.email || '',
-                  customerAddress: order.shippingAddress || '',
-                  customerCity: order.shippingCity || '',
-                  customerPostalCode: order.shippingPostalCode || '',
-                  customerCountry: order.shippingCountry || '',
-                  customerPhone: user?.phone || "",
-                  customerNote: order.customerNote || "",
-                  paymentMethod: order.paymentMethod,
-                  total: order.total,
-                  subtotal: order.total, // Simplified
-                  tax: "0.00",
-                  language: "de"
-                };
-                
-                // Pripremi stavke računa
-                const invoiceItems = orderItems.map(item => ({
-                  productId: item.productId,
-                  quantity: item.quantity,
-                  productName: item.productName || `Proizvod ${item.productId}`,
-                  price: item.price,
-                  selectedScent: item.scentName || null,
-                  selectedColor: item.colorName || null
-                }));
-                
-                const newInvoice = await storage.createInvoice(invoiceData, invoiceItems);
-                console.log(`[Webhook SUCCESS] Račun automatski kreiran sa ID: ${newInvoice.id} (${invoiceNumber})`);
+              // Generiraj račun s njemačkim jezikom (kao u Selbstabholung)
+              const invoiceId = await generateInvoiceFromOrder(newOrder.id, {
+                language: "de"
+              });
+
+              if (invoiceId) {
+                console.log(`[Webhook SUCCESS] Račun automatski kreiran sa ID: ${invoiceId} za narudžbu ${newOrder.id}`);
+              } else {
+                console.error(`[Webhook ERROR] Neuspjelo generiranje računa za narudžbu ${newOrder.id}`);
               }
             } catch (invoiceError) {
               console.error(`[Webhook ERROR] Greška pri automatskom kreiranju računa:`, invoiceError);
