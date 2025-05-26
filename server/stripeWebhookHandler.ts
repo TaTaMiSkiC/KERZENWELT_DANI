@@ -297,20 +297,39 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             try {
               console.log(`[Webhook] Kreiram automatski račun za narudžbu ${newOrder.id}`);
               
-              // Pozovi API endpoint za kreiranje PDF računa
-              const invoiceResponse = await fetch(`http://localhost:5000/api/orders/${newOrder.id}/generate-pdf`, {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'Stripe-Webhook-Server'
-                }
-              });
+              // Importuj storage i direktno kreiraj račun
+              const { storage } = await import('./dbStorage.js');
               
-              if (invoiceResponse.ok) {
-                const invoiceResult = await invoiceResponse.json();
-                console.log(`[Webhook SUCCESS] Račun automatski kreiran sa ID: ${invoiceResult.invoiceId}`);
-              } else {
-                console.error(`[Webhook ERROR] Neuspešno kreiranje računa: ${invoiceResponse.status}`);
+              // Dohvati detalje narudžbe 
+              const order = await storage.getOrder(newOrder.id);
+              const orderItems = await storage.getOrderItems(newOrder.id);
+              
+              if (order && orderItems.length > 0) {
+                // Kreiraj kratki invoice broj
+                const invoiceNumber = `i${newOrder.id}`;
+                
+                // Kreiraj račun direktno u bazi
+                const invoiceData = {
+                  invoiceNumber,
+                  orderId: order.id,
+                  userId: order.userId,
+                  customerName: order.customerName,
+                  customerEmail: order.customerEmail,
+                  customerAddress: order.customerAddress,
+                  customerCity: order.customerCity,
+                  customerPostalCode: order.customerPostalCode,
+                  customerCountry: order.customerCountry,
+                  customerPhone: order.customerPhone || "",
+                  customerNote: order.customerNote || "",
+                  paymentMethod: order.paymentMethod,
+                  total: order.total,
+                  subtotal: order.total, // Simplified
+                  tax: "0.00",
+                  language: "de"
+                };
+                
+                const newInvoice = await storage.createInvoice(invoiceData, orderItems);
+                console.log(`[Webhook SUCCESS] Račun automatski kreiran sa ID: ${newInvoice.id} (${invoiceNumber})`);
               }
             } catch (invoiceError) {
               console.error(`[Webhook ERROR] Greška pri automatskom kreiranju računa:`, invoiceError);
