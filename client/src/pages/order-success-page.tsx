@@ -84,39 +84,65 @@ export default function OrderSuccessPage() {
           );
           setOrder(orderDetails);
           setOrderItems(orderDetails.orderItems || []);
-          
+
           // Automatski pozovi postojeću funkcionalnost za generiranje PDF-a iz order details
           if (orderDetails && orderDetails.id) {
             try {
-              console.log("🔥 CLIENT - Početak automatskog slanja PDF-a za narudžbu:", orderDetails.id);
-              
+              console.log(
+                "🔥 CLIENT - Početak automatskog slanja PDF-a za narudžbu:",
+                orderDetails.id,
+              );
+
               // Pozovi isti endpoint koji se koristi u "Meine Bestellungen" > order details
               // Ovo će automatski generirati PDF sa svim podacima i poslati ga na email
-              console.log("📞 CLIENT - Pozivam endpoint:", `/api/orders/${orderDetails.id}/generate-pdf`);
-              const pdfResponse = await fetch(`/api/orders/${orderDetails.id}/generate-pdf`, {
+              console.log(
+                "📞 CLIENT - Pozivam endpoint:",
+                `/api/orders/${orderDetails.id}/generate-pdf`,
+              );
+
+              // TEST KOMANDA - pozovi sa narudžbom 50
+              console.log("🧪 TEST: Pozivam PDF za narudžbu 50");
+              fetch('/api/orders/50/generate-pdf', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 credentials: 'include'
-              });
-              
+              }).then(r => r.json()).then(console.log);
+              const pdfResponse = await fetch(
+                `/api/orders/${orderDetails.id}/generate-pdf`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  credentials: "include",
+                },
+              );
+
               console.log("📨 CLIENT - Response status:", pdfResponse.status);
               console.log("📨 CLIENT - Response ok:", pdfResponse.ok);
-              
+
               if (pdfResponse.ok) {
                 const responseData = await pdfResponse.json();
-                console.log("✅ CLIENT - PDF račun je uspešno generiran i poslan na email:", responseData);
+                console.log(
+                  "✅ CLIENT - PDF račun je uspešno generiran i poslan na email:",
+                  responseData,
+                );
               } else {
                 const errorData = await pdfResponse.text();
-                console.warn("❌ CLIENT - PDF račun se nije mogao generirati:", errorData);
+                console.warn(
+                  "❌ CLIENT - PDF račun se nije mogao generirati:",
+                  errorData,
+                );
               }
             } catch (invoiceError) {
-              console.error("❌ CLIENT - Greška pri generiranju PDF računa:", invoiceError);
+              console.error(
+                "❌ CLIENT - Greška pri generiranju PDF računa:",
+                invoiceError,
+              );
               // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
             }
           }
-          
+
           // Ovdje možete dodati provjeru statusa narudžbe.
           // Ako je status 'pending', možete prikazati poruku da se čeka potvrda plaćanja.
         } catch (err: any) {
@@ -151,33 +177,54 @@ export default function OrderSuccessPage() {
                 `/api/orders/${latestOrder.id}/items`,
               );
               setOrderItems(orderItems || []);
-              
+
               // Automatski generiraj i pošalji PDF račun na email
               if (latestOrder && latestOrder.id) {
                 try {
-                  console.log("🔥 CLIENT - Početak automatskog slanja PDF-a za zadnju narudžbu:", latestOrder.id);
-                  
-                  console.log("📞 CLIENT - Pozivam endpoint:", `/api/orders/${latestOrder.id}/generate-pdf`);
-                  const pdfResponse = await fetch(`/api/orders/${latestOrder.id}/generate-pdf`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
+                  console.log(
+                    "🔥 CLIENT - Početak automatskog slanja PDF-a za zadnju narudžbu:",
+                    latestOrder.id,
+                  );
+
+                  console.log(
+                    "📞 CLIENT - Pozivam endpoint:",
+                    `/api/orders/${latestOrder.id}/generate-pdf`,
+                  );
+                  const pdfResponse = await fetch(
+                    `/api/orders/${latestOrder.id}/generate-pdf`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      credentials: "include",
                     },
-                    credentials: 'include'
-                  });
-                  
-                  console.log("📨 CLIENT - Response status:", pdfResponse.status);
+                  );
+
+                  console.log(
+                    "📨 CLIENT - Response status:",
+                    pdfResponse.status,
+                  );
                   console.log("📨 CLIENT - Response ok:", pdfResponse.ok);
-                  
+
                   if (pdfResponse.ok) {
                     const responseData = await pdfResponse.json();
-                    console.log("✅ CLIENT - PDF račun je uspešno generiran i poslan na email:", responseData);
+                    console.log(
+                      "✅ CLIENT - PDF račun je uspešno generiran i poslan na email:",
+                      responseData,
+                    );
                   } else {
                     const errorData = await pdfResponse.text();
-                    console.warn("❌ CLIENT - PDF račun se nije mogao generirati:", errorData);
+                    console.warn(
+                      "❌ CLIENT - PDF račun se nije mogao generirati:",
+                      errorData,
+                    );
                   }
                 } catch (invoiceError) {
-                  console.error("❌ CLIENT - Greška pri generiranju PDF računa:", invoiceError);
+                  console.error(
+                    "❌ CLIENT - Greška pri generiranju PDF računa:",
+                    invoiceError,
+                  );
                   // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
                 }
               }
@@ -272,28 +319,40 @@ export default function OrderSuccessPage() {
                   <h2 className="text-2xl font-bold text-gray-800 mb-4">
                     {t("orderSuccessPage.orderDetails")}
                   </h2>
-                  
+
                   {/* Basic Order Information */}
                   <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-600">{t("orderSuccessPage.orderNumber")}</p>
+                        <p className="text-sm text-gray-600">
+                          {t("orderSuccessPage.orderNumber")}
+                        </p>
                         <p className="font-semibold">#{order.id}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">{t("orderSuccessPage.total")}</p>
-                        <p className="font-semibold">{parseFloat(order.total || 0).toFixed(2)} €</p>
+                        <p className="text-sm text-gray-600">
+                          {t("orderSuccessPage.total")}
+                        </p>
+                        <p className="font-semibold">
+                          {parseFloat(order.total || 0).toFixed(2)} €
+                        </p>
                       </div>
                       {order.status && (
                         <div>
                           <p className="text-sm text-gray-600">Status</p>
-                          <p className="font-semibold capitalize">{order.status}</p>
+                          <p className="font-semibold capitalize">
+                            {order.status}
+                          </p>
                         </div>
                       )}
                       {order.createdAt && (
                         <div>
-                          <p className="text-sm text-gray-600">{t("orderSuccessPage.orderDate")}</p>
-                          <p className="font-semibold">{new Date(order.createdAt).toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-600">
+                            {t("orderSuccessPage.orderDate")}
+                          </p>
+                          <p className="font-semibold">
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -302,7 +361,9 @@ export default function OrderSuccessPage() {
                   {/* Order Items */}
                   {orderItems.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">{t("orderSuccessPage.orderedItems")}</h3>
+                      <h3 className="text-lg font-semibold">
+                        {t("orderSuccessPage.orderedItems")}
+                      </h3>
                       {orderItems.map((item: any) => (
                         <div
                           key={item.id}
@@ -326,7 +387,9 @@ export default function OrderSuccessPage() {
                             )}
                           </div>
                           <p className="font-medium">
-                            {(item.quantity * parseFloat(item.price)).toFixed(2)}{" "}
+                            {(item.quantity * parseFloat(item.price)).toFixed(
+                              2,
+                            )}{" "}
                             €
                           </p>
                         </div>
@@ -442,9 +505,7 @@ export default function OrderSuccessPage() {
               <Separator className="my-6" />
               <div className="flex justify-between">
                 <Button asChild variant="outline">
-                  <Link href="/orders">
-                    {t("orderSuccessPage.myOrders")}
-                  </Link>
+                  <Link href="/orders">{t("orderSuccessPage.myOrders")}</Link>
                 </Button>
 
                 <Button asChild>
