@@ -50,6 +50,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         if (userId) {
           try {
             console.log(`[Webhook] Kreiram narudžbu za korisnika ${userId}`);
+            console.log(`[Webhook] Session payment_intent:`, session.payment_intent ? 'EXISTS' : 'NULL');
             
             // Get actual payment method from payment intent with enhanced detection
             let actualPaymentMethod = "Online Payment"; // Default fallback
