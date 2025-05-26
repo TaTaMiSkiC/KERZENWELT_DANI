@@ -1708,6 +1708,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.stripeProcessing": "Wir beginnen sofort mit der Bearbeitung Ihrer Kerzen",
     "orderSuccessPage.stripeContact": "Eine Bestätigungs-E-Mail wurde an Ihre Adresse gesendet",
     "orderSuccessPage.stripeNextSteps": "Wir werden Sie über den Versandstatus informieren, sobald Ihre Bestellung unterwegs ist.",
+    "orderSuccessPage.myOrders": "Meine Bestellungen",
+    "orderSuccessPage.continueShoppingButton": "Weiter einkaufen",
     //"checkout.browseProducts": "Produkte durchsuchen",
     //"checkout.orderNotFoundDescription": "Die Bestellung wurde nicht gefunden.",
     //"checkout.orderNotFound": "Bestellung nicht gefunden",
@@ -2852,6 +2854,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.stripeProcessing": "Odmah počinjemo s izradom vaših svijeća",
     "orderSuccessPage.stripeContact": "E-mail s potvrdom je poslan na vašu adresu",
     "orderSuccessPage.stripeNextSteps": "Obavijestit ćemo vas o statusu dostave čim vaša narudžba bude na putu.",
+    "orderSuccessPage.myOrders": "Moje narudžbe",
+    "orderSuccessPage.continueShoppingButton": "Nastavi kupovinu",
 
     // Admin Contact Settings
     "admin.contactSettings.title": "Postavke kontakta",
@@ -3725,6 +3729,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.stripeProcessing": "We are starting to craft your candles immediately",
     "orderSuccessPage.stripeContact": "A confirmation email has been sent to your address",
     "orderSuccessPage.stripeNextSteps": "We will notify you about the shipping status as soon as your order is on its way.",
+    "orderSuccessPage.myOrders": "My Orders",
+    "orderSuccessPage.continueShoppingButton": "Continue Shopping",
 
     // Languages
     "languages.croatian": "Croatian",
@@ -4929,6 +4935,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orderSuccessPage.stripeProcessing": "Iniziamo subito a creare le tue candele",
     "orderSuccessPage.stripeContact": "Un'email di conferma è stata inviata al tuo indirizzo",
     "orderSuccessPage.stripeNextSteps": "Ti informeremo sullo stato della spedizione non appena il tuo ordine sarà in viaggio.",
+    "orderSuccessPage.myOrders": "I miei ordini",
+    "orderSuccessPage.continueShoppingButton": "Continua Shopping",
 
     "auth.registrationSuccessVerifyEmail":
       "Registrazione riuscita! Controlla la tua casella di posta per confermare il tuo indirizzo email.",
