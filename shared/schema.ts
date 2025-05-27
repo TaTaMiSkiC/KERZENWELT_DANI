@@ -161,6 +161,11 @@ export const orders = pgTable("orders", {
     precision: 10,
     scale: 2,
   }).default("0"),
+  discountType: text("discount_type").default("fixed"),
+  discountPercentage: decimal("discount_percentage", {
+    precision: 5,
+    scale: 2,
+  }).default("0"),
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default(
     "0",
   ),

@@ -1217,9 +1217,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
+      // Get user discount info before creating order
+      const userForDiscountInfo = await storage.getUser(req.user.id);
+      const currentDiscountType = (userForDiscountInfo as any)?.discountType || "fixed";
+      const currentDiscountPercentage = currentDiscountType === "percentage" 
+        ? parseFloat(userForDiscountInfo?.discountAmount || "0")
+        : 0;
+
       const validatedData = insertOrderSchema.parse({
         ...req.body,
         userId: req.user.id,
+        discountType: currentDiscountType,
+        discountPercentage: currentDiscountPercentage.toString(),
       });
 
       // Process discount for this user before creating order
