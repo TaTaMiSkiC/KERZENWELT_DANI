@@ -1002,7 +1002,10 @@ export default function OrderDetailsPage() {
                       {t("orders.discount")}:
                     </span>
                     <span className="text-red-500">
-                      -{orderWithItems.discountAmount} €
+                      {(orderWithItems as any).discountType === 'percentage' 
+                        ? `-${parseFloat((orderWithItems as any).discountPercentage || 0).toFixed(0)}%`
+                        : `-${orderWithItems.discountAmount} €`
+                      }
                     </span>
                   </div>
                 )}

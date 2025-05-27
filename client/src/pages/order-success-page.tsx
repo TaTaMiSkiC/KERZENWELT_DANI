@@ -338,6 +338,14 @@ export default function OrderSuccessPage() {
                         <p className="font-semibold">
                           {parseFloat(order.total || 0).toFixed(2)} €
                         </p>
+                        {(order as any).discountAmount && parseFloat((order as any).discountAmount) > 0 && (
+                          <p className="text-sm text-green-600">
+                            {(order as any).discountType === 'percentage' 
+                              ? `${t("Rabatt")}: -${parseFloat((order as any).discountPercentage || 0).toFixed(0)}%`
+                              : `${t("Rabatt")}: -${parseFloat((order as any).discountAmount).toFixed(2)}€`
+                            }
+                          </p>
+                        )}
                       </div>
                       {order.status && (
                         <div>
