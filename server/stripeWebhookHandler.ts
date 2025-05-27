@@ -199,6 +199,42 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             
             console.log(`[Webhook] Kreiram narudžbu iz košarice, cartTotal: ${cartTotal}`);
             
+            // Process discount balance for this user
+            let appliedDiscount = 0;
+            try {
+              const userForDiscount = await storage.getUser(parseInt(userId));
+              if (userForDiscount) {
+                const currentBalance = parseFloat(userForDiscount.discountBalance || "0");
+                const discountType = (userForDiscount as any).discountType || "fixed";
+                
+                if (currentBalance > 0) {
+                  if (discountType === "fixed") {
+                    appliedDiscount = Math.min(currentBalance, cartTotal);
+                    const newBalance = currentBalance - appliedDiscount;
+                    
+                    // Update user's remaining balance
+                    await storage.updateUser(parseInt(userId), { 
+                      discountBalance: newBalance.toString(),
+                      // Remove discount if balance reaches 0
+                      ...(newBalance <= 0 && { 
+                        discountAmount: "0", 
+                        discountType: "fixed",
+                        discountExpiryDate: null 
+                      })
+                    });
+                    
+                    console.log(`[Webhook] Applied discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
+                  } else if (discountType === "percentage") {
+                    const discountPercentage = parseFloat(userForDiscount.discountAmount || "0");
+                    appliedDiscount = (cartTotal * discountPercentage) / 100;
+                    console.log(`[Webhook] Applied percentage discount: ${discountPercentage}% = ${appliedDiscount}€`);
+                  }
+                }
+              }
+            } catch (discountError) {
+              console.error(`[Webhook] Error processing discount:`, discountError);
+            }
+            
             // Reset payment method detection for this path
             let actualPaymentMethodForCart = "Online Payment"; // Reset to default for cart path
             console.log(`[Webhook] Session payment_method_types:`, session.payment_method_types);
@@ -274,12 +310,15 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               scentName: item.scent?.name || null,
             }));
 
+            // Calculate final total after discount
+            const finalTotal = Math.max(0, cartTotal - appliedDiscount);
+            
             // Kreiraj narudžbu
             const newOrder = await storage.createOrder({
               userId: parseInt(userId),
-              total: cartTotal.toString(),
+              total: finalTotal.toString(),
               subtotal: cartTotal.toString(),
-              discountAmount: "0",
+              discountAmount: appliedDiscount.toString(),
               shippingCost: "0",
               paymentMethod: actualPaymentMethodForCart || "Online Payment",
               status: "pending",
