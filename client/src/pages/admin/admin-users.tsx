@@ -61,6 +61,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -353,14 +355,9 @@ export default function AdminUsers() {
                                   <Info className="mr-2 h-4 w-4" /> Einzelheiten
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                  onClick={() => {
-                                    toast({
-                                      title: "E-Mail senden",
-                                      description: `Diese Funktion öffnet ein Formular zum Senden einer E-Mail an den Benutzer ${user.username}.`,
-                                    });
-                                  }}
+                                  onClick={() => openEmailModal(user)}
                                 >
-                                  <Mail className="mr-2 h-4 w-4" /> Kontakt
+                                  <Mail className="mr-2 h-4 w-4" /> E-Mail senden
                                 </DropdownMenuItem>
                                 {user.isAdmin ? (
                                   <DropdownMenuItem
@@ -643,17 +640,35 @@ export default function AdminUsers() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="discount-amount">Rabattbetrag (€)</Label>
+              <Label htmlFor="discount-type">Rabatttyp</Label>
+              <Select value={discountType} onValueChange={setDiscountType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Rabatttyp auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Fester Betrag (€)</SelectItem>
+                  <SelectItem value="percentage">Prozentsatz (%)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="discount-amount">
+                {discountType === "percentage" ? "Rabatt (%)" : "Rabattbetrag (€)"}
+              </Label>
               <Input
                 id="discount-amount"
                 type="number"
                 min="0"
-                step="0.01"
+                max={discountType === "percentage" ? "100" : undefined}
+                step={discountType === "percentage" ? "1" : "0.01"}
                 value={discountAmount}
                 onChange={(e) => setDiscountAmount(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Rabatt, der auf die Bestellung angewendet wird
+                {discountType === "percentage" 
+                  ? "Prozentsatz des Rabatts (0-100%)" 
+                  : "Fester Rabattbetrag in Euro"}
               </p>
             </div>
 
@@ -699,6 +714,7 @@ export default function AdminUsers() {
                   discountAmount,
                   discountMinimumOrder,
                   discountExpiryDate,
+                  discountType,
                 });
               }}
               disabled={setUserDiscountMutation.isPending}
@@ -712,6 +728,78 @@ export default function AdminUsers() {
                 <>
                   <PercentCircle className="mr-2 h-4 w-4" />
                   Speichern
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Modal */}
+      <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Mail className="mr-2 h-5 w-5" />
+              E-Mail senden an {selectedUser?.username}
+            </DialogTitle>
+            <DialogDescription>
+              Senden Sie eine E-Mail an {selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Betreff</Label>
+              <Input
+                id="email-subject"
+                type="text"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="E-Mail-Betreff eingeben"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email-message">Nachricht</Label>
+              <Textarea
+                id="email-message"
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                placeholder="Ihre Nachricht eingeben..."
+                rows={6}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEmailModalOpen(false)}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => {
+                if (!selectedUser || !emailSubject.trim() || !emailMessage.trim()) return;
+
+                sendEmailMutation.mutate({
+                  userId: selectedUser.id,
+                  subject: emailSubject,
+                  message: emailMessage,
+                });
+              }}
+              disabled={sendEmailMutation.isPending || !emailSubject.trim() || !emailMessage.trim()}
+            >
+              {sendEmailMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Senden...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  E-Mail senden
                 </>
               )}
             </Button>
