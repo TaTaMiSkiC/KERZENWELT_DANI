@@ -2004,6 +2004,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to process discount balance
+  async function processDiscountBalance(userId: number, orderTotal: number): Promise<{
+    appliedDiscount: number;
+    remainingBalance: number;
+  }> {
+    const user = await storage.getUser(userId);
+    if (!user) return { appliedDiscount: 0, remainingBalance: 0 };
+
+    const currentBalance = parseFloat(user.discountBalance || "0");
+    const discountType = (user as any).discountType || "fixed";
+    
+    if (currentBalance <= 0) {
+      return { appliedDiscount: 0, remainingBalance: 0 };
+    }
+
+    let appliedDiscount = 0;
+    let newBalance = currentBalance;
+
+    if (discountType === "fixed") {
+      // For fixed discounts, use the balance directly
+      appliedDiscount = Math.min(currentBalance, orderTotal);
+      newBalance = currentBalance - appliedDiscount;
+    } else if (discountType === "percentage") {
+      // For percentage discounts, calculate based on discount amount
+      const discountPercentage = parseFloat(user.discountAmount || "0");
+      appliedDiscount = (orderTotal * discountPercentage) / 100;
+      // Percentage discounts don't reduce balance
+      newBalance = currentBalance;
+    }
+
+    // Update user's remaining balance
+    if (newBalance !== currentBalance) {
+      await storage.updateUser(userId, { 
+        discountBalance: newBalance.toString(),
+        // Remove discount if balance is 0
+        ...(newBalance <= 0 && { 
+          discountAmount: "0", 
+          discountType: "fixed",
+          discountExpiryDate: null 
+        })
+      });
+    }
+
+    console.log(`Discount processed for user ${userId}: applied=${appliedDiscount}, remaining=${newBalance}`);
+    return { appliedDiscount, remainingBalance: newBalance };
+  }
+
+  // Get user discount balance
+  app.get("/api/users/:id/discount-balance", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const id = parseInt(req.params.id);
+      const user = await storage.getUser(id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const balance = parseFloat(user.discountBalance || "0");
+      const discountType = (user as any).discountType || "fixed";
+      
+      res.json({
+        balance,
+        discountType,
+        hasActiveDiscount: balance > 0 || (discountType === "percentage" && parseFloat(user.discountAmount || "0") > 0)
+      });
+    } catch (error) {
+      console.error("Error getting user discount balance:", error);
+      res.status(500).json({ message: "Failed to get discount balance" });
+    }
+  });
+
   // Postavi popust za korisnika
   app.post("/api/users/:id/discount", async (req, res) => {
     try {
@@ -2025,12 +2100,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // When setting a new discount, also set the discount balance
+      const discountBalanceValue = discountType === "fixed" ? discountAmount : "0";
+      
       const updatedUser = await storage.updateUser(id, {
         discountAmount,
         discountMinimumOrder: discountMinimumOrder || "0",
         discountExpiryDate: expiryDate,
         discountType: discountType || "fixed", // 'fixed' or 'percentage'
+        discountBalance: discountBalanceValue, // Set initial balance for fixed amounts
       });
+
+      console.log(`Set discount for user ${id}: type=${discountType}, amount=${discountAmount}, balance=${discountBalanceValue}`);
 
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });

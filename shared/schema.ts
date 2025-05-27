@@ -38,6 +38,10 @@ export const users = pgTable("users", {
   }).default("0"),
   discountExpiryDate: timestamp("discount_expiry_date"),
   discountType: text("discount_type").default("fixed"), // 'fixed' or 'percentage'
+  discountBalance: decimal("discount_balance", {
+    precision: 10,
+    scale: 2,
+  }).default("0"), // Remaining discount balance
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
