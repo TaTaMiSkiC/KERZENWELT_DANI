@@ -2100,7 +2100,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // When setting a new discount, also set the discount balance
+      // When setting a new discount, set the discount balance correctly
+      // For fixed amounts: set the balance to the amount
+      // For percentage: keep balance at 0 since percentage doesn't use balance
       const discountBalanceValue = discountType === "fixed" ? discountAmount : "0";
       
       const updatedUser = await storage.updateUser(id, {
