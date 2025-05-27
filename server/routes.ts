@@ -1224,14 +1224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? parseFloat(userForDiscountInfo?.discountAmount || "0")
         : 0;
 
-      const validatedData = insertOrderSchema.parse({
-        ...req.body,
-        userId: req.user.id,
-        discountType: currentDiscountType,
-        discountPercentage: currentDiscountPercentage.toString(),
-      });
-
-      // Process discount for this user before creating order
+      // Process discount for this user BEFORE creating validatedData
       let appliedDiscount = 0;
       console.log(`[Direct Order] Processing discount for user ${req.user.id}`);
       try {
@@ -1246,7 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const discountType = (userForDiscount as any).discountType || "fixed";
           const discountUsageType = (userForDiscount as any).discountUsageType || "permanent";
           const discountAmount = parseFloat(userForDiscount.discountAmount || "0");
-          const orderTotal = parseFloat(validatedData.total);
+          const orderTotal = parseFloat(req.body.total);
           
           console.log(`[Direct Order] Processing discount:`, {
             discountType,
@@ -1304,6 +1297,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (discountError) {
         console.error(`[Direct Order] Error processing discount:`, discountError);
       }
+
+      // Now create validatedData with the calculated discount
+      const validatedData = insertOrderSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+        discountType: currentDiscountType,
+        discountPercentage: currentDiscountPercentage.toString(),
+        discountAmount: appliedDiscount.toString(), // Include the calculated discount
+      });
+
+      console.log(`[Direct Order] Creating order with discount applied:`, {
+        originalTotal: req.body.total,
+        appliedDiscount,
+        discountType: currentDiscountType,
+        discountPercentage: currentDiscountPercentage
+      });
 
       // Kreiraj narudžbu
       const order = await storage.createOrder(validatedData, req.body.items);
