@@ -62,7 +62,9 @@ export default function CheckoutPage() {
   // Apply discount if valid
   const discountAmount =
     hasDiscount && meetsMinimumOrder
-      ? parseFloat(user.discountAmount || "0")
+      ? (user as any)?.discountType === 'percentage'
+        ? (cartTotal * parseFloat(user.discountAmount || "0")) / 100
+        : parseFloat(user.discountAmount || "0")
       : 0;
 
   // Calculate shipping and total
@@ -313,7 +315,9 @@ export default function CheckoutPage() {
                             />
                           </svg>
                           {t("checkout.discountApplied")}{" "}
-                          {discountAmount.toFixed(2)} €
+                          {(user as any)?.discountType === 'percentage' 
+                            ? `${user?.discountAmount}% (${discountAmount.toFixed(2)} €)`
+                            : `${discountAmount.toFixed(2)} €`}
                         </p>
                       ) : (
                         <p className="text-sm text-amber-700 flex items-center">
@@ -332,7 +336,7 @@ export default function CheckoutPage() {
                             />
                           </svg>
                           {t("checkout.discountNotApplied")}{" "}
-                          {user?.discountAmount} €{" "}
+                          {user?.discountAmount}{(user as any)?.discountType === 'percentage' ? '%' : '€'}{" "}
                           {t("checkout.discountMinimumOrder")}{" "}
                           {parseFloat(
                             user?.discountMinimumOrder || "0",
