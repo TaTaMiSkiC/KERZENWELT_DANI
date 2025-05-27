@@ -4,6 +4,9 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ["chunk-S34NKWM7.js"], // Add your excluded dependency here
+  },
   plugins: [
     react(),
     runtimeErrorOverlay(),

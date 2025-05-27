@@ -1,10 +1,16 @@
+// client/src/hooks/use-auth.tsx
 import { createContext, ReactNode, useContext } from "react";
 import {
   useQuery,
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
+// Pobrini se da tvoj @shared/schema ima is_admin: boolean u definiciji SelectUser
+import {
+  insertUserSchema,
+  User as SelectUser,
+  InsertUser,
+} from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
@@ -13,6 +19,7 @@ type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
+  isAdmin: boolean; // <--- DODANO: isAdmin status
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
@@ -21,18 +28,22 @@ type AuthContextType = {
 type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
-export function AuthProvider({ children }: { children: ReactNode }) {
+
+export function AuthProvider({ children }: { ReactNode }) {
   const { toast } = useToast();
   const { t } = useLanguage();
-  
+
   const {
-    data: user,
+    data: user, // user objekt bi trebao sadržavati is_admin
     error,
     isLoading,
   } = useQuery<SelectUser | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
+
+  // <--- DODANO: Izračunaj isAdmin status
+  const isAdmin = user?.is_admin === true;
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -60,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return;
       }
-      
+
       toast({
         title: t("auth.loginErrorTitle"),
         description: t("auth.loginErrorMessage"),
@@ -73,21 +84,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (credentials: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", credentials);
       const data = await res.json();
-      
+
       // If it's a successful registration with verification required
       if (res.ok && data.message === "registration_success_verify_email") {
         // We still return the data so the UI can show the verification message
         return {
           ...data,
-          message: "registration_success_verify_email"
+          message: "registration_success_verify_email",
         };
       }
-      
+
       // Regular registration success
       if (res.ok) {
         return data;
       }
-      
+
       // Error handling
       throw new Error(data.message || "Registration failed");
     },
@@ -97,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.setQueryData(["/api/user"], response);
         toast({
           title: t("auth.registerSuccessTitle"),
-          description: t("auth.registerSuccessMessage", { username: response.username }),
+          description: t("auth.registerSuccessMessage", {
+            username: response.username,
+          }),
         });
       }
     },
@@ -117,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       queryClient.invalidateQueries({
-        queryKey: ["/api/cart"]
+        queryKey: ["/api/cart"],
       });
       toast({
         title: t("auth.logoutSuccessTitle"),
@@ -139,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: user ?? null,
         isLoading,
         error,
+        isAdmin, // <--- DODANO: Proslijedi isAdmin
         loginMutation,
         logoutMutation,
         registerMutation,

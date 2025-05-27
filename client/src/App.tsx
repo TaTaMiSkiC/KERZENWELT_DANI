@@ -1,3 +1,4 @@
+// client/src/App.tsx
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -41,7 +42,7 @@ import { CartProvider } from "./hooks/use-cart";
 import { ThemeProvider } from "./hooks/use-theme";
 import { LanguageProvider } from "./hooks/use-language";
 import CookieConsent from "./components/CookieConsent";
-import { SecurityProvider } from "./components/SecurityProvider";
+import { SecurityProvider } from "./components/SecurityProvider"; // <--- Pobrini se da je ovo ispravan import
 
 function Router() {
   return (
@@ -95,6 +96,7 @@ function Router() {
       <Route path="/order-success">
         <ProtectedRoute path="/order-success" component={OrderSuccessPage} />
       </Route>
+      {/* Admin rute - osigurano sa ProtectedRoute, ali SecurityProvider će se brinuti za DevTools */}
       <Route path="/admin">
         <ProtectedRoute path="/admin" component={AdminDashboard} />
       </Route>
@@ -169,6 +171,7 @@ function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
+            {/* SecurityProvider je omotan oko cijele aplikacije nakon autentifikacije */}
             <SecurityProvider>
               <CartProvider>
                 <TooltipProvider>

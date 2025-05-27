@@ -768,6 +768,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.quantity": "Menge",
     "common.select": "Auswählen",
     "common.reset": "Zurücksetzen",
+    "common.color": "Farbe",
+    "common.selectMultipleColors": "Mehrere Farben auswählen",
+    "common.selectColor": "Farbe auswählen",
+    "admin.products.singleColor": "Einzelne Farbe",
+    "admin.products.multipleColors": "Mehrere Farben",
+    "admin.products.colorSelectionMode": "Farbauswahlmodus",
+    "common.scent": "Duft",
+    "common.selectScent": "Duft auswählen",
+    "admin.products.scentSelectionMode": "Duftauswahlmodus",
     "admin.invoices.firstNameRequired": "Vorname ist erforderlich",
     "admin.invoices.lastNameRequired": "Nachname ist erforderlich",
     "admin.invoices.invalidEmail": "Ungültige E-Mail-Adresse",
@@ -1659,15 +1668,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.discountMinimumOrder":
       "Der Mindestbestellwert für diesen Gutscheincode beträgt {amount}€.",
     "checkout.securePayment": "Sichere Zahlung",
-    
+
     // Newsletter - Deutsch
-    "newsletter.title": "Newsletter abonnieren",
-    "newsletter.subtitle": "Abonnieren Sie unseren Newsletter für exklusive Angebote, neue Produktankündigungen und einen speziellen Rabattcode für Ihren ersten Einkauf.",
+    "newsletter.subtitle":
+      "Abonnieren Sie unseren Newsletter für exklusive Angebote, neue Produktankündigungen und einen speziellen Rabattcode für Ihren ersten Einkauf.",
     "newsletter.whySubscribe": "Warum abonnieren?",
     "newsletter.benefit1": "Erhalten Sie 10% Rabatt auf Ihre erste Bestellung",
-    "newsletter.benefit2": "Seien Sie der Erste, der von neuen Produkteinführungen erfährt",
+    "newsletter.benefit2":
+      "Seien Sie der Erste, der von neuen Produkteinführungen erfährt",
     "newsletter.benefit3": "Erhalten Sie exklusive Angebote und Aktionen",
-    "newsletter.benefit4": "Holen Sie sich saisonale Geschenkideen und Inspiration",
+    "newsletter.benefit4":
+      "Holen Sie sich saisonale Geschenkideen und Inspiration",
     "checkout.securePaymentDescription":
       "Ihre Zahlungsinformationen sind sicher und verschlüsselt.",
 
@@ -2022,10 +2033,11 @@ export const translations: Record<Language, Record<string, string>> = {
     "checkout.securePayment": "Sigurno plaćanje",
     "checkout.securePaymentDescription":
       "Vaši podaci za plaćanje su sigurni i šifrirani.",
-    
+
     // Newsletter - Hrvatski
     "newsletter.title": "Pretplatite se na newsletter",
-    "newsletter.subtitle": "Pretplatite se na naš newsletter za ekskluzivne ponude, najave novih proizvoda i poseban kod popusta za vašu prvu kupovinu.",
+    "newsletter.subtitle":
+      "Pretplatite se na naš newsletter za ekskluzivne ponude, najave novih proizvoda i poseban kod popusta za vašu prvu kupovinu.",
     "newsletter.whySubscribe": "Zašto se pretplatiti?",
     "newsletter.benefit1": "Dobijte 10% popusta na vašu prvu narudžbu",
     "newsletter.benefit2": "Budite prvi koji će saznati o novim proizvodima",
@@ -3049,7 +3061,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Unesite iznos za besplatnu dostavu",
     "admin.delivery.freeShippingThresholdHelp":
       "Iznos narudžbe iznad kojeg je dostava besplatna",
-    "admin.delivery.shippingCalculation": "Izračun troškova dostave",
+    "admin.delivery.shippingCalculation": "Izračun trof�kova dostave",
     "admin.delivery.fixedRate": "Fiksna stopa",
     "admin.delivery.weightBased": "Prema težini",
     "admin.delivery.priceBased": "Prema cijeni",
@@ -3761,7 +3773,6 @@ export const translations: Record<Language, Record<string, string>> = {
       "Upravljajte svojim računom, pregledajte narudžbe i ažurirajte osobne podatke.",
 
     // Newsletter
-    "newsletter.title": "Pretplatite se na novosti",
     "newsletter.description":
       "Budite prvi koji će saznati o našim novim proizvodima, posebnim ponudama i popustima. Pretplatite se na naš newsletter i dobijte 10% popusta na vašu prvu narudžbu.",
     "newsletter.placeholder": "Vaša email adresa",
@@ -7385,7 +7396,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.printInvoice": "Natisni račun",
     "admin.invoiceGenerated": "Račun uspešno ustvarjen",
     "admin.downloadFormat": "Format za prenos",
-
     // Admin Users Page
     "admin.users.title": "Uporabniki",
     "admin.users.subtitle": "Upravljajte uporabnike v vaši trgovini",

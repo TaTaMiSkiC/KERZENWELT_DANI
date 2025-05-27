@@ -1561,7 +1561,7 @@ export default function AdminInvoices() {
                                     colSpan={3}
                                     className="font-medium"
                                   >
-                                    Međuzbroj
+                                    Zwischensumme
                                   </TableCell>
                                   <TableCell colSpan={2} className="text-right">
                                     {selectedProducts
@@ -1580,7 +1580,7 @@ export default function AdminInvoices() {
                                     colSpan={3}
                                     className="font-medium"
                                   >
-                                    Dostava
+                                    Versand
                                   </TableCell>
                                   <TableCell colSpan={2} className="text-right">
                                     5.00 €
@@ -1591,7 +1591,7 @@ export default function AdminInvoices() {
                                     colSpan={3}
                                     className="font-medium"
                                   >
-                                    UKUPNO
+                                    Total
                                   </TableCell>
                                   <TableCell
                                     colSpan={2}
