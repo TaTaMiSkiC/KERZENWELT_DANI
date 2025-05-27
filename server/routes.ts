@@ -1226,7 +1226,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process discount for this user BEFORE creating validatedData
       let appliedDiscount = 0;
-      console.log(`[Direct Order] Processing discount for user ${req.user.id}`);
+      console.log(`🔍 [DIRECT ORDER DEBUG] Processing discount for user ${req.user.id}`);
+      console.log(`🔍 [DIRECT ORDER DEBUG] Request body:`, req.body);
       try {
         const userForDiscount = await storage.getUser(req.user.id);
         console.log(`[Direct Order] User discount data:`, {
