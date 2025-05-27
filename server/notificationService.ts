@@ -23,6 +23,29 @@ interface NotificationOptions {
   smsEnabled?: boolean;
 }
 
+// Generic email sending function
+export async function sendEmail(params: {
+  to: string;
+  from: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}) {
+  try {
+    await sgMail.send({
+      to: params.to,
+      from: params.from,
+      subject: params.subject,
+      text: params.text,
+      html: params.html,
+    });
+    return true;
+  } catch (error) {
+    console.error('SendGrid email error:', error);
+    return false;
+  }
+}
+
 // Funkcija za slanje e-mail obavijesti
 export async function sendEmailNotification(
   subject: string,

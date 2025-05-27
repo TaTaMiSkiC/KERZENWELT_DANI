@@ -56,6 +56,7 @@ import {
   CalendarDays,
   CreditCard as CreditCardIcon,
   DollarSign,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -205,6 +206,43 @@ export default function AdminUsers() {
         : format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"),
     );
     setIsDiscountModalOpen(true);
+  };
+
+  // Remove user discount - mutation
+  const removeUserDiscountMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await apiRequest("DELETE", `/api/users/${userId}/discount`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Rabatt entfernt",
+        description: `Rabatt für Benutzer ${selectedUser?.username} wurde erfolgreich entfernt.`,
+      });
+
+      // Refresh users and stats
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/users/${selectedUser?.id}/stats`],
+      });
+
+      setIsUserDetailsOpen(false);
+    },
+    onError: (error) => {
+      console.error("Error removing user discount:", error);
+      toast({
+        title: "Fehler",
+        description: "Rabatt konnte nicht entfernt werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove discount function
+  const removeUserDiscount = (user: User) => {
+    if (confirm(`Möchten Sie den Rabatt für ${user.username} wirklich entfernen?`)) {
+      removeUserDiscountMutation.mutate(user.id);
+    }
   };
 
   // Set user discount - mutation
@@ -554,12 +592,16 @@ export default function AdminUsers() {
                         <p className="text-sm">
                           Der Benutzer hat einen aktiven Rabatt von{" "}
                           <span className="font-semibold">
-                            {selectedUser.discountAmount} €
+                            {selectedUser.discountAmount}{(selectedUser as any).discountType === 'percentage' ? '%' : '€'}
+                          </span>
+                          {" "}
+                          <span className="text-xs text-gray-500">
+                            ({(selectedUser as any).discountUsageType === 'one_time' ? 'einmalig' : 'dauerhaft'})
                           </span>
                           {selectedUser.discountMinimumOrder &&
                           parseFloat(selectedUser.discountMinimumOrder) > 0
-                            ? ` za narudžbe iznad ${selectedUser.discountMinimumOrder} €`
-                            : " za sljedeću narudžbu"}
+                            ? ` für Bestellungen über ${selectedUser.discountMinimumOrder} €`
+                            : ""}
                         </p>
                         {selectedUser.discountExpiryDate && (
                           <p className="text-xs text-green-600 mt-1">
@@ -577,16 +619,30 @@ export default function AdminUsers() {
                     </div>
                   )}
 
-                  <Button
-                    onClick={() => openDiscountModal(selectedUser)}
-                    className="w-full"
-                  >
-                    <PercentCircle className="h-4 w-4 mr-2" />
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => openDiscountModal(selectedUser)}
+                      className="w-full"
+                    >
+                      <PercentCircle className="h-4 w-4 mr-2" />
+                      {selectedUser.discountAmount &&
+                      parseFloat(selectedUser.discountAmount) > 0
+                        ? "Rabatt bearbeiten"
+                        : "Fügen Sie einen Rabatt hinzu"}
+                    </Button>
+                    
                     {selectedUser.discountAmount &&
-                    parseFloat(selectedUser.discountAmount) > 0
-                      ? "Rabatt bearbeiten"
-                      : "Fügen Sie einen Rabatt hinzu"}
-                  </Button>
+                    parseFloat(selectedUser.discountAmount) > 0 && (
+                      <Button
+                        onClick={() => removeUserDiscount(selectedUser)}
+                        variant="outline"
+                        className="w-full text-red-600 hover:text-red-700"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Rabatt entfernen
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
