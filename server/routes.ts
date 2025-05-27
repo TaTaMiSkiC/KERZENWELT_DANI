@@ -4163,20 +4163,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         align: "right",
       }); //
 
+      // Add discount if exists
+      let currentY = finalY + 15;
+      if (order.discountAmount && parseFloat(order.discountAmount) > 0) {
+        const discountText = (order as any).discountType === 'percentage' 
+          ? `Rabatt (-${parseFloat((order as any).discountPercentage || 0).toFixed(0)}%):`
+          : `Rabatt:`;
+        doc.text(discountText, 160, currentY, { align: "right" });
+        doc.text(`-${parseFloat(order.discountAmount).toFixed(2)} €`, 190, currentY, {
+          align: "right",
+        });
+        currentY += 5;
+      }
+
       // Add shipping costs if they exist
-      doc.text(`${t.shipping}:`, 160, finalY + 15, { align: "right" }); //
-      doc.text(`${shippingCost.toFixed(2)} €`, 190, finalY + 15, {
+      doc.text(`${t.shipping}:`, 160, currentY, { align: "right" }); //
+      doc.text(`${shippingCost.toFixed(2)} €`, 190, currentY, {
         align: "right",
       }); //
+      currentY += 5;
 
       // For simplicity of tax model, set VAT to 0%
-      doc.text(`${t.tax}:`, 160, finalY + 20, { align: "right" }); //
-      doc.text("0.00 €", 190, finalY + 20, { align: "right" }); //
+      doc.text(`${t.tax}:`, 160, currentY, { align: "right" }); //
+      doc.text("0.00 €", 190, currentY, { align: "right" }); //
+      currentY += 5;
 
       // Total amount
       doc.setFont("helvetica", "bold"); //
-      doc.text(`${t.totalAmount}:`, 160, finalY + 25, { align: "right" }); //
-      doc.text(`${total.toFixed(2)} €`, 190, finalY + 25, { align: "right" }); //
+      doc.text(`${t.totalAmount}:`, 160, currentY, { align: "right" }); //
+      doc.text(`${total.toFixed(2)} €`, 190, currentY, { align: "right" }); //
       doc.setFont("helvetica", "normal"); //
 
       // Payment information

@@ -999,11 +999,11 @@ export default function OrderDetailsPage() {
                 parseFloat(orderWithItems.discountAmount) > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      {t("orders.discount")}:
+                      Rabatt:
                     </span>
                     <span className="text-red-500">
                       {(orderWithItems as any).discountType === 'percentage' 
-                        ? `-${parseFloat((orderWithItems as any).discountPercentage || 0).toFixed(0)}%`
+                        ? `-${parseFloat((orderWithItems as any).discountPercentage || 0).toFixed(0)}% = -${orderWithItems.discountAmount} €`
                         : `-${orderWithItems.discountAmount} €`
                       }
                     </span>
