@@ -86,6 +86,7 @@ export default function AdminUsers() {
   const [discountMinimumOrder, setDiscountMinimumOrder] = useState("");
   const [discountExpiryDate, setDiscountExpiryDate] = useState("");
   const [discountType, setDiscountType] = useState("fixed");
+  const [discountUsageType, setDiscountUsageType] = useState("permanent");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
 
@@ -197,6 +198,7 @@ export default function AdminUsers() {
     setDiscountAmount(user.discountAmount?.toString() || "0");
     setDiscountMinimumOrder(user.discountMinimumOrder?.toString() || "0");
     setDiscountType((user as any).discountType || "fixed");
+    setDiscountUsageType((user as any).discountUsageType || "permanent");
     setDiscountExpiryDate(
       user.discountExpiryDate
         ? format(new Date(user.discountExpiryDate), "yyyy-MM-dd")
@@ -213,6 +215,7 @@ export default function AdminUsers() {
       discountMinimumOrder: string;
       discountExpiryDate: string;
       discountType: string;
+      discountUsageType: string;
     }) => {
       const response = await apiRequest(
         "POST",
@@ -222,6 +225,7 @@ export default function AdminUsers() {
           discountMinimumOrder: data.discountMinimumOrder,
           discountExpiryDate: data.discountExpiryDate,
           discountType: data.discountType,
+          discountUsageType: data.discountUsageType,
         },
       );
       return await response.json();
@@ -653,6 +657,19 @@ export default function AdminUsers() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="discount-usage">Nutzungstyp</Label>
+              <Select value={discountUsageType} onValueChange={setDiscountUsageType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nutzungstyp auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="one_time">Einmalig (für eine Bestellung)</SelectItem>
+                  <SelectItem value="permanent">Dauerhaft (für alle Bestellungen)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="discount-amount">
                 {discountType === "percentage" ? "Rabatt (%)" : "Rabattbetrag (€)"}
               </Label>
@@ -715,6 +732,7 @@ export default function AdminUsers() {
                   discountMinimumOrder,
                   discountExpiryDate,
                   discountType,
+                  discountUsageType,
                 });
               }}
               disabled={setUserDiscountMutation.isPending}

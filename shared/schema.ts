@@ -42,6 +42,7 @@ export const users = pgTable("users", {
     precision: 10,
     scale: 2,
   }).default("0"), // Remaining discount balance
+  discountUsageType: text("discount_usage_type").default("permanent"), // 'one_time' or 'permanent'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
