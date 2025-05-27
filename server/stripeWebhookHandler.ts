@@ -213,18 +213,29 @@ export async function handleStripeWebhook(req: Request, res: Response) {
                   appliedDiscount = Math.min(currentBalance, cartTotal);
                   const newBalance = currentBalance - appliedDiscount;
                   
-                  // Update user's remaining balance
-                  await storage.updateUser(parseInt(userId), { 
-                    discountBalance: newBalance.toString(),
-                    // Remove discount if balance reaches 0
-                    ...(newBalance <= 0 && { 
+                  // For one-time fixed discounts, remove after use regardless of remaining balance
+                  if (discountUsageType === "one_time") {
+                    await storage.updateUser(parseInt(userId), { 
                       discountAmount: "0", 
+                      discountBalance: "0",
                       discountType: "fixed",
+                      discountUsageType: "permanent",
                       discountExpiryDate: null 
-                    })
-                  });
-                  
-                  console.log(`[Webhook] Applied fixed discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
+                    });
+                    console.log(`[Webhook] Removed one-time fixed discount for user ${userId}, applied: ${appliedDiscount}€`);
+                  } else {
+                    // For permanent discounts, update balance and remove if it reaches 0
+                    await storage.updateUser(parseInt(userId), { 
+                      discountBalance: newBalance.toString(),
+                      // Remove discount if balance reaches 0
+                      ...(newBalance <= 0 && { 
+                        discountAmount: "0", 
+                        discountType: "fixed",
+                        discountExpiryDate: null 
+                      })
+                    });
+                    console.log(`[Webhook] Applied fixed discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
+                  }
                 } else if (discountType === "percentage" && discountAmount > 0) {
                   appliedDiscount = (cartTotal * discountAmount) / 100;
                   console.log(`[Webhook] Applied percentage discount: ${discountAmount}% = ${appliedDiscount}€, usage type: ${discountUsageType}`);
