@@ -417,6 +417,14 @@ export default function AdminOrders() {
                           </TableCell>
                           <TableCell>
                             {parseFloat(order.total).toFixed(2)} €
+                            {(order as any).discountAmount && parseFloat((order as any).discountAmount) > 0 && (
+                              <div className="text-xs text-green-600">
+                                {(order as any).discountType === 'percentage' 
+                                  ? `(-${parseFloat((order as any).discountPercentage || 0).toFixed(0)}%)`
+                                  : `(-${parseFloat((order as any).discountAmount).toFixed(2)}€)`
+                                }
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
                             {order.paymentMethod === "credit_card"
