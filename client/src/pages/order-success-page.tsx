@@ -341,7 +341,12 @@ export default function OrderSuccessPage() {
                         {(order as any).discountAmount && parseFloat((order as any).discountAmount) > 0 && (
                           <p className="text-sm text-green-600">
                             {(order as any).discountType === 'percentage' 
-                              ? `Rabatt: -${parseFloat((order as any).discountPercentage || 0).toFixed(0)}% = -${parseFloat((order as any).discountAmount).toFixed(2)}€`
+                              ? (() => {
+                                  const percentage = parseFloat((order as any).discountPercentage || 0);
+                                  const subtotal = parseFloat(order.subtotal || order.total || 0);
+                                  const actualDiscount = (subtotal * percentage) / 100;
+                                  return `Rabatt: -${percentage.toFixed(0)}% = -${actualDiscount.toFixed(2)}€`;
+                                })()
                               : `Rabatt: -${parseFloat((order as any).discountAmount).toFixed(2)}€`
                             }
                           </p>
