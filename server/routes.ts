@@ -2169,6 +2169,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Remove user discount
+  app.delete("/api/users/:id/discount", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const id = parseInt(req.params.id);
+      
+      const updatedUser = await storage.updateUser(id, {
+        discountAmount: "0",
+        discountMinimumOrder: "0",
+        discountExpiryDate: null,
+        discountType: "fixed",
+        discountUsageType: "permanent",
+        discountBalance: "0",
+      });
+
+      console.log(`Removed discount for user ${id}`);
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error removing user discount:", error);
+      res.status(500).json({ message: "Failed to remove discount" });
+    }
+  });
+
   // Settings
   app.get("/api/settings", async (req, res) => {
     try {
