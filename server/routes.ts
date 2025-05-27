@@ -1224,8 +1224,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process discount for this user before creating order
       let appliedDiscount = 0;
+      console.log(`[Direct Order] Processing discount for user ${req.user.id}`);
       try {
         const userForDiscount = await storage.getUser(req.user.id);
+        console.log(`[Direct Order] User discount data:`, {
+          discountAmount: userForDiscount?.discountAmount,
+          discountType: (userForDiscount as any)?.discountType,
+          discountUsageType: (userForDiscount as any)?.discountUsageType,
+          discountBalance: userForDiscount?.discountBalance
+        });
         if (userForDiscount) {
           const currentBalance = parseFloat(userForDiscount.discountBalance || "0");
           const discountType = (userForDiscount as any).discountType || "fixed";
