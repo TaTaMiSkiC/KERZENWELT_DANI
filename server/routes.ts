@@ -1212,6 +1212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/orders", async (req, res) => {
+    console.log(`🚀 [ORDER ENDPOINT] Starting order creation for user ${req.user?.id}`);
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Unauthorized" });
