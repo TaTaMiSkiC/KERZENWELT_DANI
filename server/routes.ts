@@ -2087,7 +2087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const id = parseInt(req.params.id);
-      const { discountAmount, discountMinimumOrder, discountExpiryDate, discountType } =
+      const { discountAmount, discountMinimumOrder, discountExpiryDate, discountType, discountUsageType } =
         req.body;
 
       // Convert date string to proper Date object
@@ -2110,10 +2110,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         discountMinimumOrder: discountMinimumOrder || "0",
         discountExpiryDate: expiryDate,
         discountType: discountType || "fixed", // 'fixed' or 'percentage'
+        discountUsageType: discountUsageType || "permanent", // 'one_time' or 'permanent'
         discountBalance: discountBalanceValue, // Set initial balance for fixed amounts
       });
 
       console.log(`Set discount for user ${id}: type=${discountType}, amount=${discountAmount}, balance=${discountBalanceValue}`);
+
+      // Send email notification to user about the discount
+      if (updatedUser && updatedUser.email) {
+        try {
+          const discountText = discountType === "percentage" ? `${discountAmount}%` : `${discountAmount}€`;
+          const usageText = discountUsageType === "one_time" ? "einmalig für Ihre nächste Bestellung" : "dauerhaft für alle Ihre Bestellungen";
+          
+          await sendEmail({
+            to: updatedUser.email,
+            from: "info@kerzenweltbydani.com",
+            subject: "Ihr neuer Rabatt bei Kerzenwelt by Dani!",
+            text: `Liebe/r ${updatedUser.username}, Sie haben einen neuen Rabatt von ${discountText} erhalten! Dieser Rabatt ist ${usageText} gültig.`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h1 style="color: #D4AF37;">Kerzenwelt by Dani</h1>
+                <h2>Ihr neuer Rabatt ist da! 🎉</h2>
+                <p>Liebe/r ${updatedUser.username},</p>
+                <p>Wir freuen uns, Ihnen mitteilen zu können, dass Sie einen neuen Rabatt erhalten haben!</p>
+                <div style="background-color: #f0f0f0; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+                  <h3 style="color: #D4AF37; margin: 0;">Ihr Rabatt: ${discountText}</h3>
+                  <p style="margin: 10px 0 0 0; color: #666;">Gültig ${usageText}</p>
+                </div>
+                ${discountMinimumOrder && parseFloat(discountMinimumOrder) > 0 ? 
+                  `<p><strong>Mindestbestellwert:</strong> ${discountMinimumOrder}€</p>` : 
+                  ''
+                }
+                ${expiryDate ? 
+                  `<p><strong>Gültig bis:</strong> ${expiryDate.toLocaleDateString('de-DE')}</p>` : 
+                  ''
+                }
+                <p>Vielen Dank für Ihr Vertrauen in Kerzenwelt by Dani!</p>
+                <p>Mit freundlichen Grüßen,<br>Daniela</p>
+              </div>
+            `,
+          });
+          console.log(`Discount notification email sent to ${updatedUser.email}`);
+        } catch (error) {
+          console.error("Error sending discount notification email:", error);
+          // Continue even if email fails
+        }
+      }
 
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });

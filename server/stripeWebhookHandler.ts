@@ -206,28 +206,38 @@ export async function handleStripeWebhook(req: Request, res: Response) {
               if (userForDiscount) {
                 const currentBalance = parseFloat(userForDiscount.discountBalance || "0");
                 const discountType = (userForDiscount as any).discountType || "fixed";
+                const discountUsageType = (userForDiscount as any).discountUsageType || "permanent";
+                const discountAmount = parseFloat(userForDiscount.discountAmount || "0");
                 
-                if (currentBalance > 0) {
-                  if (discountType === "fixed") {
-                    appliedDiscount = Math.min(currentBalance, cartTotal);
-                    const newBalance = currentBalance - appliedDiscount;
-                    
-                    // Update user's remaining balance
+                if (discountType === "fixed" && currentBalance > 0) {
+                  appliedDiscount = Math.min(currentBalance, cartTotal);
+                  const newBalance = currentBalance - appliedDiscount;
+                  
+                  // Update user's remaining balance
+                  await storage.updateUser(parseInt(userId), { 
+                    discountBalance: newBalance.toString(),
+                    // Remove discount if balance reaches 0
+                    ...(newBalance <= 0 && { 
+                      discountAmount: "0", 
+                      discountType: "fixed",
+                      discountExpiryDate: null 
+                    })
+                  });
+                  
+                  console.log(`[Webhook] Applied fixed discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
+                } else if (discountType === "percentage" && discountAmount > 0) {
+                  appliedDiscount = (cartTotal * discountAmount) / 100;
+                  console.log(`[Webhook] Applied percentage discount: ${discountAmount}% = ${appliedDiscount}€, usage type: ${discountUsageType}`);
+                  
+                  // Remove one-time percentage discounts after use
+                  if (discountUsageType === "one_time") {
                     await storage.updateUser(parseInt(userId), { 
-                      discountBalance: newBalance.toString(),
-                      // Remove discount if balance reaches 0
-                      ...(newBalance <= 0 && { 
-                        discountAmount: "0", 
-                        discountType: "fixed",
-                        discountExpiryDate: null 
-                      })
+                      discountAmount: "0", 
+                      discountType: "fixed",
+                      discountUsageType: "permanent",
+                      discountExpiryDate: null 
                     });
-                    
-                    console.log(`[Webhook] Applied discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
-                  } else if (discountType === "percentage") {
-                    const discountPercentage = parseFloat(userForDiscount.discountAmount || "0");
-                    appliedDiscount = (cartTotal * discountPercentage) / 100;
-                    console.log(`[Webhook] Applied percentage discount: ${discountPercentage}% = ${appliedDiscount}€`);
+                    console.log(`[Webhook] Removed one-time percentage discount for user ${userId}`);
                   }
                 }
               }
