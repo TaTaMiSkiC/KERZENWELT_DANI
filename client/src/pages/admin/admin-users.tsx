@@ -79,9 +79,13 @@ export default function AdminUsers() {
   const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountMinimumOrder, setDiscountMinimumOrder] = useState("");
   const [discountExpiryDate, setDiscountExpiryDate] = useState("");
+  const [discountType, setDiscountType] = useState("fixed");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
 
   // Fetch users
   const { data: users, isLoading } = useQuery<User[]>({
@@ -143,11 +147,54 @@ export default function AdminUsers() {
     }
   };
 
+  // Open the email modal
+  const openEmailModal = (user: User) => {
+    setSelectedUser(user);
+    setEmailSubject("");
+    setEmailMessage("");
+    setIsEmailModalOpen(true);
+  };
+
+  // Send email to user - mutation
+  const sendEmailMutation = useMutation({
+    mutationFn: async (data: {
+      userId: number;
+      subject: string;
+      message: string;
+    }) => {
+      const response = await apiRequest(
+        "POST",
+        `/api/users/${data.userId}/send-email`,
+        {
+          subject: data.subject,
+          message: data.message,
+        },
+      );
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "E-Mail gesendet",
+        description: `E-Mail wurde erfolgreich an ${selectedUser?.email} gesendet.`,
+      });
+      setIsEmailModalOpen(false);
+    },
+    onError: (error) => {
+      console.error("Error sending email:", error);
+      toast({
+        title: "Fehler",
+        description: "E-Mail konnte nicht gesendet werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Open the discount modal
   const openDiscountModal = (user: User) => {
     setSelectedUser(user);
     setDiscountAmount(user.discountAmount?.toString() || "0");
     setDiscountMinimumOrder(user.discountMinimumOrder?.toString() || "0");
+    setDiscountType((user as any).discountType || "fixed");
     setDiscountExpiryDate(
       user.discountExpiryDate
         ? format(new Date(user.discountExpiryDate), "yyyy-MM-dd")
@@ -163,6 +210,7 @@ export default function AdminUsers() {
       discountAmount: string;
       discountMinimumOrder: string;
       discountExpiryDate: string;
+      discountType: string;
     }) => {
       const response = await apiRequest(
         "POST",
@@ -171,6 +219,7 @@ export default function AdminUsers() {
           discountAmount: data.discountAmount,
           discountMinimumOrder: data.discountMinimumOrder,
           discountExpiryDate: data.discountExpiryDate,
+          discountType: data.discountType,
         },
       );
       return await response.json();

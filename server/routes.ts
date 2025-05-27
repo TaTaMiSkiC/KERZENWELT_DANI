@@ -1969,6 +1969,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send email to user
+  app.post("/api/users/:id/send-email", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const id = parseInt(req.params.id);
+      const { subject, message } = req.body;
+
+      if (!subject || !message) {
+        return res.status(400).json({ message: "Subject and message are required" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Import sendEmailNotification from notificationService
+      const { sendEmailNotification } = await import("./notificationService");
+      
+      const emailSent = await sendEmailNotification(subject, message, user.email);
+      
+      if (emailSent) {
+        res.json({ message: "Email sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send email" });
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res.status(500).json({ message: "Failed to send email" });
+    }
+  });
+
   // Postavi popust za korisnika
   app.post("/api/users/:id/discount", async (req, res) => {
     try {
@@ -1977,13 +2012,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const id = parseInt(req.params.id);
-      const { discountAmount, discountMinimumOrder, discountExpiryDate } =
+      const { discountAmount, discountMinimumOrder, discountExpiryDate, discountType } =
         req.body;
+
+      // Convert date string to proper Date object
+      let expiryDate = null;
+      if (discountExpiryDate) {
+        expiryDate = new Date(discountExpiryDate);
+        // Ensure it's a valid date
+        if (isNaN(expiryDate.getTime())) {
+          return res.status(400).json({ message: "Invalid expiry date format" });
+        }
+      }
 
       const updatedUser = await storage.updateUser(id, {
         discountAmount,
         discountMinimumOrder: discountMinimumOrder || "0",
-        discountExpiryDate: discountExpiryDate || null,
+        discountExpiryDate: expiryDate,
+        discountType: discountType || "fixed", // 'fixed' or 'percentage'
       });
 
       if (!updatedUser) {

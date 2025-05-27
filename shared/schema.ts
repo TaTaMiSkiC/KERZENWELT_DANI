@@ -37,6 +37,7 @@ export const users = pgTable("users", {
     scale: 2,
   }).default("0"),
   discountExpiryDate: timestamp("discount_expiry_date"),
+  discountType: text("discount_type").default("fixed"), // 'fixed' or 'percentage'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
