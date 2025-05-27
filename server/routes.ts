@@ -18,6 +18,7 @@ import { eq, sql, and, isNull } from "drizzle-orm";
 import { db, pool } from "./db";
 import { registerDocumentRoutes } from "./documentRoutes";
 import { generateInvoiceFromOrder } from "./invoiceService";
+import { sendEmail } from "./notificationService";
 import {
   sendNewOrderNotification,
   sendInvoiceGeneratedNotification,
