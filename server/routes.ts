@@ -2106,29 +2106,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let appliedDiscount = 0;
     let newBalance = currentBalance;
 
-    if (discountType === "fixed") {
+    if (discountType === "percentage") {
+      // For percentage discounts, calculate based on the discount percentage
+      const discountPercentage = parseFloat(user.discountAmount || "0");
+      appliedDiscount = (orderTotal * discountPercentage) / 100;
+      console.log(`[processDiscountBalance] Applied percentage discount: ${discountPercentage}% = ${appliedDiscount}€`);
+      
+      // For one-time percentage discounts, remove after use
+      const discountUsageType = (user as any).discountUsageType || "permanent";
+      if (discountUsageType === "one_time") {
+        await storage.updateUser(userId, { 
+          discountAmount: "0", 
+          discountType: "fixed",
+          discountUsageType: "permanent",
+          discountExpiryDate: null 
+        });
+        console.log(`[processDiscountBalance] Removed one-time percentage discount for user ${userId}`);
+      }
+      // Percentage discounts don't reduce balance
+      newBalance = currentBalance;
+    } else if (discountType === "fixed") {
       // For fixed discounts, use the balance directly
       appliedDiscount = Math.min(currentBalance, orderTotal);
       newBalance = currentBalance - appliedDiscount;
-    } else if (discountType === "percentage") {
-      // For percentage discounts, calculate based on discount amount
-      const discountPercentage = parseFloat(user.discountAmount || "0");
-      appliedDiscount = (orderTotal * discountPercentage) / 100;
-      // Percentage discounts don't reduce balance
-      newBalance = currentBalance;
+      console.log(`[processDiscountBalance] Applied fixed discount: ${appliedDiscount}€ from balance ${currentBalance}€`);
     }
 
-    // Update user's remaining balance
-    if (newBalance !== currentBalance) {
-      await storage.updateUser(userId, { 
-        discountBalance: newBalance.toString(),
-        // Remove discount if balance is 0
-        ...(newBalance <= 0 && { 
+    // Update user's remaining balance for fixed discounts
+    if (discountType === "fixed" && newBalance !== currentBalance) {
+      const discountUsageType = (user as any).discountUsageType || "permanent";
+      
+      if (discountUsageType === "one_time") {
+        // For one-time fixed discounts, remove completely after use
+        await storage.updateUser(userId, { 
           discountAmount: "0", 
+          discountBalance: "0",
           discountType: "fixed",
+          discountUsageType: "permanent",
           discountExpiryDate: null 
-        })
-      });
+        });
+        console.log(`[processDiscountBalance] Removed one-time fixed discount for user ${userId}`);
+      } else {
+        // For permanent fixed discounts, update balance
+        await storage.updateUser(userId, { 
+          discountBalance: newBalance.toString(),
+          // Remove discount if balance reaches 0
+          ...(newBalance <= 0 && { 
+            discountAmount: "0", 
+            discountType: "fixed",
+            discountExpiryDate: null 
+          })
+        });
+        console.log(`[processDiscountBalance] Updated fixed discount balance: ${newBalance}€`);
+      }
     }
 
     console.log(`Discount processed for user ${userId}: applied=${appliedDiscount}, remaining=${newBalance}`);
