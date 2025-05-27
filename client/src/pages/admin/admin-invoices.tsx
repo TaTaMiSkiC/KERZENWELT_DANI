@@ -801,7 +801,12 @@ export default function AdminInvoices() {
                               )}
                             </TableCell>
                             <TableCell>{invoice.customerName}</TableCell>
-                            <TableCell>{invoice.total} €</TableCell>
+                            <TableCell>
+                              {invoice.total && parseFloat(invoice.total) > 0 
+                                ? `${parseFloat(invoice.total).toFixed(2)} €`
+                                : `${parseFloat(invoice.subtotal || "0").toFixed(2)} €`
+                              }
+                            </TableCell>
                             <TableCell>
                               {t(`paymentMethods.${invoice.paymentMethod}`)}
                             </TableCell>

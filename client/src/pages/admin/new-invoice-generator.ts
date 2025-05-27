@@ -392,20 +392,35 @@ export const generateInvoicePdf = (data: any, toast: any) => {
     doc.text(`${t.subtotal}:`, 160, finalY + 10, { align: "right" });
     doc.text(`${subtotal.toFixed(2)} €`, 190, finalY + 10, { align: "right" });
 
+    // Add discount if exists
+    let currentY = finalY + 15;
+    if (data.discountAmount && parseFloat(data.discountAmount) > 0) {
+      const discountText = data.discountType === 'percentage' 
+        ? `Rabatt (-${parseFloat(data.discountPercentage || 0).toFixed(0)}%):`
+        : `Rabatt:`;
+      doc.text(discountText, 160, currentY, { align: "right" });
+      doc.text(`-${parseFloat(data.discountAmount).toFixed(2)} €`, 190, currentY, {
+        align: "right",
+      });
+      currentY += 5;
+    }
+
     // Dodaj troškove dostave ako postoje
-    doc.text(`${t.shipping}:`, 160, finalY + 15, { align: "right" });
-    doc.text(`${shippingCost.toFixed(2)} €`, 190, finalY + 15, {
+    doc.text(`${t.shipping}:`, 160, currentY, { align: "right" });
+    doc.text(`${shippingCost.toFixed(2)} €`, 190, currentY, {
       align: "right",
     });
+    currentY += 5;
 
     // Zbog jednostavnosti porezni model, stavljamo PDV 0%
-    doc.text(`${t.tax}:`, 160, finalY + 20, { align: "right" });
-    doc.text("0.00 €", 190, finalY + 20, { align: "right" });
+    doc.text(`${t.tax}:`, 160, currentY, { align: "right" });
+    doc.text("0.00 €", 190, currentY, { align: "right" });
+    currentY += 5;
 
     // Ukupan iznos
     doc.setFont("helvetica", "bold");
-    doc.text(`${t.totalAmount}:`, 160, finalY + 25, { align: "right" });
-    doc.text(`${total.toFixed(2)} €`, 190, finalY + 25, { align: "right" });
+    doc.text(`${t.totalAmount}:`, 160, currentY, { align: "right" });
+    doc.text(`${total.toFixed(2)} €`, 190, currentY, { align: "right" });
     doc.setFont("helvetica", "normal");
 
     // Informacije o plaćanju

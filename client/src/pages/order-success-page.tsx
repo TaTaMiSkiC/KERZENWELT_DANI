@@ -341,8 +341,8 @@ export default function OrderSuccessPage() {
                         {(order as any).discountAmount && parseFloat((order as any).discountAmount) > 0 && (
                           <p className="text-sm text-green-600">
                             {(order as any).discountType === 'percentage' 
-                              ? `${t("Rabatt")}: -${parseFloat((order as any).discountPercentage || 0).toFixed(0)}%`
-                              : `${t("Rabatt")}: -${parseFloat((order as any).discountAmount).toFixed(2)}€`
+                              ? `Rabatt: -${parseFloat((order as any).discountPercentage || 0).toFixed(0)}% = -${parseFloat((order as any).discountAmount).toFixed(2)}€`
+                              : `Rabatt: -${parseFloat((order as any).discountAmount).toFixed(2)}€`
                             }
                           </p>
                         )}

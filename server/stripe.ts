@@ -132,7 +132,31 @@ export async function processStripeSession(
       }
     }
 
-    const orderTotal = totalProductAmount + shippingCost;
+    // Calculate discount if user has one
+    let discountAmount = 0;
+    let discountType = null;
+    let discountPercentage = null;
+    
+    if (userId) {
+      const user = await storage.getUser(userId);
+      if (user && user.discountAmount && parseFloat(user.discountAmount) > 0) {
+        const userDiscountAmount = parseFloat(user.discountAmount);
+        const minimumOrder = parseFloat(user.discountMinimumOrder || "0");
+        
+        if (totalProductAmount >= minimumOrder) {
+          discountType = (user as any).discountType || 'fixed';
+          
+          if (discountType === 'percentage') {
+            discountPercentage = userDiscountAmount;
+            discountAmount = (totalProductAmount * userDiscountAmount) / 100;
+          } else {
+            discountAmount = userDiscountAmount;
+          }
+        }
+      }
+    }
+
+    const orderTotal = totalProductAmount + shippingCost - discountAmount;
 
     // Pripremamo podatke za dostavu iz Stripe sesije - koristimo customer_details umjesto shipping
     // jer Stripe.js tipovi ne prepoznaju shipping polje u sesiji, iako je dostupno u podacima
@@ -152,6 +176,9 @@ export async function processStripeSession(
       total: orderTotal.toString(),
       subtotal: totalProductAmount.toString(),
       shippingCost: shippingCost.toString(),
+      discountAmount: discountAmount > 0 ? discountAmount.toString() : null,
+      discountType: discountType,
+      discountPercentage: discountPercentage ? discountPercentage.toString() : null,
       // Add optional fields only if they exist in the schema
       customerNote: session.metadata?.note || "",
     };
