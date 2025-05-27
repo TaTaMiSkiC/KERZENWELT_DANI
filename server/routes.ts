@@ -1243,13 +1243,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           discountBalance: userForDiscount?.discountBalance
         });
         if (userForDiscount) {
-          const currentBalance = parseFloat(userForDiscount.discountBalance || "0");
           const discountType = (userForDiscount as any).discountType || "fixed";
           const discountUsageType = (userForDiscount as any).discountUsageType || "permanent";
           const discountAmount = parseFloat(userForDiscount.discountAmount || "0");
           const orderTotal = parseFloat(validatedData.total);
           
-          if (discountType === "fixed" && currentBalance > 0) {
+          console.log(`[Direct Order] Processing discount:`, {
+            discountType,
+            discountUsageType,
+            discountAmount,
+            orderTotal
+          });
+          
+          if (discountType === "percentage" && discountAmount > 0) {
+            // For percentage discounts, calculate based on order total
+            appliedDiscount = (orderTotal * discountAmount) / 100;
+            console.log(`[Direct Order] Applied percentage discount: ${discountAmount}% = ${appliedDiscount}€, usage type: ${discountUsageType}`);
+            
+            // Remove one-time percentage discounts after use
+            if (discountUsageType === "one_time") {
+              await storage.updateUser(req.user.id, { 
+                discountAmount: "0", 
+                discountType: "fixed",
+                discountUsageType: "permanent",
+                discountExpiryDate: null 
+              });
+              console.log(`[Direct Order] Removed one-time percentage discount for user ${req.user.id}`);
+            }
+          } else if (discountType === "fixed" && discountAmount > 0) {
+            // For fixed discounts, use discount balance system
+            const currentBalance = parseFloat(userForDiscount.discountBalance || userForDiscount.discountAmount || "0");
             appliedDiscount = Math.min(currentBalance, orderTotal);
             
             // For one-time fixed discounts, remove after use regardless of remaining balance
@@ -1275,20 +1298,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 })
               });
               console.log(`[Direct Order] Applied fixed discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
-            }
-          } else if (discountType === "percentage" && discountAmount > 0) {
-            appliedDiscount = (orderTotal * discountAmount) / 100;
-            console.log(`[Direct Order] Applied percentage discount: ${discountAmount}% = ${appliedDiscount}€, usage type: ${discountUsageType}`);
-            
-            // Remove one-time percentage discounts after use
-            if (discountUsageType === "one_time") {
-              await storage.updateUser(req.user.id, { 
-                discountAmount: "0", 
-                discountType: "fixed",
-                discountUsageType: "permanent",
-                discountExpiryDate: null 
-              });
-              console.log(`[Direct Order] Removed one-time percentage discount for user ${req.user.id}`);
             }
           }
         }
