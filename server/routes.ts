@@ -1298,13 +1298,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`[Direct Order] Error processing discount:`, discountError);
       }
 
+      // Calculate the final total after discount
+      const originalTotal = parseFloat(req.body.total);
+      const finalTotal = Math.max(0, originalTotal - appliedDiscount);
+
       // Now create validatedData with the calculated discount
       const validatedData = insertOrderSchema.parse({
         ...req.body,
         userId: req.user.id,
+        total: finalTotal.toString(), // Update total to reflect discount
+        subtotal: originalTotal.toString(), // Keep original total as subtotal
         discountType: currentDiscountType,
         discountPercentage: currentDiscountPercentage.toString(),
-        discountAmount: appliedDiscount.toString(), // Include the calculated discount
+        discountAmount: appliedDiscount.toString(), // Store the actual calculated discount amount
       });
 
       console.log(`[Direct Order] Creating order with discount applied:`, {
