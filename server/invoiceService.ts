@@ -109,6 +109,9 @@ export async function generateInvoiceFromOrder(
       customerNote: order.customerNote,
       total: order.total,
       subtotal: order.subtotal || "0.00",
+      discountAmount: order.discountAmount || "0.00",
+      discountType: (order as any).discountType || "fixed",
+      discountPercentage: (order as any).discountPercentage || "0.00",
       tax: "0.00", // Austrija nema PDV za male poduzetnike
       paymentMethod: order.paymentMethod,
       language: options.language || "hr" // Default to Croatian if not specified
