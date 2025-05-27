@@ -334,12 +334,21 @@ export async function handleStripeWebhook(req: Request, res: Response) {
             // Calculate final total after discount
             const finalTotal = Math.max(0, cartTotal - appliedDiscount);
             
+            // Get discount info for order
+            const userForDiscount = await storage.getUser(parseInt(userId));
+            const discountType = (userForDiscount as any)?.discountType || "fixed";
+            const discountPercentage = discountType === "percentage" 
+              ? parseFloat(userForDiscount?.discountAmount || "0")
+              : 0;
+
             // Kreiraj narudžbu
             const newOrder = await storage.createOrder({
               userId: parseInt(userId),
               total: finalTotal.toString(),
               subtotal: cartTotal.toString(),
               discountAmount: appliedDiscount.toString(),
+              discountType: discountType,
+              discountPercentage: discountPercentage.toString(),
               shippingCost: "0",
               paymentMethod: actualPaymentMethodForCart || "Online Payment",
               status: "pending",
