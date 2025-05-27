@@ -1222,6 +1222,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.id,
       });
 
+      // Process discount for this user before creating order
+      let appliedDiscount = 0;
+      try {
+        const userForDiscount = await storage.getUser(req.user.id);
+        if (userForDiscount) {
+          const currentBalance = parseFloat(userForDiscount.discountBalance || "0");
+          const discountType = (userForDiscount as any).discountType || "fixed";
+          const discountUsageType = (userForDiscount as any).discountUsageType || "permanent";
+          const discountAmount = parseFloat(userForDiscount.discountAmount || "0");
+          const orderTotal = parseFloat(validatedData.total);
+          
+          if (discountType === "fixed" && currentBalance > 0) {
+            appliedDiscount = Math.min(currentBalance, orderTotal);
+            
+            // For one-time fixed discounts, remove after use regardless of remaining balance
+            if (discountUsageType === "one_time") {
+              await storage.updateUser(req.user.id, { 
+                discountAmount: "0", 
+                discountBalance: "0",
+                discountType: "fixed",
+                discountUsageType: "permanent",
+                discountExpiryDate: null 
+              });
+              console.log(`[Direct Order] Removed one-time fixed discount for user ${req.user.id}, applied: ${appliedDiscount}€`);
+            } else {
+              // For permanent discounts, update balance and remove if it reaches 0
+              const newBalance = currentBalance - appliedDiscount;
+              await storage.updateUser(req.user.id, { 
+                discountBalance: newBalance.toString(),
+                // Remove discount if balance reaches 0
+                ...(newBalance <= 0 && { 
+                  discountAmount: "0", 
+                  discountType: "fixed",
+                  discountExpiryDate: null 
+                })
+              });
+              console.log(`[Direct Order] Applied fixed discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
+            }
+          } else if (discountType === "percentage" && discountAmount > 0) {
+            appliedDiscount = (orderTotal * discountAmount) / 100;
+            console.log(`[Direct Order] Applied percentage discount: ${discountAmount}% = ${appliedDiscount}€, usage type: ${discountUsageType}`);
+            
+            // Remove one-time percentage discounts after use
+            if (discountUsageType === "one_time") {
+              await storage.updateUser(req.user.id, { 
+                discountAmount: "0", 
+                discountType: "fixed",
+                discountUsageType: "permanent",
+                discountExpiryDate: null 
+              });
+              console.log(`[Direct Order] Removed one-time percentage discount for user ${req.user.id}`);
+            }
+          }
+        }
+      } catch (discountError) {
+        console.error(`[Direct Order] Error processing discount:`, discountError);
+      }
+
       // Kreiraj narudžbu
       const order = await storage.createOrder(validatedData, req.body.items);
       await storage.clearCart(req.user.id);
