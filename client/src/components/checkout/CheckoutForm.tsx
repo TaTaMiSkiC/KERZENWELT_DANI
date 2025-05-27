@@ -170,11 +170,22 @@ export default function CheckoutForm() {
         !user?.discountMinimumOrder ||
         parseFloat(user.discountMinimumOrder || "0") <= cartTotal;
 
-      // Apply discount if valid
-      const discountAmount =
-        hasDiscount && meetsMinimumOrder
-          ? parseFloat(user.discountAmount || "0")
-          : 0;
+      // Apply discount if valid - handle percentage vs fixed discounts
+      let discountAmount = 0;
+      if (hasDiscount && meetsMinimumOrder) {
+        const discountValue = parseFloat(user.discountAmount || "0");
+        const discountType = (user as any).discountType || "fixed";
+        
+        if (discountType === "percentage") {
+          // For percentage discounts, calculate the actual discount amount
+          discountAmount = (cartTotal * discountValue) / 100;
+          console.log(`Frontend: Applied ${discountValue}% discount = ${discountAmount.toFixed(2)}€ on cart total ${cartTotal}€`);
+        } else {
+          // For fixed discounts, use the amount directly
+          discountAmount = Math.min(discountValue, cartTotal);
+          console.log(`Frontend: Applied fixed discount = ${discountAmount.toFixed(2)}€`);
+        }
+      }
 
       // Create final order data
       const orderData = {
@@ -182,6 +193,10 @@ export default function CheckoutForm() {
         total: (cartTotal + shippingCost - discountAmount).toString(),
         subtotal: cartTotal.toString(),
         discountAmount: discountAmount.toString(),
+        discountType: hasDiscount && meetsMinimumOrder ? ((user as any).discountType || "fixed") : "fixed",
+        discountPercentage: hasDiscount && meetsMinimumOrder && (user as any).discountType === "percentage" 
+          ? parseFloat(user.discountAmount || "0").toString() 
+          : "0",
         shippingCost: shippingCost.toString(),
         items: orderItems,
         paymentMethod: paymentMethod || data.paymentMethod,
