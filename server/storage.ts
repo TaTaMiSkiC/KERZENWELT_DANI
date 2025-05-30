@@ -219,6 +219,12 @@ export interface IStorage {
   getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]>;
   deleteInvoice(id: number): Promise<void>;
 
+  // Product Images methods
+  getProductImages(productId: number): Promise<ProductImage[]>;
+  addImageToProduct(productId: number, imageData: InsertProductImage): Promise<ProductImage>;
+  deleteProductImage(imageId: number): Promise<void>;
+  setPrimaryImage(productId: number, imageId: number): Promise<void>;
+
   // Session store
   sessionStore: SessionStore;
 }
