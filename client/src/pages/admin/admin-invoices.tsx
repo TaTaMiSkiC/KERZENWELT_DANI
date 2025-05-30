@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/hooks/use-language";
+import { useTax } from "@/hooks/use-tax";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -268,6 +269,7 @@ export default function AdminInvoices() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useLanguage();
+  const { shouldShowTax, calculateTax, calculateNetPrice, calculateGrossPrice } = useTax();
 
   // ✅ NOVI POZIVI HOOKOVA ZA DOHVAĆANJE SPECIFIČNIH POSTAVKI
   // Koristimo useSettingValue za dohvaćanje samo vrijednosti postavke

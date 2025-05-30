@@ -5,6 +5,7 @@ import {
   useSettingValue, // Behalten wir
 } from "@/hooks/use-settings-api";
 import { useLanguage } from "@/hooks/use-language";
+import { useTax } from "@/hooks/use-tax";
 // import { queryClient } from "@/lib/queryClient"; // queryClient wird nicht mehr direkt im useEffect benötigt, da setInterval entfernt wird
 import { Helmet } from "react-helmet";
 import { useLocation } from "wouter";
@@ -22,6 +23,7 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const [location, navigate] = useLocation();
   const { t, translateText } = useLanguage();
+  const { formatPriceWithTax, shouldShowTax, calculateGrossPrice, calculateTax, calculateNetPrice } = useTax();
 
   // ✅ VRAĆENO: State za direktno dohvaćene vrijednosti postavki dostave
   const [shippingSettings, setShippingSettings] = useState<{
@@ -342,10 +344,27 @@ export default function CheckoutPage() {
 
                   {/* Order totals */}
                   <div className="mt-6 pt-6 border-t space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Zwischensumme</span>
-                      <span>{cartTotal.toFixed(2)} €</span>
-                    </div>
+                    {shouldShowTax() ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Nettobetrag</span>
+                          <span>{calculateNetPrice(cartTotal).toFixed(2)} €</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">MwSt. ({parseFloat(calculateTax(cartTotal) > 0 ? ((calculateTax(cartTotal) / calculateNetPrice(cartTotal)) * 100).toFixed(0) : "0")}%)</span>
+                          <span>{calculateTax(cartTotal).toFixed(2)} €</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Zwischensumme (inkl. MwSt.)</span>
+                          <span>{calculateGrossPrice(cartTotal).toFixed(2)} €</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Zwischensumme</span>
+                        <span>{cartTotal.toFixed(2)} €</span>
+                      </div>
+                    )}
 
                     <div className="flex justify-between">
                       <span className="text-gray-600">Versand:</span>
