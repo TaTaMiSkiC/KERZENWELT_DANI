@@ -298,6 +298,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     const uploadedUrl = await handleImageUpload(file);
     if (uploadedUrl && product?.id) {
       addImageMutation.mutate({
+        productId: product.id,
         imageUrl: uploadedUrl,
         altText: file.name || null,
         sortOrder: productImages.length,
@@ -439,7 +440,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                       {categoriesLoading ? (
                         <div className="py-2 text-center">{t("admin.general.loading")}</div>
                       ) : (
-                        categories?.map((category: any) => (
+                        (categories || []).map((category: any) => (
                           <SelectItem 
                             key={category.id} 
                             value={category.id.toString()}
@@ -918,7 +919,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                   {scentsLoading ? (
                     <div>{t("admin.product.loadingScents")}</div>
                   ) : (
-                    scents?.map((scent: any) => (
+                    (scents || []).map((scent: any) => (
                       <div key={scent.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`scent-${scent.id}`}
@@ -955,7 +956,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                   {colorsLoading ? (
                     <div>{t("admin.product.loadingColors")}</div>
                   ) : (
-                    colors?.map((color: any) => (
+                    (colors || []).map((color: any) => (
                       <div key={color.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`color-${color.id}`}
