@@ -8,12 +8,21 @@ import {
 import { generateInvoiceFromOrder } from "./invoiceService"; // Importiere Rechnungsgenerierungsfunktion
 
 // Stripe mit dem geheimen Schlüssel aus den Umgebungsvariablen initialisieren
+// if (!process.env.STRIPE_SECRET_KEY_TEST) {
+//   throw new Error("Missing required Stripe secret: STRIPE_SECRET_KEY_TEST");
+// }
+
+// // Initialisierung der Stripe-Instanz
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST);
+// export { stripe };
+
+// Stripe mit dem geheimen Schlüssel aus den Umgebungsvariablen initialisieren
 if (!process.env.STRIPE_SECRET_KEY_TEST) {
-  throw new Error("Missing required Stripe secret: STRIPE_SECRET_KEY_TEST");
+  throw new Error("Missing required Stripe secret: STRIPE_SECRET_KEY");
 }
 
 // Initialisierung der Stripe-Instanz
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export { stripe };
 
 /**
