@@ -54,6 +54,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [additionalImages, setAdditionalImages] = useState<string[]>(
+    product?.additionalImages || []
+  );
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   // Create extended schema with validations
   const validationSchema = insertProductSchema.extend({
@@ -79,6 +83,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     materials: z.string().optional().nullable(),
     instructions: z.string().optional().nullable(),
     maintenance: z.string().optional().nullable(),
+    additionalImages: z.array(z.string()).optional(),
   });
 
   // Create form with validation

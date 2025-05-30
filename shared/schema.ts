@@ -92,6 +92,7 @@ export const products = pgTable("products", {
   description: text("description").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   imageUrl: text("image_url"),
+  additionalImages: json("additional_images").$type<string[]>().default([]),
   categoryId: integer("category_id"),
   stock: integer("stock").default(0).notNull(),
   scent: text("scent"), // Direktno pohranjen miris za proizvod
