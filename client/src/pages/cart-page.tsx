@@ -7,6 +7,7 @@ import {
   useSettingValue, // Behalten wir
 } from "@/hooks/use-settings-api";
 import { useLanguage } from "@/hooks/use-language";
+import { useTax } from "@/hooks/use-tax";
 import { Helmet } from "react-helmet";
 import Layout from "@/components/layout/Layout";
 import CartItem from "@/components/cart/CartItem";
@@ -51,6 +52,7 @@ export default function CartPage() {
   } = useCart();
   const { user } = useAuth();
   const { t, translateText } = useLanguage();
+  const { formatPriceWithTax, shouldShowTax, calculateGrossPrice, calculateTax } = useTax();
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
 
