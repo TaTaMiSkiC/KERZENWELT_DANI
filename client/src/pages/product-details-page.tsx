@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import ProductViewModal from "@/components/product/ProductViewModal";
 import { useLanguage } from "@/hooks/use-language";
+import { useTax } from "@/hooks/use-tax";
 import {
   Minus,
   Plus,
@@ -106,6 +107,7 @@ export default function ProductDetailsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t, translateText, translateObject } = useLanguage();
+  const { formatPriceWithTax, shouldShowTax } = useTax();
 
   // Fetch product details
   const { data: product, isLoading: productLoading } = useQuery<Product>({
@@ -463,7 +465,15 @@ export default function ProductDetailsPage() {
 
               {/* Price */}
               <div className="text-xl font-bold text-primary mb-4">
-                {parseFloat(product.price).toFixed(2)} €
+                {shouldShowTax() ? (
+                  <div>
+                    <div className="text-xl font-bold">
+                      {formatPriceWithTax(parseFloat(product.price))}
+                    </div>
+                  </div>
+                ) : (
+                  <div>{parseFloat(product.price).toFixed(2)} €</div>
+                )}
               </div>
 
               {/* Short description */}

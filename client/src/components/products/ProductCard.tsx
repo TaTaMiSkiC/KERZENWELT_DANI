@@ -8,6 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
 import ProductViewModal from "@/components/product/ProductViewModal";
 import { useLanguage } from "@/hooks/use-language";
+import { useTax } from "@/hooks/use-tax";
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { t, translateText } = useLanguage();
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { formatPriceWithTax, shouldShowTax } = useTax();
   const [isHovered, setIsHovered] = useState(false);
   const [productViewModalOpen, setProductViewModalOpen] = useState(false);
 
@@ -132,9 +134,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           <div className="flex justify-between items-center">
-            <span className="font-accent font-medium text-primary">
-              {parseFloat(price).toFixed(2)} €
-            </span>
+            <div className="font-accent font-medium text-primary">
+              {shouldShowTax() ? (
+                <div className="text-sm">
+                  <div className="font-medium">
+                    {formatPriceWithTax(parseFloat(price))}
+                  </div>
+                </div>
+              ) : (
+                <span>{parseFloat(price).toFixed(2)} €</span>
+              )}
+            </div>
             <Button
               size="sm"
               onClick={handleShowOptions}
