@@ -158,10 +158,9 @@ function Router() {
           component={AdminSubscribers}
         />
       </Route>
-      <Route path="/admin/inbox">
-        <AdminMailboxPage />
+      <Route path="/admin/emails">
         <ProtectedRoute
-          path="/admin/AdminMailboxPage"
+          path="/admin/emails"
           component={AdminMailboxPage}
         />
       </Route>
