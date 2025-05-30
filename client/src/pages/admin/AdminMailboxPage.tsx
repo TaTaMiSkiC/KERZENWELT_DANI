@@ -329,187 +329,192 @@ export default function AdminMailboxPage() {
 
   return (
     <AdminLayout title={t("admin.inbox")}>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>{t("admin.mailbox.title")}</CardTitle>
-            <CardDescription>{t("admin.mailbox.description")}</CardDescription>
-          </div>
-          <Button onClick={handleComposeNew} className="flex gap-2">
-            <MailPlus size={18} />
-            {t("admin.mailbox.compose")}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {selectedConversation ? (
-            <div className="space-y-4">
-              <Button
-                variant="ghost"
-                onClick={() => setSelectedConversation(null)}
-                className="mb-4"
-              >
-                <ChevronLeft size={20} className="mr-2" />
-                {t("admin.mailbox.backToInbox")}
-              </Button>
-              <h2 className="text-xl font-bold">
-                {selectedConversation.subject}
-              </h2>
-              <p className="text-sm text-gray-500">
-                {t("admin.mailbox.participants")}:{" "}
-                {selectedConversation.participants.join(", ")}
-              </p>
-
-              {/* ✅ KORREKTUR: Max-Höhe und Scroll-Verhalten für Nachrichtenliste */}
-              <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-4">
-                {selectedConversation.messages
-                  .sort(
-                    (a, b) =>
-                      new Date(a.receivedAt).getTime() -
-                      new Date(b.receivedAt).getTime(),
-                  )
-                  .map((message) => (
-                    <Card
-                      key={message.id}
-                      className={
-                        message.type === "outbound"
-                          ? "bg-blue-50 border-blue-200"
-                          : "bg-gray-50 border-gray-200"
-                      }
-                    >
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-semibold">
-                          {message.type === "inbound"
-                            ? t("admin.mailbox.from")
-                            : t("admin.mailbox.to")}
-                          :{" "}
-                          {message.type === "inbound"
-                            ? message.senderName || message.senderEmail
-                            : message.recipientEmail}
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                          {format(new Date(message.receivedAt), "PPP p", {
-                            locale: currentLocale,
-                          })}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="whitespace-pre-wrap text-sm">
-                          {message.body}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-              <div className="mt-6 flex justify-end">
-                <Button
-                  onClick={handleReplyToConversation}
-                  className="flex gap-2"
-                >
-                  <Reply size={18} />
-                  {t("admin.mailbox.reply")}
-                </Button>
-              </div>
+      <div className="h-full flex flex-col">
+        <Card className="flex-1 flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
+            <div>
+              <CardTitle>{t("admin.mailbox.title")}</CardTitle>
+              <CardDescription>{t("admin.mailbox.description")}</CardDescription>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center space-x-2 mb-4">
-                <Search className="h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder={t("admin.mailbox.searchPlaceholder")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
+            <Button onClick={handleComposeNew} className="flex gap-2">
+              <MailPlus size={18} />
+              {t("admin.mailbox.compose")}
+            </Button>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col overflow-hidden">
+            {selectedConversation ? (
+              <div className="flex flex-col h-full">
+                <div className="flex-shrink-0 mb-4">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setSelectedConversation(null)}
+                    className="mb-4"
+                  >
+                    <ChevronLeft size={20} className="mr-2" />
+                    {t("admin.mailbox.backToInbox")}
+                  </Button>
+                  <h2 className="text-xl font-bold">
+                    {selectedConversation.subject}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {t("admin.mailbox.participants")}:{" "}
+                    {selectedConversation.participants.join(", ")}
+                  </p>
+                </div>
 
-              {/* ✅ KORREKTUR: Max-Höhe und Scroll-Verhalten für die Konversationsliste */}
-              <div className="max-h-[60vh] overflow-y-auto">
-                {filteredConversations.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    {t("admin.mailbox.noEmails")}
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[200px]">
-                          {t("admin.mailbox.conversation")}
-                        </TableHead>
-                        <TableHead>{t("admin.mailbox.subject")}</TableHead>
-                        <TableHead className="w-[180px] text-right">
-                          {t("admin.mailbox.lastActivity")}
-                        </TableHead>
-                        <TableHead className="w-[60px] text-center">
-                          {t("admin.mailbox.messages")}
-                        </TableHead>
-                        <TableHead className="w-[60px] text-center">
-                          {t("admin.mailbox.actions")}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredConversations.map((conv) => (
-                        <TableRow
-                          key={conv.id}
-                          className={
-                            conv.unreadCount > 0
-                              ? "bg-blue-50 hover:bg-blue-100"
-                              : "hover:bg-gray-50"
-                          }
-                          onClick={() => handleOpenConversation(conv)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <TableCell className="font-medium">
-                            {conv.participants.join(", ")}
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-semibold">
-                              {conv.unreadCount > 0 &&
-                                `[${t("admin.mailbox.unread")}] `}
-                            </span>
-                            {conv.subject}
-                          </TableCell>
-                          <TableCell className="text-right text-sm text-muted-foreground">
-                            {format(new Date(conv.lastActivity), "PPP p", {
+                <div className="flex-1 overflow-y-auto space-y-6 pr-4">
+                  {selectedConversation.messages
+                    .sort(
+                      (a, b) =>
+                        new Date(a.receivedAt).getTime() -
+                        new Date(b.receivedAt).getTime(),
+                    )
+                    .map((message) => (
+                      <Card
+                        key={message.id}
+                        className={
+                          message.type === "outbound"
+                            ? "bg-blue-50 border-blue-200"
+                            : "bg-gray-50 border-gray-200"
+                        }
+                      >
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-semibold">
+                            {message.type === "inbound"
+                              ? t("admin.mailbox.from")
+                              : t("admin.mailbox.to")}
+                            :{" "}
+                            {message.type === "inbound"
+                              ? message.senderName || message.senderEmail
+                              : message.recipientEmail}
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            {format(new Date(message.receivedAt), "PPP p", {
                               locale: currentLocale,
                             })}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center">
-                              <MessageCircle
-                                size={16}
-                                className="mr-1 text-muted-foreground"
-                              />
-                              {conv.messages.length}
-                              {conv.unreadCount > 0 && (
-                                <span className="ml-1 text-xs font-bold text-blue-600">
-                                  ({conv.unreadCount})
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenConversation(conv);
-                              }}
-                            >
-                              <Eye size={18} />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="whitespace-pre-wrap text-sm">
+                            {message.body}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+                
+                <div className="flex-shrink-0 mt-6 flex justify-end">
+                  <Button
+                    onClick={handleReplyToConversation}
+                    className="flex gap-2"
+                  >
+                    <Reply size={18} />
+                    {t("admin.mailbox.reply")}
+                  </Button>
+                </div>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="flex-shrink-0 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Search className="h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder={t("admin.mailbox.searchPlaceholder")}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  {filteredConversations.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {t("admin.mailbox.noEmails")}
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[200px]">
+                            {t("admin.mailbox.conversation")}
+                          </TableHead>
+                          <TableHead>{t("admin.mailbox.subject")}</TableHead>
+                          <TableHead className="w-[180px] text-right">
+                            {t("admin.mailbox.lastActivity")}
+                          </TableHead>
+                          <TableHead className="w-[60px] text-center">
+                            {t("admin.mailbox.messages")}
+                          </TableHead>
+                          <TableHead className="w-[60px] text-center">
+                            {t("admin.mailbox.actions")}
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredConversations.map((conv) => (
+                          <TableRow
+                            key={conv.id}
+                            className={
+                              conv.unreadCount > 0
+                                ? "bg-blue-50 hover:bg-blue-100"
+                                : "hover:bg-gray-50"
+                            }
+                            onClick={() => handleOpenConversation(conv)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            <TableCell className="font-medium">
+                              {conv.participants.join(", ")}
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-semibold">
+                                {conv.unreadCount > 0 &&
+                                  `[${t("admin.mailbox.unread")}] `}
+                              </span>
+                              {conv.subject}
+                            </TableCell>
+                            <TableCell className="text-right text-sm text-muted-foreground">
+                              {format(new Date(conv.lastActivity), "PPP p", {
+                                locale: currentLocale,
+                              })}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center justify-center">
+                                <MessageCircle
+                                  size={16}
+                                  className="mr-1 text-muted-foreground"
+                                />
+                                {conv.messages.length}
+                                {conv.unreadCount > 0 && (
+                                  <span className="ml-1 text-xs font-bold text-blue-600">
+                                    ({conv.unreadCount})
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenConversation(conv);
+                                }}
+                              >
+                                <Eye size={18} />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Dialog open={composeDialogOpen} onOpenChange={setComposeDialogOpen}>
         <DialogContent className="sm:max-w-[800px]">
