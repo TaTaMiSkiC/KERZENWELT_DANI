@@ -27,8 +27,6 @@ import {
   type InsertProductScent,
   type ProductColor,
   type InsertProductColor,
-  type ProductImage,
-  type InsertProductImage,
   type Collection,
   type InsertCollection,
   type ProductCollection,
@@ -53,7 +51,6 @@ import {
   colors,
   productScents,
   productColors,
-  productImages,
   collections,
   productCollections,
   invoices,
@@ -141,13 +138,6 @@ export interface IStorage {
   addColorToProduct(productId: number, colorId: number): Promise<ProductColor>;
   removeColorFromProduct(productId: number, colorId: number): Promise<void>;
 
-  // Product Image methods
-  getProductImages(productId: number): Promise<ProductImage[]>;
-  addImageToProduct(productId: number, imageData: InsertProductImage): Promise<ProductImage>;
-  updateProductImage(id: number, imageData: Partial<InsertProductImage>): Promise<ProductImage | undefined>;
-  deleteProductImage(id: number): Promise<void>;
-  setPrimaryImage(productId: number, imageId: number): Promise<void>;
-
   // Order methods
   getOrder(id: number): Promise<Order | undefined>;
   getAllOrders(): Promise<Order[]>;
@@ -218,12 +208,6 @@ export interface IStorage {
   ): Promise<Invoice>;
   getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]>;
   deleteInvoice(id: number): Promise<void>;
-
-  // Product Images methods
-  getProductImages(productId: number): Promise<ProductImage[]>;
-  addImageToProduct(productId: number, imageData: InsertProductImage): Promise<ProductImage>;
-  deleteProductImage(imageId: number): Promise<void>;
-  setPrimaryImage(productId: number, imageId: number): Promise<void>;
 
   // Session store
   sessionStore: SessionStore;
@@ -1775,50 +1759,6 @@ export class DatabaseStorage implements IStorage {
 
   async deletePage(id: number): Promise<void> {
     await db.delete(pages).where(eq(pages.id, id));
-  }
-
-  // Product Image methods
-  async getProductImages(productId: number): Promise<ProductImage[]> {
-    return await db
-      .select()
-      .from(productImages)
-      .where(eq(productImages.productId, productId))
-      .orderBy(productImages.sortOrder, productImages.createdAt);
-  }
-
-  async addImageToProduct(productId: number, imageData: InsertProductImage): Promise<ProductImage> {
-    const [image] = await db
-      .insert(productImages)
-      .values({ ...imageData, productId })
-      .returning();
-    return image;
-  }
-
-  async updateProductImage(id: number, imageData: Partial<InsertProductImage>): Promise<ProductImage | undefined> {
-    const [updatedImage] = await db
-      .update(productImages)
-      .set(imageData)
-      .where(eq(productImages.id, id))
-      .returning();
-    return updatedImage;
-  }
-
-  async deleteProductImage(id: number): Promise<void> {
-    await db.delete(productImages).where(eq(productImages.id, id));
-  }
-
-  async setPrimaryImage(productId: number, imageId: number): Promise<void> {
-    // First, set all images for this product to non-primary
-    await db
-      .update(productImages)
-      .set({ isPrimary: false })
-      .where(eq(productImages.productId, productId));
-    
-    // Then set the specified image as primary
-    await db
-      .update(productImages)
-      .set({ isPrimary: true })
-      .where(eq(productImages.id, imageId));
   }
 }
 

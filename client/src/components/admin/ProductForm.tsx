@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { Product, insertProductSchema, ProductImage, InsertProductImage } from "@shared/schema";
+import { Product, insertProductSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { LoaderCircle, Upload, Link, ImageIcon, X, Star, StarOff, MoveUp, MoveDown } from "lucide-react";
+import { LoaderCircle, Upload, Link, ImageIcon } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -54,11 +54,6 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [uploadMethod, setUploadMethod] = useState<'url' | 'file'>('url');
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Multiple images state
-  const [productImages, setProductImages] = useState<ProductImage[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState("");
-  const [newImageAltText, setNewImageAltText] = useState("");
 
   // Create extended schema with validations
   const validationSchema = insertProductSchema.extend({
@@ -126,56 +121,6 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     queryKey: ["/api/colors"],
   });
 
-  // Fetch product images
-  const { data: images } = useQuery<ProductImage[]>({
-    queryKey: ["/api/products", product?.id, "images"],
-    enabled: !!product?.id,
-  });
-
-  // Mutations for managing product images
-  const addImageMutation = useMutation({
-    mutationFn: async (imageData: InsertProductImage) => {
-      if (!product?.id) throw new Error("Product ID required");
-      const response = await apiRequest("POST", `/api/products/${product.id}/images`, imageData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", product?.id, "images"] });
-      setNewImageUrl("");
-      setNewImageAltText("");
-      toast({
-        title: t("admin.product.imageAdded"),
-        description: t("admin.product.imageAddedSuccess"),
-      });
-    },
-  });
-
-  const deleteImageMutation = useMutation({
-    mutationFn: async (imageId: number) => {
-      await apiRequest("DELETE", `/api/products/images/${imageId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", product?.id, "images"] });
-      toast({
-        title: t("admin.product.imageDeleted"),
-        description: t("admin.product.imageDeletedSuccess"),
-      });
-    },
-  });
-
-  const setPrimaryImageMutation = useMutation({
-    mutationFn: async ({ productId, imageId }: { productId: number; imageId: number }) => {
-      await apiRequest("PUT", `/api/products/${productId}/images/${imageId}/primary`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products", product?.id, "images"] });
-      toast({
-        title: t("admin.product.primaryImageSet"),
-        description: t("admin.product.primaryImageSetSuccess"),
-      });
-    },
-  });
-
   // Fetch product scents
   useEffect(() => {
     if (product) {
@@ -209,13 +154,6 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       fetchProductColors();
     }
   }, [product]);
-
-  // Update product images when data changes
-  useEffect(() => {
-    if (images) {
-      setProductImages(images);
-    }
-  }, [images]);
 
   // Handler za upload slike
   const handleImageUpload = async (file: File) => {
@@ -266,44 +204,6 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     const file = event.target.files?.[0];
     if (file) {
       await handleImageUpload(file);
-    }
-  };
-
-  // Handlers for multiple images
-  const handleAddImage = () => {
-    if (!newImageUrl.trim()) return;
-    
-    if (product?.id) {
-      addImageMutation.mutate({
-        productId: product.id,
-        imageUrl: newImageUrl.trim(),
-        altText: newImageAltText.trim() || null,
-        sortOrder: productImages.length,
-        isPrimary: productImages.length === 0, // First image is primary by default
-      });
-    }
-  };
-
-  const handleDeleteImage = (imageId: number) => {
-    deleteImageMutation.mutate(imageId);
-  };
-
-  const handleSetPrimary = (imageId: number) => {
-    if (product?.id) {
-      setPrimaryImageMutation.mutate({ productId: product.id, imageId });
-    }
-  };
-
-  const handleAddImageFromUpload = async (file: File) => {
-    const uploadedUrl = await handleImageUpload(file);
-    if (uploadedUrl && product?.id) {
-      addImageMutation.mutate({
-        productId: product.id,
-        imageUrl: uploadedUrl,
-        altText: file.name || null,
-        sortOrder: productImages.length,
-        isPrimary: productImages.length === 0,
-      });
     }
   };
 
@@ -440,7 +340,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                       {categoriesLoading ? (
                         <div className="py-2 text-center">{t("admin.general.loading")}</div>
                       ) : (
-                        (categories || []).map((category: any) => (
+                        categories?.map((category: any) => (
                           <SelectItem 
                             key={category.id} 
                             value={category.id.toString()}
@@ -588,125 +488,6 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                 </div>
               )}
             </div>
-
-            {/* Multiple Images Section - Only show for existing products */}
-            {product && (
-              <div className="col-span-full space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">{t("admin.product.multipleImages")}</h3>
-                </div>
-                
-                {/* Add new image form */}
-                <div className="p-4 border border-border rounded-lg bg-muted/20">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">{t("admin.product.imageUrl")}</label>
-                      <Input
-                        placeholder={t("admin.product.imageUrlPlaceholder")}
-                        value={newImageUrl}
-                        onChange={(e) => setNewImageUrl(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">{t("admin.product.altText")}</label>
-                      <Input
-                        placeholder="Alternative text for image"
-                        value={newImageAltText}
-                        onChange={(e) => setNewImageAltText(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        onClick={handleAddImage}
-                        disabled={!newImageUrl.trim() || addImageMutation.isPending}
-                        className="w-full"
-                      >
-                        {addImageMutation.isPending ? (
-                          <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <ImageIcon className="h-4 w-4 mr-2" />
-                        )}
-                        {t("admin.product.addImage")}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Images gallery */}
-                <div className="space-y-4">
-                  {productImages.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      {t("admin.product.noImages")}
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {productImages.map((image, index) => (
-                        <div key={image.id} className="relative group border border-border rounded-lg overflow-hidden">
-                          <div className="aspect-square relative">
-                            <img
-                              src={image.imageUrl}
-                              alt={image.altText || `Product image ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = '/placeholder-image.png';
-                              }}
-                            />
-                            
-                            {/* Primary badge */}
-                            {image.isPrimary && (
-                              <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
-                                {t("admin.product.primaryImage")}
-                              </div>
-                            )}
-                            
-                            {/* Action buttons */}
-                            <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {!image.isPrimary && (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="secondary"
-                                  onClick={() => handleSetPrimary(image.id)}
-                                  disabled={setPrimaryImageMutation.isPending}
-                                  className="h-8 w-8 p-0"
-                                  title={t("admin.product.setPrimary")}
-                                >
-                                  <Star className="h-4 w-4" />
-                                </Button>
-                              )}
-                              
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleDeleteImage(image.id)}
-                                disabled={deleteImageMutation.isPending}
-                                className="h-8 w-8 p-0"
-                                title={t("admin.product.deleteImage")}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          
-                          {/* Image info */}
-                          <div className="p-3 bg-card">
-                            <p className="text-sm font-medium truncate">
-                              {image.altText || `Image ${index + 1}`}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Order: {image.sortOrder}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
             
             {/* Description */}
             <FormField
@@ -919,7 +700,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                   {scentsLoading ? (
                     <div>{t("admin.product.loadingScents")}</div>
                   ) : (
-                    (scents || []).map((scent: any) => (
+                    scents?.map((scent: any) => (
                       <div key={scent.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`scent-${scent.id}`}
@@ -956,7 +737,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                   {colorsLoading ? (
                     <div>{t("admin.product.loadingColors")}</div>
                   ) : (
-                    (colors || []).map((color: any) => (
+                    colors?.map((color: any) => (
                       <div key={color.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`color-${color.id}`}
