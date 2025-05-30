@@ -718,10 +718,11 @@ export async function createCheckoutSession(req: Request, res: Response) {
             name: "Versandkosten",
             description: "Standardversand",
           },
-          unit_amount: Math.round(standardShippingRate * 100),
+          unit_amount: Math.round(shippingCost * 100),
         },
         quantity: 1,
       });
+      console.log(`[DEBUG STRIPE] Dodani troškovi dostave: ${shippingCost}€`);
     }
 
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
