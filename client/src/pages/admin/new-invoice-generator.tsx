@@ -100,6 +100,9 @@ export const generateInvoicePdf = (data: any, toast: any) => {
     const lang = data.language || "hr";
     console.log("Korišteni jezik:", lang);
 
+    // Provjeri MwSt. postavke
+    const shouldShowTax = data.taxRate > 0;
+
     // Određivanje datuma
     const currentDate = new Date();
     const formattedDate = format(currentDate, "dd.MM.yyyy.");
@@ -477,10 +480,14 @@ export const generateInvoicePdf = (data: any, toast: any) => {
     });
     currentY += 5;
 
-    // 4. Porez (Tax) - PDV
-    doc.text(`${t.tax}:`, 160, currentY, { align: "right" });
-    doc.text("0.00 €", 190, currentY, { align: "right" });
-    currentY += 5;
+    // 4. Porez (Tax) - PDV - prikaži samo ako je potrebno
+    if (shouldShowTax) {
+      const taxAmount = parseFloat(data.tax || "0");
+      const taxRate = data.taxRate || 20;
+      doc.text(`MwSt. (${taxRate}%):`, 160, currentY, { align: "right" });
+      doc.text(`${taxAmount.toFixed(2)} €`, 190, currentY, { align: "right" });
+      currentY += 5;
+    }
 
     // 5. Ukupan Iznos (Total Amount)
     doc.setFont("helvetica", "bold");

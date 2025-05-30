@@ -798,7 +798,14 @@ export default function AdminInvoices() {
           }),
         );
 
-        // Pripremi podatke za PDF sa svim potrebnim poljima
+        // Dohvati MwSt. postavke
+        const settingsResponse = await fetch("/api/settings");
+        const settings = await settingsResponse.json();
+        const taxRateString = settings.find((s: any) => s.key === "taxRate")?.value || "0";
+        const taxRate = parseFloat(taxRateString);
+        const taxIncluded = settings.find((s: any) => s.key === "taxIncluded")?.value === "true";
+
+        // Pripremi podatke za PDF sa svim potrebnim poljima uključujući MwSt.
         const invoiceData = {
           invoiceNumber: invoice.invoiceNumber,
           createdAt: invoice.createdAt,
@@ -824,6 +831,9 @@ export default function AdminInvoices() {
           discountPercentage: parseFloat(invoice.discountPercentage || "0"),
           tax: parseFloat(invoice.tax || "0"),
           total: parseFloat(invoice.total || "0"),
+          // MwSt. informacije
+          taxRate: taxRate,
+          taxIncluded: taxIncluded,
         };
 
         console.log("Preparing data for PDF:", invoiceData);
