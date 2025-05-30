@@ -101,6 +101,7 @@ export default function ProductDetailsPage() {
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
   const [productViewModalOpen, setProductViewModalOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<number | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -384,15 +385,48 @@ export default function ProductDetailsPage() {
       <section className="bg-background py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Product image */}
+            {/* Product image gallery */}
             <div className="w-full md:w-1/2">
-              <div className="bg-neutral rounded-lg overflow-hidden">
+              {/* Main image */}
+              <div className="bg-neutral rounded-lg overflow-hidden mb-4">
                 <img
-                  src={product.imageUrl}
+                  src={(() => {
+                    const allImages = product.imageUrl ? [product.imageUrl, ...(product.additionalImages || [])] : (product.additionalImages || []);
+                    return allImages[selectedImageIndex] || product.imageUrl;
+                  })()}
                   alt={product.name}
                   className="w-full h-auto object-cover"
                 />
               </div>
+              
+              {/* Image thumbnails */}
+              {(() => {
+                const allImages = product.imageUrl ? [product.imageUrl, ...(product.additionalImages || [])] : (product.additionalImages || []);
+                if (allImages.length > 1) {
+                  return (
+                    <div className="grid grid-cols-4 gap-2">
+                      {allImages.map((imageUrl, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`relative rounded-md overflow-hidden border-2 transition-colors ${
+                            selectedImageIndex === index 
+                              ? 'border-primary' 
+                              : 'border-transparent hover:border-muted-foreground'
+                          }`}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`${product.name} ${index + 1}`}
+                            className="w-full h-16 object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Product info */}
