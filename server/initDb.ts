@@ -231,7 +231,7 @@ async function checkContactSettingsExist() {
 
 // Funkcija za stvaranje zadanih kontakt postavki
 async function createDefaultContactSettings() {
-  console.log("Kreiranje kontakt postavki...");
+  // console.log("Kreiranje kontakt postavki...");
 
   await db.insert(settings).values([
     {
@@ -274,7 +274,7 @@ async function checkGeneralSettingsExist() {
 
 // Funkcija za stvaranje zadanih općih postavki
 async function createDefaultGeneralSettings() {
-  console.log("Kreiranje općih postavki...");
+  // console.log("Kreiranje općih postavki...");
 
   await db.insert(settings).values([
     {
