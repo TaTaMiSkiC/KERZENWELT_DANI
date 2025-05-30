@@ -340,7 +340,7 @@ export default function AdminMailboxPage() {
             {t("admin.mailbox.compose")}
           </Button>
         </CardHeader>
-        <CardContent className="max-h-[70vh] overflow-y-auto">
+        <CardContent className="max-h-[60vh] overflow-y-auto">
           {selectedConversation ? (
             <div className="space-y-4">
               <Button
