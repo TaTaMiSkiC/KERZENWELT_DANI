@@ -601,7 +601,7 @@ export default function OrderDetailsPage() {
               {orderWithItems.shippingCost && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    {t("orders.shipping")}:
+                    {t("admin.orders.shippingCost")}:
                   </span>
                   <span>
                     {parseFloat(orderWithItems.shippingCost).toFixed(2)} €

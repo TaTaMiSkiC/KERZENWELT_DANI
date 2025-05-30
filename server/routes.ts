@@ -4098,7 +4098,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           generatedNote:
             "Ovo je automatski generirani racun i valjan je bez potpisa i pecata",
           exemptionNote:
-            "Poduzetnik nije u sustavu PDV-a, PDV nije obracunat temeljem odredbi posebnog postupka oporezivanja za male porezne obveznike.",
+            "Poduzetnik podliježe pravilu o malim poduzetnicima prema § 6 st. 1 t. 27 Zakona o PDV-u. PDV se ne obračunava.",
           orderItems: "Stavke narudzbe",
           shipping: "Dostava",
           customerNote: "Napomena kupca",
@@ -4130,7 +4130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           generatedNote:
             "This is an automatically generated invoice and is valid without signature or stamp",
           exemptionNote:
-            "The entrepreneur is not in the VAT system, VAT is not calculated based on the provisions of the special taxation procedure for small taxpayers.",
+            "The entrepreneur falls under the small business regulation according to § 6 para. 1 item 27 of the VAT Act. No VAT is charged.",
           orderItems: "Order items",
           shipping: "Shipping",
           customerNote: "Customer note",
@@ -4162,7 +4162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           generatedNote:
             "Dies ist eine automatisch generierte Rechnung und ist ohne Unterschrift und Stempel gültig",
           exemptionNote:
-            "Der Unternehmer ist nicht im Mehrwertsteuersystem, MwSt. wird nicht berechnet gemäß den Bestimmungen des Kleinunternehmerregelung.",
+            "Der Unternehmer fällt unter die Kleinunternehmerregelung gemäß § 6 Abs. 1 Z 27 UStG. Es wird keine Umsatzsteuer berechnet.",
           orderItems: "Bestellpositionen",
           shipping: "Versand",
           customerNote: "Kundenhinweis",

@@ -185,6 +185,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.quote":
       "Jede Kerze, die unsere Werkstatt verlässt, trägt ein Stück unserer Seele und Leidenschaft für dieses Handwerk.",
     "auth.founder": "- Dani, Gründerin",
+    "orders.subtotal": "Zwischensumme",
 
     // Orders Page
     "orders.myOrders": "Meine Bestellungen",
@@ -230,7 +231,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.quantity": "Menge",
     "orders.unitPrice": "Preis",
     "orders.itemTotal": "Gesamt",
-    "orders.pricesIncludeTax": "Alle Preise inkl. MwSt.",
+    "orders.pricesIncludeTax":
+      "Gemäß § 6 Abs. 1 Z 27 UStG wird keine Umsatzsteuer berechnet.",
     "orders.orderItems": "Bestellpositionen",
     "orders.orderDetails": "Bestelldetails",
     "orders.scent": "Duft",
@@ -2111,7 +2113,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.loginErrorMessage": "Pogrešno korisničko ime ili lozinka.",
 
     "auth.registerSuccessTitle": "Registracija uspješna",
-    "auth.registerSuccessMessage": "Dobrodošli, {username}!",
+    "auth.registerSuccessMessage": "Dobrodo �li, {username}!",
     "auth.registerErrorTitle": "Registracija nije uspjela",
     "auth.registerErrorMessage": "Korisničko ime ili email već postoji.",
 
@@ -3806,7 +3808,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.quantity": "Količina",
     "orders.unitPrice": "Cijena",
     "orders.itemTotal": "Ukupno",
-    "orders.pricesIncludeTax": "Sve cijene uključuju PDV",
+    "orders.pricesIncludeTax":
+      "Sukladno § 6 st. 1 t. 27 Zakona o PDV-u, PDV se ne obračunava.",
     "orders.orderItems": "Stavke narudžbe",
     "orders.orderDetails": "Detalji narudžbe",
     "orders.priceColumn": "Cijena",
@@ -4126,7 +4129,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.quantity": "Quantity",
     "orders.unitPrice": "Price",
     "orders.itemTotal": "Total",
-    "orders.pricesIncludeTax": "All prices include VAT",
+    "orders.pricesIncludeTax":
+      "According to § 6 para. 1 item 27 of the VAT Act, no VAT is charged.",
     "orders.orderItems": "Order Items",
     "orders.orderDetails": "Order Details",
     "orders.scent": "Scent",
@@ -6516,7 +6520,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.quantity": "Quantità",
     "orders.unitPrice": "Prezzo",
     "orders.itemTotal": "Totale",
-    "orders.pricesIncludeTax": "Tutti i prezzi includono IVA",
+    "orders.pricesIncludeTax":
+      "Ai sensi del § 6 comma 1 punto 27 della legge sull’IVA, non viene addebitata l’IVA.",
     "orders.orderItems": "Articoli dell'ordine",
     "orders.orderDetails": "Dettagli dell'ordine",
     "orders.price": "Prezzo",
@@ -7811,7 +7816,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.quantity": "Količina",
     "orders.unitPrice": "Cena",
     "orders.itemTotal": "Skupaj",
-    "orders.pricesIncludeTax": "Vse cene vključujejo DDV",
+    "orders.pricesIncludeTax":
+      "V skladu s § 6 odst. 1 tč. 27 Zakona o DDV se DDV ne obračuna.",
     "orders.orderItems": "Izdelki naročila",
     "orders.orderDetails": "Podrobnosti naročila",
     "orders.price": "Cena",
