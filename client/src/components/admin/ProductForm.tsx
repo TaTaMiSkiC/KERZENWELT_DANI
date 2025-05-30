@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { z } from "zod";
-import { Product, insertProductSchema } from "@shared/schema";
+import { Product, insertProductSchema, ProductImage, InsertProductImage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/use-language";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { LoaderCircle, Upload, Link, ImageIcon } from "lucide-react";
+import { LoaderCircle, Upload, Link, ImageIcon, X, Star, StarOff, MoveUp, MoveDown } from "lucide-react";
 import {
   Form,
   FormControl,

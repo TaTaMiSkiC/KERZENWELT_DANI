@@ -35,6 +35,7 @@ import {
   insertSettingSchema,
   insertScentSchema,
   insertColorSchema,
+  insertProductImageSchema,
   insertCollectionSchema,
   insertInvoiceSchema,
   insertInvoiceItemSchema,
@@ -2025,6 +2026,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to remove all colors from product",
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+  });
+
+  // Product Images routes
+  app.get("/api/products/:id/images", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+
+      const images = await storage.getProductImages(productId);
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching product images:", error);
+      res.status(500).json({ message: "Failed to fetch product images" });
+    }
+  });
+
+  app.post("/api/products/:id/images", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+
+      const imageData = insertProductImageSchema.parse(req.body);
+      const image = await storage.addImageToProduct(productId, imageData);
+      
+      res.status(201).json(image);
+    } catch (error) {
+      console.error("Error adding product image:", error);
+      res.status(500).json({ message: "Failed to add product image" });
+    }
+  });
+
+  app.put("/api/products/images/:imageId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const imageId = parseInt(req.params.imageId);
+      if (isNaN(imageId)) {
+        return res.status(400).json({ message: "Invalid image ID" });
+      }
+
+      const imageData = req.body;
+      const updatedImage = await storage.updateProductImage(imageId, imageData);
+      
+      if (!updatedImage) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+
+      res.json(updatedImage);
+    } catch (error) {
+      console.error("Error updating product image:", error);
+      res.status(500).json({ message: "Failed to update product image" });
+    }
+  });
+
+  app.delete("/api/products/images/:imageId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const imageId = parseInt(req.params.imageId);
+      if (isNaN(imageId)) {
+        return res.status(400).json({ message: "Invalid image ID" });
+      }
+
+      await storage.deleteProductImage(imageId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting product image:", error);
+      res.status(500).json({ message: "Failed to delete product image" });
+    }
+  });
+
+  app.put("/api/products/:id/images/:imageId/primary", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const productId = parseInt(req.params.id);
+      const imageId = parseInt(req.params.imageId);
+      
+      if (isNaN(productId) || isNaN(imageId)) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
+
+      await storage.setPrimaryImage(productId, imageId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error setting primary image:", error);
+      res.status(500).json({ message: "Failed to set primary image" });
     }
   });
 
