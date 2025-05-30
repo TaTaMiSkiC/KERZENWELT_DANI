@@ -116,6 +116,25 @@ export const insertProductSchema = createInsertSchema(products).omit({
   createdAt: true,
 });
 
+// Product Images table (slike proizvoda)
+export const productImages = pgTable("product_images", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  altText: text("alt_text"),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isPrimary: boolean("is_primary").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertProductImageSchema = createInsertSchema(productImages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type ProductImage = typeof productImages.$inferSelect;
+export type InsertProductImage = z.infer<typeof insertProductImageSchema>;
+
 // Categories table
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -377,6 +396,14 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productScents: many(productScents),
   productColors: many(productColors),
   productCollections: many(productCollections),
+  productImages: many(productImages),
+}));
+
+export const productImagesRelations = relations(productImages, ({ one }) => ({
+  product: one(products, {
+    fields: [productImages.productId],
+    references: [products.id],
+  }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
