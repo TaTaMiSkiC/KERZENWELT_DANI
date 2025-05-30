@@ -71,32 +71,36 @@ export default function AdminPaymentsPage() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: TaxSettingsFormValues) => {
-      const responses = await Promise.all([
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "tax_rate", value: data.taxRate }),
-          credentials: "include",
-        }),
-        fetch("/api/settings", {
-          method: "POST", 
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "tax_included", value: data.taxIncluded.toString() }),
-          credentials: "include",
-        }),
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "currency", value: data.currency }),
-          credentials: "include",
-        }),
-        fetch("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: "currency_symbol", value: data.currencySymbol }),
-          credentials: "include",
-        }),
-      ]);
+      const settingsToUpdate = [
+        { key: "tax_rate", value: data.taxRate.toString() },
+        { key: "tax_included", value: data.taxIncluded.toString() },
+        { key: "currency", value: data.currency },
+        { key: "currency_symbol", value: data.currencySymbol },
+      ];
+
+      const responses = await Promise.all(
+        settingsToUpdate.map(async (setting) => {
+          // First try to update the existing setting
+          const updateResponse = await fetch(`/api/settings/${setting.key}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ value: setting.value }),
+            credentials: "include",
+          });
+
+          // If updating failed (setting doesn't exist), create it
+          if (!updateResponse.ok && updateResponse.status === 404) {
+            return fetch("/api/settings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(setting),
+              credentials: "include",
+            });
+          }
+
+          return updateResponse;
+        })
+      );
 
       // Check if all requests were successful
       responses.forEach(response => {
