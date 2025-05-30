@@ -39,6 +39,7 @@ import ContactSettingsPage from "@/pages/admin/contact-settings";
 import DocumentManagementPage from "@/pages/admin/document-management";
 import AdminMailboxPage from "@/pages/admin/AdminMailboxPage"; // NEU IMPORTIEREN
 import VisitorStatsPage from "@/pages/admin/VisitorStatsPage";
+import AdminPaymentsPage from "@/pages/admin/AdminPaymentsPage";
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
@@ -171,6 +172,12 @@ function Router() {
         <ProtectedRoute
           path="/admin/documents"
           component={DocumentManagementPage}
+        />
+      </Route>
+      <Route path="/admin/payments">
+        <ProtectedRoute
+          path="/admin/payments"
+          component={AdminPaymentsPage}
         />
       </Route>
       <Route component={NotFound} />
