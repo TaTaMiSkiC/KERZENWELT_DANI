@@ -257,6 +257,22 @@ export const insertProductColorSchema = createInsertSchema(productColors).omit({
   id: true,
 });
 
+// Product Images table - for multiple images per product
+export const productImages = pgTable("product_images", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  imageUrl: text("image_url").notNull(),
+  altText: text("alt_text"),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isPrimary: boolean("is_primary").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertProductImageSchema = createInsertSchema(productImages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Relations for product scents and colors
 export const productScentsRelations = relations(productScents, ({ one }) => ({
   product: one(products, {
@@ -277,6 +293,13 @@ export const productColorsRelations = relations(productColors, ({ one }) => ({
   color: one(colors, {
     fields: [productColors.colorId],
     references: [colors.id],
+  }),
+}));
+
+export const productImagesRelations = relations(productImages, ({ one }) => ({
+  product: one(products, {
+    fields: [productImages.productId],
+    references: [products.id],
   }),
 }));
 
@@ -365,6 +388,9 @@ export type InsertProductScent = z.infer<typeof insertProductScentSchema>;
 export type ProductColor = typeof productColors.$inferSelect;
 export type InsertProductColor = z.infer<typeof insertProductColorSchema>;
 
+export type ProductImage = typeof productImages.$inferSelect;
+export type InsertProductImage = z.infer<typeof insertProductImageSchema>;
+
 // Define relationships between tables
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
@@ -376,6 +402,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   reviews: many(reviews),
   productScents: many(productScents),
   productColors: many(productColors),
+  productImages: many(productImages),
   productCollections: many(productCollections),
 }));
 

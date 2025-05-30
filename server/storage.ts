@@ -27,6 +27,8 @@ import {
   type InsertProductScent,
   type ProductColor,
   type InsertProductColor,
+  type ProductImage,
+  type InsertProductImage,
   type Collection,
   type InsertCollection,
   type ProductCollection,
