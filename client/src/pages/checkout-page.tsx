@@ -1,6 +1,11 @@
 import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
-import { useSettings } from "@/hooks/use-settings-api";
+import {
+  useSettings, // Behalten wir, um Ladezustand zu erhalten
+  useSettingValue, // Behalten wir
+} from "@/hooks/use-settings-api";
+import { useLanguage } from "@/hooks/use-language";
+// import { queryClient } from "@/lib/queryClient"; // queryClient wird nicht mehr direkt im useEffect benötigt, da setInterval entfernt wird
 import { Helmet } from "react-helmet";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
@@ -11,40 +16,107 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Lock, ChevronRight, ShoppingBag } from "lucide-react";
 import { Link } from "wouter";
-import { useLanguage } from "@/hooks/use-language";
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotal, isLoading } = useCart();
+  const { cartItems, cartTotal, isLoading: isLoadingCart } = useCart();
   const { user } = useAuth();
   const [location, navigate] = useLocation();
-  const { getSetting } = useSettings();
   const { t, translateText } = useLanguage();
 
-  // Dohvati postavke za dostavu
-  const { data: freeShippingThresholdSetting } = getSetting(
+  // ✅ VRAĆENO: State za direktno dohvaćene vrijednosti postavki dostave
+  const [shippingSettings, setShippingSettings] = useState<{
+    freeShippingThreshold: string;
+    standardShippingRate: string;
+  } | null>(null);
+  // ✅ VRAĆENO: State za praćenje učitavanja direktnih API poziva
+  const [isDirectlyLoadingSettings, setIsDirectlyLoadingSettings] =
+    useState(true);
+
+  // Total nakon popusta
+  const totalAfterDiscount = cartTotal;
+
+  // ✅ KORREKTUR: useEffect block for fetching delivery settings (ONLY ONCE on mount)
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setIsDirectlyLoadingSettings(true); // Set to true before fetching
+        const freeThresholdResponse = await fetch(
+          "/api/settings/freeShippingThreshold",
+        );
+        const freeThresholdData = await freeThresholdResponse.json();
+
+        const standardRateResponse = await fetch(
+          "/api/settings/standardShippingRate",
+        );
+        const standardRateData = await standardRateResponse.json();
+
+        console.log("Direktno dohvaćene postavke u checkout-page (einmalig):", {
+          // Log angepasst
+          freeShippingThreshold: freeThresholdData.value,
+          standardShippingRate: standardRateData.value,
+        });
+
+        // Update state and localStorage
+        setShippingSettings({
+          freeShippingThreshold: freeThresholdData.value,
+          standardShippingRate: standardRateData.value,
+        });
+
+        localStorage.setItem("freeShippingThreshold", freeThresholdData.value);
+        localStorage.setItem("standardShippingRate", standardRateData.value);
+
+        // React Query cache invalidation (still good practice if useQuery is used elsewhere)
+        // queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+        // queryClient.invalidateQueries({
+        //   queryKey: ["/api/settings", "freeShippingThreshold"],
+        // });
+        // queryClient.invalidateQueries({
+        //   queryKey: ["/api/settings", "standardShippingRate"],
+        // });
+      } catch (error) {
+        console.error("Greška pri dohvaćanju postavki u checkout-page:", error);
+        setShippingSettings(null);
+      } finally {
+        setIsDirectlyLoadingSettings(false);
+      }
+    };
+
+    // Fetch data immediately when component mounts
+    fetchSettings();
+
+    // ✅ REMOVED: No more setInterval here. The settings will only be fetched once.
+    // return () => clearInterval(intervalId); // This cleanup is now unnecessary for settings, but keep if other intervals exist
+  }, []); // Empty dependency array means it runs only once on mount
+
+  // ✅ KORISTIMO useSettingValue kao fallback ako direktno dohvaćanje nije uspjelo ili se još učitava
+  // Values from useSettingValue (React Query)
+  const queryFreeShippingThresholdValue = useSettingValue(
     "freeShippingThreshold",
+    "50",
   );
-  const { data: standardShippingRateSetting } = getSetting(
+  const queryStandardShippingRateValue = useSettingValue(
     "standardShippingRate",
+    "5",
   );
 
-  // Dohvati vrijednosti iz localStorage ako postoje, inače koristi API vrijednosti
-  const localFreeShippingThreshold =
-    typeof window !== "undefined"
-      ? localStorage.getItem("freeShippingThreshold")
-      : null;
-  const localStandardShippingRate =
-    typeof window !== "undefined"
-      ? localStorage.getItem("standardShippingRate")
-      : null;
+  // ✅ LOGIKA PRIORITIZACIJE: Direktno dohvaćeno (shippingSettings) > React Query (useSettingValue) > Default
+  let freeShippingThreshold = parseFloat(
+    shippingSettings?.freeShippingThreshold ||
+      queryFreeShippingThresholdValue ||
+      "50",
+  );
+  if (isNaN(freeShippingThreshold)) {
+    freeShippingThreshold = 50; // Fallback to default if NaN
+  }
 
-  // Prioritet imaju localStorage vrijednosti, zatim API vrijednosti, i na kraju defaultne vrijednosti
-  const freeShippingThreshold = parseFloat(
-    localFreeShippingThreshold || freeShippingThresholdSetting?.value || "50",
+  let standardShippingRate = parseFloat(
+    shippingSettings?.standardShippingRate ||
+      queryStandardShippingRateValue ||
+      "5",
   );
-  const standardShippingRate = parseFloat(
-    localStandardShippingRate || standardShippingRateSetting?.value || "5",
-  );
+  if (isNaN(standardShippingRate)) {
+    standardShippingRate = 5; // Fallback to default if NaN
+  }
 
   // Check if user has a valid discount
   const hasDiscount =
@@ -62,7 +134,7 @@ export default function CheckoutPage() {
   // Apply discount if valid
   const discountAmount =
     hasDiscount && meetsMinimumOrder
-      ? (user as any)?.discountType === 'percentage'
+      ? (user as any)?.discountType === "percentage"
         ? (cartTotal * parseFloat(user.discountAmount || "0")) / 100
         : parseFloat(user.discountAmount || "0")
       : 0;
@@ -76,12 +148,15 @@ export default function CheckoutPage() {
 
   // Redirect to cart if cart is empty
   useEffect(() => {
-    if (!isLoading && (!cartItems || cartItems.length === 0)) {
+    if (!isLoadingCart && (!cartItems || cartItems.length === 0)) {
       navigate("/cart");
     }
-  }, [cartItems, isLoading, navigate]);
+  }, [cartItems, isLoadingCart, navigate]);
 
-  if (isLoading) {
+  // ✅ UPDATED LOADING LOGIC: Now also includes isDirectlyLoadingSettings (initial direct fetch)
+  const isLoadingPage = isLoadingCart || isDirectlyLoadingSettings; // Keep this until initial fetch is done
+
+  if (isLoadingPage) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-12">
@@ -143,7 +218,11 @@ export default function CheckoutPage() {
             <div className="w-full lg:w-2/3">
               <Card>
                 <CardContent className="pt-6">
-                  <CheckoutForm />
+                  {/* ✅ PROSLJEĐUJEMO PROPOVE CheckoutForm-u */}
+                  <CheckoutForm
+                    freeShippingThreshold={freeShippingThreshold}
+                    standardShippingRate={standardShippingRate}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -315,7 +394,7 @@ export default function CheckoutPage() {
                             />
                           </svg>
                           {t("checkout.discountApplied")}{" "}
-                          {(user as any)?.discountType === 'percentage' 
+                          {(user as any)?.discountType === "percentage"
                             ? `${user?.discountAmount}% (${discountAmount.toFixed(2)} €)`
                             : `${discountAmount.toFixed(2)} €`}
                         </p>
@@ -336,7 +415,10 @@ export default function CheckoutPage() {
                             />
                           </svg>
                           {t("checkout.discountNotApplied")}{" "}
-                          {user?.discountAmount}{(user as any)?.discountType === 'percentage' ? '%' : '€'}{" "}
+                          {user?.discountAmount}
+                          {(user as any)?.discountType === "percentage"
+                            ? "%"
+                            : "€"}{" "}
                           {t("checkout.discountMinimumOrder")}{" "}
                           {parseFloat(
                             user?.discountMinimumOrder || "0",

@@ -22,6 +22,7 @@ import {
   pageVisits,
   subscribers,
   verificationTokens,
+  mailboxMessages,
 } from "@shared/schema";
 
 import type {
@@ -67,6 +68,8 @@ import type {
   PageVisit,
   InsertPageVisit,
   SelectedColorInfo,
+  MailboxMessage, // <-- Hinzufügen
+  InsertMailboxMessage, // <-- Hinzufügen
 } from "@shared/schema";
 
 import connectPg from "connect-pg-simple";
@@ -160,6 +163,131 @@ export class DatabaseStorage implements IStorage {
         `Greška prilikom provjere postojanja tablice ${tableName}: ${error}`,
       );
       return false;
+    }
+  }
+
+  // NEU: Methode zur Initialisierung der Mailbox-Tabelle
+  private async initializeMailboxTable() {
+    try {
+      console.log("Inicijalizacija tablice mailbox_messages...");
+      const mailboxTableExists = await this.tableExists("mailbox_messages");
+      if (!mailboxTableExists) {
+        await db.execute(sql`
+          CREATE TABLE IF NOT EXISTS "mailbox_messages" (
+              "id" SERIAL PRIMARY KEY,
+              "sender_email" VARCHAR(255) NOT NULL,
+              "sender_name" VARCHAR(255),
+              "recipient_email" VARCHAR(255) NOT NULL,
+              "subject" VARCHAR(512) NOT NULL,
+              "body" TEXT NOT NULL,
+              "received_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+              "read" BOOLEAN DEFAULT FALSE NOT NULL,
+              "type" VARCHAR(50) NOT NULL,
+              "in_reply_to_message_id" INTEGER REFERENCES "mailbox_messages"("id") ON DELETE SET NULL
+          );
+        `);
+        console.log("Tablica 'mailbox_messages' uspješno kreirana.");
+      } else {
+        console.log("Tablica 'mailbox_messages' već postoji.");
+      }
+    } catch (error) {
+      console.error(
+        `Greška prilikom inicijalizacije tablice 'mailbox_messages': ${error}`,
+      );
+      throw error;
+    }
+  }
+
+  async getAllMailboxMessages(): Promise<MailboxMessage[]> {
+    console.log("Dohvaćanje svih e-mail poruka iz baze...");
+    try {
+      const messages = await db
+        .select()
+        .from(mailboxMessages)
+        .orderBy(desc(mailboxMessages.receivedAt)); // Neueste zuerst
+      console.log(`Dohvaćeno ${messages.length} e-mail poruka.`);
+      return messages;
+    } catch (error) {
+      console.error("Greška prilikom dohvaćanja svih e-mail poruka:", error);
+      throw error;
+    }
+  }
+
+  async getMailboxMessage(id: number): Promise<MailboxMessage | undefined> {
+    console.log(`Dohvaćanje e-mail poruke sa ID: ${id}`);
+    try {
+      const [message] = await db
+        .select()
+        .from(mailboxMessages)
+        .where(eq(mailboxMessages.id, id));
+      if (message) {
+        console.log("E-mail poruka pronađena.");
+      } else {
+        console.log("E-mail poruka nije pronađena.");
+      }
+      return message;
+    } catch (error) {
+      console.error(
+        `Greška prilikom dohvaćanja e-mail poruke ID ${id}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async createMailboxMessage(
+    messageData: InsertMailboxMessage,
+  ): Promise<MailboxMessage> {
+    console.log("Stvaranje nove e-mail poruke:", JSON.stringify(messageData));
+    try {
+      const [newMessage] = await db
+        .insert(mailboxMessages)
+        .values(messageData)
+        .returning();
+      console.log("E-mail poruka uspješno stvorena:", newMessage.id);
+      return newMessage;
+    } catch (error) {
+      console.error("Greška prilikom stvaranja e-mail poruke:", error);
+      throw error;
+    }
+  }
+
+  async updateMailboxMessageReadStatus(
+    id: number,
+    readStatus: boolean,
+  ): Promise<MailboxMessage | undefined> {
+    console.log(
+      `Ažuriranje statusa 'pročitano' za e-mail poruku ID: ${id} na ${readStatus}`,
+    );
+    try {
+      const [updatedMessage] = await db
+        .update(mailboxMessages)
+        .set({ read: readStatus })
+        .where(eq(mailboxMessages.id, id))
+        .returning();
+      if (updatedMessage) {
+        console.log("Status uspješno ažuriran.");
+      } else {
+        console.log("E-mail poruka za ažuriranje nije pronađena.");
+      }
+      return updatedMessage;
+    } catch (error) {
+      console.error(
+        `Greška prilikom ažuriranja statusa e-mail poruke ID ${id}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async deleteMailboxMessage(id: number): Promise<void> {
+    console.log(`Brisanje e-mail poruke sa ID: ${id}`);
+    try {
+      await db.delete(mailboxMessages).where(eq(mailboxMessages.id, id));
+      console.log("E-mail poruka uspješno obrisana.");
+    } catch (error) {
+      console.error(`Greška prilikom brisanja e-mail poruke ID ${id}:`, error);
+      throw error;
     }
   }
 

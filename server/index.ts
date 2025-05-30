@@ -8,27 +8,29 @@ import compression from "compression";
 
 const app = express();
 // Dodajemo kompresiju za brži prijenos podataka
-app.use(compression({
-  level: 6, // Balans između brzine kompresije i omjera kompresije
-  threshold: 0 // Kompresija za sve veličine odgovora
-}));
+app.use(
+  compression({
+    level: 6, // Balans između brzine kompresije i omjera kompresije
+    threshold: 0, // Kompresija za sve veličine odgovora
+  }),
+);
 
 // Middleware za HTTP zaglavlja performansi i sigurnosti
 app.use((req, res, next) => {
   // Dodajemo zaglavlja za poboljšanje sigurnosti
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+
   // Za statičke resurse postavljamo optimizirano keširanje
   if (req.url.match(/\.(css|js)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 godina za CSS i JS
+    res.setHeader("Cache-Control", "public, max-age=31536000"); // 1 godina za CSS i JS
   } else if (req.url.match(/\.(png|jpg|jpeg|gif|webp|avif|ico|svg)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 godina za slike
+    res.setHeader("Cache-Control", "public, max-age=31536000"); // 1 godina za slike
   } else if (req.url.match(/\.(woff|woff2|ttf|eot)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 godina za fontove
+    res.setHeader("Cache-Control", "public, max-age=31536000"); // 1 godina za fontove
   }
-  
+
   next();
 });
 
@@ -43,6 +45,21 @@ app.post(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// ✅ OVDJE DODAJTE KOD ZA /api/client-log RUTU
+app.post("/api/client-log", (req, res) => {
+  const { timestamp, message, data, url, userAgent } = req.body;
+  console.log("--- CLIENT LOG ---");
+  console.log(`Vrijeme: ${timestamp}`);
+  console.log(`Poruka: ${message}`);
+  if (data) {
+    console.log("Podaci:", JSON.stringify(data, null, 2));
+  }
+  console.log(`URL: ${url}`);
+  console.log(`User Agent: ${userAgent}`);
+  console.log("------------------");
+  res.status(200).send("Log received");
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -84,7 +101,7 @@ app.use((req, res, next) => {
   } catch (error) {
     console.error("Greška prilikom inicijalizacije baze podataka:", error);
   }
-  
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -108,11 +125,14 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    },
+  );
 })();

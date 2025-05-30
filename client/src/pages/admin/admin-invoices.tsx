@@ -1,10 +1,11 @@
-import React, { useState, useRef } from "react";
+// admin-invoices.tsx
+
+import React, { useState, useCallback } from "react"; // Dodan useState i useCallback
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -92,14 +93,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import DocumentManager from "@/components/admin/DocumentManager";
-import {
-  generateInvoicePdf,
-  getPaymentMethodText,
-} from "./new-invoice-generator";
+import { buildInvoiceData, generateInvoicePdf } from "./new-invoice-generator";
 
-// Helper function for generating invoice number
+// ✅ VAŽNA PROMJENA: Dodajte useGetSetting i useSettingValue u import
+import {
+  useSettings,
+  useGetSetting,
+  useSettingValue,
+} from "@/hooks/use-settings-api";
+
+// Helper funkcija za generiranje broja računa
 const createInvoiceNumber = async (orderId?: number) => {
-  // Generating invoice number in format i450, i451, etc.
+  // Generiranje broja računa u formatu i450, i451, itd.
   try {
     const response = await fetch("/api/invoices/last");
     const lastInvoice = await response.json();
@@ -107,12 +112,12 @@ const createInvoiceNumber = async (orderId?: number) => {
     console.log("Last invoice retrieved:", lastInvoice);
 
     if (lastInvoice && lastInvoice.invoiceNumber) {
-      // Parse the existing invoice number
-      const currentNumber = lastInvoice.invoiceNumber.substring(1); // Exclude 'i' prefix
+      // Parsiraj postojeći broj računa
+      const currentNumber = lastInvoice.invoiceNumber.substring(1); // Isključi 'i' prefiks
       const nextNumber = parseInt(currentNumber) + 1;
       return `i${nextNumber}`;
     } else {
-      // If there are no existing invoices, start from 450
+      // Ako nema postojećih računa, počni od 450
       return "i450";
     }
   } catch (error) {
@@ -121,7 +126,7 @@ const createInvoiceNumber = async (orderId?: number) => {
   }
 };
 
-// Component for selecting invoice language
+// Komponenta za odabir jezika računa
 function LanguageSelector({
   invoice,
   onSelectLanguage,
@@ -185,7 +190,6 @@ function LanguageSelector({
             width="24"
             height="18"
             alt="Slovenian flag"
-            className="mr-2"
           />
           {t("languages.slovenian")}
         </DropdownMenuItem>
@@ -194,14 +198,14 @@ function LanguageSelector({
   );
 }
 
-// Types for invoices
+// Tipovi za račune
 interface Invoice {
   id: number;
   invoiceNumber: string;
   orderId: number;
   userId: number;
-  customerName: string;
-  customerEmail: string;
+  customerName: string; // Npr. "Ime Prezime"
+  customerEmail: string | null; // Može biti null
   customerAddress: string | null;
   customerCity: string | null;
   customerPostalCode: string | null;
@@ -214,9 +218,14 @@ interface Invoice {
   tax: string;
   language: string;
   createdAt: string;
+  // Dodano: za popust
+  discountAmount?: string | null;
+  discountType?: string | null;
+  discountPercentage?: string | null;
+  shippingCost?: string | null;
 }
 
-// Selected product
+// Odabrani proizvod
 interface SelectedProduct {
   id: number;
   name: string;
@@ -230,9 +239,7 @@ interface SelectedProduct {
   hasMultipleColors?: boolean;
 }
 
-// Schema for creating invoices
-// Note: We can't use t() function here directly since it's outside component
-// Translation keys will be applied in validation error messages inside the form
+// Shema za kreiranje računa
 const createInvoiceSchema = z.object({
   firstName: z.string().min(1, "admin.invoices.firstNameRequired"),
   lastName: z.string().min(1, "admin.invoices.lastNameRequired"),
@@ -248,10 +255,10 @@ const createInvoiceSchema = z.object({
   customerNote: z.string().optional(),
 });
 
-// Types for the form
+// Tipovi za formu
 type CreateInvoiceFormValues = z.infer<typeof createInvoiceSchema>;
 
-// Component for the entire admin invoices module
+// Komponenta za cijeli modul računa za administratore
 export default function AdminInvoices() {
   const [activeTab, setActiveTab] = useState<string>("existing");
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>(
@@ -262,23 +269,46 @@ export default function AdminInvoices() {
   const queryClient = useQueryClient();
   const { t } = useLanguage();
 
-  // Fetch invoices
+  // ✅ NOVI POZIVI HOOKOVA ZA DOHVAĆANJE SPECIFIČNIH POSTAVKI
+  // Koristimo useSettingValue za dohvaćanje samo vrijednosti postavke
+  const defaultFreeShippingThreshold = parseFloat(
+    useSettingValue("freeShippingThreshold", "50"), // Default "50" ako postavka ne postoji
+  );
+  const defaultStandardShippingRate = parseFloat(
+    useSettingValue("standardShippingRate", "5"), // Default "5" ako postavka ne postoji
+  );
+
+  const [useFreeShipping, setUseFreeShipping] = useState(false);
+  const [manualShippingCost, setManualShippingCost] = useState<string>("5.00");
+  const [manualDiscountAmount, setManualDiscountAmount] =
+    useState<string>("0.00");
+
+  const subtotalProducts = selectedProducts.reduce(
+    (sum, p) => sum + parseFloat(p.price) * p.quantity,
+    0,
+  );
+  const currentShippingCost = useFreeShipping
+    ? 0
+    : parseFloat(manualShippingCost || "0");
+  const currentDiscountAmount = parseFloat(manualDiscountAmount || "0");
+
+  // Dohvati račune
   const { data: invoices = [], refetch: refetchInvoices } = useQuery<Invoice[]>(
     {
       queryKey: ["/api/invoices"],
     },
   );
 
-  // Fetch orders
+  // Dohvati narudžbe
   const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
   });
 
-  // Form for creating invoice
+  // Forma za kreiranje računa
   const form = useForm<CreateInvoiceFormValues>({
     resolver: zodResolver(createInvoiceSchema),
     defaultValues: async () => {
-      // Get initial invoice number
+      // Dohvati početni broj računa
       const invoiceNumber = await createInvoiceNumber();
 
       return {
@@ -297,51 +327,54 @@ export default function AdminInvoices() {
     },
   });
 
-  // Function for generating PDF
-  const generatePdf = (data: any) => {
-    // Using the new method from new-invoice-generator.ts which gives identical appearance as in the user section
-    generateInvoicePdf(data, toast);
-  };
+  const generatePdf = useCallback(
+    (rawData: any) => {
+      const invoiceData = buildInvoiceData(rawData); // Priprema podataka
+      generateInvoicePdf(invoiceData, toast); // Generiraj PDF
+    },
+    [toast],
+  );
 
-  // Add product to the list
+  // Dodaj proizvod na listu
   const addProduct = (product: SelectedProduct) => {
     setSelectedProducts([...selectedProducts, product]);
   };
 
-  // Remove product from the list
+  // Ukloni proizvod s liste
   const removeProduct = (index: number) => {
     const newProducts = [...selectedProducts];
     newProducts.splice(index, 1);
     setSelectedProducts(newProducts);
   };
 
-  // Set data from order
+  // Postavi podatke iz narudžbe
   const setOrderData = (order: any) => {
     setSelectedOrder(order);
 
-    // Get user data from API
+    // Dohvati korisničke podatke iz API-ja
     const userId = order.userId;
     if (userId) {
-      // Here we could fetch user data from the API
-      // For now we just set available values
+      // Ovdje bismo mogli dohvatiti korisničke podatke iz API-ja
+      // Za sada samo postavljamo dostupne vrijednosti
       form.setValue("firstName", order.firstName || "");
       form.setValue("lastName", order.lastName || "");
-      form.setValue("address", order.shippingAddress || "");
-      form.setValue("city", order.shippingCity || "");
-      form.setValue("postalCode", order.shippingPostalCode || "");
-      form.setValue("country", order.shippingCountry || "");
-      form.setValue("email", order.email || "");
-      form.setValue("phone", order.phone || "");
+      form.setValue("address", order.shippingAddress || ""); // Koristi shippingAddress
+      form.setValue("city", order.shippingCity || ""); // Koristi shippingCity
+      form.setValue("postalCode", order.shippingPostalCode || ""); // Koristi shippingPostalCode
+      form.setValue("country", order.shippingCountry || ""); // Koristi shippingCountry
+      form.setValue("email", order.customerEmail || ""); // Koristi customerEmail ako postoji u Order
+      form.setValue("phone", order.customerPhone || ""); // Koristi customerPhone
       form.setValue("paymentMethod", order.paymentMethod || "cash");
+      form.setValue("customerNote", order.customerNote || ""); // Dodaj customerNote
     }
 
-    // Set products from order
+    // Postavi proizvode iz narudžbe
     apiRequest("GET", `/api/orders/${order.id}/items`)
       .then((response) => response.json())
       .then((items) => {
         console.log("Order items retrieved:", items);
 
-        // Prepare selected products for invoice
+        // Pripremi odabrane proizvode za račun
         const orderProducts: SelectedProduct[] = items.map((item: any) => ({
           id: item.productId,
           name: item.productName,
@@ -362,19 +395,22 @@ export default function AdminInvoices() {
       });
   };
 
-  // Clear form and reset data
+  // Očisti formu i resetiraj podatke
   const resetForm = () => {
     form.reset();
     setSelectedProducts([]);
     setSelectedOrder(null);
+    setUseFreeShipping(false); // Resetiraj i state za dostavu
+    setManualShippingCost("5.00"); // Resetiraj i state za ručni unos dostave
+    setManualDiscountAmount("0.00"); // Resetiraj i state za ručni unos popusta
 
-    // Get new invoice number
+    // Dohvati novi broj računa
     createInvoiceNumber().then((invoiceNumber) => {
       form.setValue("invoiceNumber", invoiceNumber);
     });
   };
 
-  // Getting data for PDF creation
+  // Dohvaćanje podataka za kreiranje PDF-a
   const [productId, setSelectedProductId] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
@@ -386,7 +422,7 @@ export default function AdminInvoices() {
   >("single");
   const [orderSearchTerm, setOrderSearchTerm] = useState<string>("");
 
-  // Fetch products
+  // Dohvati proizvode
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
@@ -396,19 +432,19 @@ export default function AdminInvoices() {
     queryKey: ["/api/users"],
   });
 
-  // Get scents for selected product
+  // Dohvati mirise za odabrani proizvod
   const { data: productScents = [] } = useQuery<Scent[]>({
     queryKey: [`/api/products/${productId}/scents`],
     enabled: !!productId,
   });
 
-  // Get colors for selected product
+  // Dohvati boje za odabrani proizvod
   const { data: productColors = [] } = useQuery<Color[]>({
     queryKey: [`/api/products/${productId}/colors`],
     enabled: !!productId,
   });
 
-  // Set price when product is selected
+  // Postavi cijenu kada je proizvod odabran
   const handleProductChange = async (productId: string) => {
     const id = parseInt(productId);
     setSelectedProductId(id);
@@ -418,13 +454,13 @@ export default function AdminInvoices() {
       setPrice(product.price);
     }
 
-    // Reset scent and color
+    // Resetiraj miris i boju
     setSelectedScent(null);
     setSelectedColor(null);
 
     console.log("Selected product ID:", id);
 
-    // Manual retrieval of scents and colors
+    // Ručno dohvaćanje mirisa i boja
     try {
       const scentsResponse = await fetch(`/api/products/${id}/scents`);
       const scentsData = await scentsResponse.json();
@@ -438,7 +474,7 @@ export default function AdminInvoices() {
     }
   };
 
-  // Add product to the list
+  // Dodaj proizvod na listu
   const handleAddProduct = () => {
     if (!productId) {
       return;
@@ -459,7 +495,7 @@ export default function AdminInvoices() {
         .filter(Boolean);
 
       colorInfo = {
-        colorId: null, // Multiple colors don't have a single ID
+        colorId: null, // Više boja nema jedan ID
         colorName: colorNames.join(", "),
         colorIds: JSON.stringify(selectedColors),
         hasMultipleColors: true,
@@ -490,7 +526,7 @@ export default function AdminInvoices() {
 
     addProduct(newProduct);
 
-    // Reset selections
+    // Resetiraj odabire
     setSelectedProductId(null);
     setSelectedScent(null);
     setSelectedColor(null);
@@ -500,14 +536,14 @@ export default function AdminInvoices() {
     setColorSelectionMode("single");
   };
 
-  // Filter orders by search terms
+  // Filtriraj narudžbe po pojmovima za pretraživanje
   const filteredOrders = orders.filter((order) => {
     if (!orderSearchTerm) return true;
 
-    // Search by order ID
+    // Pretraživanje po ID-u narudžbe
     if (order.id.toString().includes(orderSearchTerm)) return true;
 
-    // Search by user name
+    // Pretraživanje po imenu korisnika
     const user = users.find((u) => u.id === order.userId);
     if (
       user &&
@@ -520,7 +556,7 @@ export default function AdminInvoices() {
     return false;
   });
 
-  // Format order status
+  // Formatiraj status narudžbe
   const formatOrderStatus = (status: string) => {
     switch (status) {
       case "pending":
@@ -536,10 +572,10 @@ export default function AdminInvoices() {
     }
   };
 
-  // Create new invoice
+  // Kreiraj novi račun
   const onSubmit = async (data: CreateInvoiceFormValues) => {
     try {
-      // Product validation
+      // Validacija proizvoda
       if (selectedProducts.length === 0) {
         toast({
           title: t("admin.invoices.emptyProductList"),
@@ -549,22 +585,41 @@ export default function AdminInvoices() {
         return;
       }
 
-      // Prepare data for API
-      const subtotal = selectedProducts
-        .reduce((sum, p) => sum + parseFloat(p.price) * p.quantity, 0)
-        .toFixed(2);
+      // Pripremi podatke za API
+      const subtotalProducts = selectedProducts // <- Ovo je izračun proizvoda
+        .reduce((sum, p) => sum + parseFloat(p.price) * p.quantity, 0);
+
+      // ✅ KORISTIMO VRIJEDNOSTI DOHVAĆENE OD HOOKOVA NA VRHU KOMPONENTE
+      // NE ZOVEMO useGetSetting ILI useSettingValue OVDJE!
+      let shippingCost = defaultStandardShippingRate; // Defaultna dostava
+      if (
+        subtotalProducts >= defaultFreeShippingThreshold &&
+        defaultFreeShippingThreshold > 0
+      ) {
+        shippingCost = 0; // Besplatna dostava
+      }
+
+      // NOVO: Popust nije primjenjen na admin fakturi
+      // Admin fakture se obično kreiraju na temelju punih cijena,
+      // a popust se odražava samo na plaćenom iznosu (što dolazi od Stipea).
+      // Ako ipak želiš prikazati popust, morao bi ga ručno unijeti u formi,
+      // ili bi ga trebao dohvatiti od korisnika.
+      // Za sada, pretpostavljamo da za ručno kreirane fakture nema popusta,
+      // ili se popust unosi kao tekstualna napomena.
+      const discountAmount = 0; // Pretpostavljamo 0 za ručno kreirane fakture
 
       const tax = "0.00";
-      const total = (parseFloat(subtotal) + 5.0).toFixed(2); // Add 5€ for shipping
+      // NOVO: Ukupni iznos fakture (bez popusta, ako ga ručno ne unosiš)
+      const totalInvoiceAmount = (subtotalProducts + shippingCost).toFixed(2);
 
-      // Create customer data
+      // Kreiraj podatke o kupcu
       const customerName = `${data.firstName} ${data.lastName}`;
 
-      // Prepare data for API submission
+      // Pripremi podatke za API slanje (ovo ide u bazu)
       const invoiceData = {
         invoiceNumber: data.invoiceNumber,
         orderId: selectedOrder ? selectedOrder.id : null,
-        userId: selectedOrder ? selectedOrder.userId : 1, // Default admin user if there is no order
+        userId: selectedOrder ? selectedOrder.userId : null, // Ako nema narudžbe, userId može biti null ili default admin ID
         customerName,
         customerEmail: data.email || "",
         customerAddress: data.address || "",
@@ -574,17 +629,23 @@ export default function AdminInvoices() {
         customerPhone: data.phone || "",
         customerNote: data.customerNote || "",
         paymentMethod: data.paymentMethod,
-        total,
-        subtotal,
+        total: totalInvoiceAmount, // <- KORISTI NOVO IZRAČUNATU VRIJEDNOST
+        subtotal: subtotalProducts.toFixed(2), // <- KORISTI NOVO IZRAČUNATU VRIJEDNOST
         tax,
         language: data.language,
+        discountAmount: discountAmount.toFixed(2), // Proslijedi popust (ovdje je 0)
+        discountType: "fixed", // Defaultni tip
+        discountPercentage: "0", // Defaultni postotak
+        shippingCost: shippingCost.toFixed(2), // Proslijedi izračunatu dostavu
         items: selectedProducts.map((p) => ({
           productId: p.id,
           productName: p.name,
           quantity: p.quantity,
           price: p.price,
-          selectedScent: p.scentName,
-          selectedColor: p.colorName,
+          scentId: p.scentId,
+          scentName: p.scentName,
+          colorId: p.colorId,
+          colorName: p.colorName,
           colorIds: p.colorIds,
           hasMultipleColors: p.hasMultipleColors,
         })),
@@ -592,7 +653,7 @@ export default function AdminInvoices() {
 
       console.log("Sending data to create invoice:", invoiceData);
 
-      // Send request to create invoice
+      // Pošalji zahtjev za kreiranje računa
       apiRequest("POST", "/api/invoices", invoiceData)
         .then((response) => {
           if (!response.ok) {
@@ -611,22 +672,22 @@ export default function AdminInvoices() {
             ),
           });
 
-          // Refresh invoice list and reset form
+          // Osvježi listu računa i resetiraj formu
           refetchInvoices();
           resetForm();
 
-          // Switch to "Existing Invoices" tab
+          // Prebaci na "Existing Invoices" tab
           setActiveTab("existing");
         })
         .catch((errorResponse) => {
           let errorMessage = t("admin.invoices.errorCreatingInvoice");
 
           try {
-            // Try to parse JSON response
+            // Pokušaj parsirati JSON odgovor
             const errorObj = JSON.parse(errorResponse.message);
             errorMessage = errorObj.message || errorMessage;
           } catch (error) {
-            // If not JSON, use the original message
+            // Ako nije JSON, koristi originalnu poruku
             errorMessage = errorResponse.message || errorMessage;
           }
 
@@ -656,7 +717,7 @@ export default function AdminInvoices() {
         if (!response.ok) {
           throw new Error("Error while deleting invoice");
         }
-        refetchInvoices(); // Refresh invoice list after deletion
+        refetchInvoices(); // Osvježi listu računa nakon brisanja
         toast({
           title: t("admin.invoices.invoiceDeleted"),
           description: t("admin.invoices.invoiceDeletedSuccess"),
@@ -672,9 +733,9 @@ export default function AdminInvoices() {
       });
   };
 
-  // Functions for downloading PDFs for existing invoices
+  // Funkcije za preuzimanje PDF-ova za postojeće račune
   const handleDownloadInvoice = (invoice: Invoice) => {
-    // Download invoice with original language
+    // Preuzmi račun s originalnim jezikom
     downloadInvoice(invoice, invoice.language || "hr");
   };
 
@@ -682,36 +743,89 @@ export default function AdminInvoices() {
     invoice: Invoice,
     language: string,
   ) => {
-    // Download invoice with selected language
+    // Preuzmi račun s odabranim jezikom
     downloadInvoice(invoice, language);
   };
 
   const downloadInvoice = (invoice: Invoice, language: string) => {
-    // Fetch invoice items from server
+    // Dohvati detalje računa sa servera (koji sadrže orderItems)
     apiRequest("GET", `/api/invoices/${invoice.id}`)
-      .then((response) => response.json())
-      .then((data) => {
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Error while deleting invoice");
+        }
+        const data = await response.json(); // Ovo je cijeli objekt fakture s .items
+
         console.log("Retrieved data for PDF invoice:", data);
 
-        // Prepare data for the PDF with correct field names as expected by the PDF generation function
+        // NOVO: Obogati stavke fakture s detaljima proizvoda, mirisa i boja (ovaj dio je već ispravan)
+        const enhancedInvoiceItems = await Promise.all(
+          data.items.map(async (item: any) => {
+            const product = products.find((p) => p.id === item.productId);
+            let scent = productScents.find((s) => s.id === item.scentId);
+            let color = productColors.find((c) => c.id === item.colorId);
+
+            let colorNames: string[] = [];
+            if (item.hasMultipleColors && item.colorIds) {
+              try {
+                const ids = JSON.parse(item.colorIds);
+                ids.forEach((id: number) => {
+                  const c = productColors.find((pc) => pc.id === id);
+                  if (c) colorNames.push(c.name);
+                });
+              } catch (e) {
+                console.error("Error parsing colorIds for invoice item:", e);
+              }
+            } else if (color?.name) {
+              colorNames.push(color.name);
+            }
+
+            return {
+              ...item,
+              product: product || {
+                name: item.productName || "Nepoznat proizvod",
+                price: item.price,
+                imageUrl: null,
+                description: "",
+              },
+              scentName: item.scentName || scent?.name || null,
+              colorName: item.colorName || colorNames.join(", ") || null,
+              colorIds: item.colorIds || null,
+              hasMultipleColors: item.hasMultipleColors || false,
+            };
+          }),
+        );
+
+        // Pripremi podatke za PDF sa svim potrebnim poljima
         const invoiceData = {
           invoiceNumber: invoice.invoiceNumber,
           createdAt: invoice.createdAt,
-          customerName: invoice.customerName,
+          // PODACI O KUPCU - BITNO DA SU SVI OVDJE I SIGURNI
+          customerName: invoice.customerName || "",
+          customerEmail: invoice.customerEmail || "",
           customerAddress: invoice.customerAddress || "",
           customerCity: invoice.customerCity || "",
           customerPostalCode: invoice.customerPostalCode || "",
           customerCountry: invoice.customerCountry || "",
-          customerEmail: invoice.customerEmail || "",
           customerPhone: invoice.customerPhone || "",
           customerNote: invoice.customerNote || "",
-          items: data.items || [], // Using items fetched from the server
-          language: language, // Using the selected language
-          paymentMethod: invoice.paymentMethod || "cash", // Using payment method from the existing invoice
+          // OSTALI PODACI
+          items: enhancedInvoiceItems,
+          language: language,
+          paymentMethod: invoice.paymentMethod || "cash",
+          paymentStatus: invoice.paymentStatus || "unpaid",
+          // Iznosi (total, subtotal, discount, shipping, tax) - ovo je već OK
+          subtotal: parseFloat(invoice.subtotal || "0"),
+          shippingCost: parseFloat(invoice.shippingCost || "0"),
+          discountAmount: parseFloat(invoice.discountAmount || "0"),
+          discountType: invoice.discountType || "fixed",
+          discountPercentage: parseFloat(invoice.discountPercentage || "0"),
+          tax: parseFloat(invoice.tax || "0"),
+          total: parseFloat(invoice.total || "0"),
         };
 
         console.log("Preparing data for PDF:", invoiceData);
-        generatePdf(invoiceData);
+        generatePdf(invoiceData); // Pozivanje generatePdf sa kompletnim podacima
       })
       .catch((error) => {
         console.error("Error retrieving invoice items:", error);
@@ -786,7 +900,7 @@ export default function AdminInvoices() {
                     ) : (
                       [...invoices]
                         .sort((a, b) => {
-                          // Sort by ID (newest first)
+                          // Sortiraj po ID-u (najnoviji prvi)
                           return b.id - a.id;
                         })
                         .map((invoice) => (
@@ -802,10 +916,9 @@ export default function AdminInvoices() {
                             </TableCell>
                             <TableCell>{invoice.customerName}</TableCell>
                             <TableCell>
-                              {invoice.total && parseFloat(invoice.total) > 0 
+                              {invoice.total && parseFloat(invoice.total) > 0
                                 ? `${parseFloat(invoice.total).toFixed(2)} €`
-                                : `${parseFloat(invoice.subtotal || "0").toFixed(2)} €`
-                              }
+                                : `${parseFloat(invoice.subtotal || "0").toFixed(2)} €`}
                             </TableCell>
                             <TableCell>
                               {t(`paymentMethods.${invoice.paymentMethod}`)}
@@ -1220,6 +1333,77 @@ export default function AdminInvoices() {
 
                     <Separator />
 
+                    <div className="p-4 space-y-3 bg-muted/40 rounded-b-md">
+                      <h3 className="text-lg font-medium mb-2">
+                        {t("admin.invoices.deliveryAndDiscount")}
+                      </h3>
+
+                      {/* Kontrola dostave */}
+                      <div className="flex items-center space-x-4">
+                        <label className="text-sm font-medium">
+                          {t("admin.invoices.shipping")}:
+                        </label>
+                        <Button
+                          variant={useFreeShipping ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setUseFreeShipping(true)}
+                          type="button"
+                        >
+                          {t("admin.invoices.freeShipping")}
+                        </Button>
+                        <Button
+                          variant={!useFreeShipping ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setUseFreeShipping(false)}
+                          type="button"
+                        >
+                          {t("admin.invoices.manualShipping")}
+                        </Button>
+                      </div>
+                      {!useFreeShipping && (
+                        <div className="space-y-2">
+                          <label
+                            htmlFor="manualShipping"
+                            className="text-sm font-medium"
+                          >
+                            {t("admin.invoices.shippingCost")} *
+                          </label>
+                          <Input
+                            id="manualShipping"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={manualShippingCost}
+                            onChange={(e) =>
+                              setManualShippingCost(e.target.value)
+                            }
+                            placeholder={defaultStandardShippingRate.toFixed(2)}
+                          />
+                        </div>
+                      )}
+
+                      {/* Kontrola popusta */}
+                      <div className="space-y-2 mt-4">
+                        <label
+                          htmlFor="manualDiscount"
+                          className="text-sm font-medium"
+                        >
+                          {t("admin.invoices.discountAmount")}
+                        </label>
+                        <Input
+                          id="manualDiscount"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={manualDiscountAmount}
+                          onChange={(e) =>
+                            setManualDiscountAmount(e.target.value)
+                          }
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <h3 className="text-lg font-medium">
@@ -1580,35 +1764,65 @@ export default function AdminInvoices() {
                                     €
                                   </TableCell>
                                 </TableRow>
+                                {/* Totals section - AŽURIRANO */}
                                 <TableRow className="bg-muted/50">
                                   <TableCell
                                     colSpan={3}
                                     className="font-medium"
                                   >
-                                    Versand
+                                    {t("admin.invoices.subtotal")}
                                   </TableCell>
                                   <TableCell colSpan={2} className="text-right">
-                                    5.00 €
+                                    {subtotalProducts.toFixed(2)} €
                                   </TableCell>
                                 </TableRow>
+
+                                {currentDiscountAmount > 0 && ( // Prikazi popust samo ako ga ima
+                                  <TableRow className="bg-muted/50 text-green-600">
+                                    <TableCell
+                                      colSpan={3}
+                                      className="font-medium"
+                                    >
+                                      {t("admin.invoices.discount")}
+                                    </TableCell>
+                                    <TableCell
+                                      colSpan={2}
+                                      className="text-right"
+                                    >
+                                      -{currentDiscountAmount.toFixed(2)} €
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+
                                 <TableRow className="bg-muted/50">
                                   <TableCell
                                     colSpan={3}
                                     className="font-medium"
                                   >
-                                    Total
+                                    {t("admin.invoices.shipping")}
+                                  </TableCell>
+                                  <TableCell colSpan={2} className="text-right">
+                                    {currentShippingCost === 0
+                                      ? t("cart.shippingFree")
+                                      : `${currentShippingCost.toFixed(2)} €`}
+                                  </TableCell>
+                                </TableRow>
+
+                                <TableRow className="bg-muted/50">
+                                  <TableCell
+                                    colSpan={3}
+                                    className="font-medium"
+                                  >
+                                    {t("admin.invoices.total")}
                                   </TableCell>
                                   <TableCell
                                     colSpan={2}
                                     className="text-right font-bold"
                                   >
                                     {(
-                                      selectedProducts.reduce(
-                                        (sum, p) =>
-                                          sum +
-                                          parseFloat(p.price) * p.quantity,
-                                        0,
-                                      ) + 5.0
+                                      subtotalProducts +
+                                      currentShippingCost -
+                                      currentDiscountAmount
                                     ).toFixed(2)}{" "}
                                     €
                                   </TableCell>

@@ -5,7 +5,8 @@ import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
-import { useSettings } from "@/hooks/use-settings-api";
+// ✅ PROMJENA OVDJE: Uklonjen je useSettings jer se propovi prosljeđuju
+// import { useSettings } from "@/hooks/use-settings-api";
 import StripePaymentElement from "@/components/payment/StripePaymentElement";
 import StripeBuyButton from "@/components/payment/StripeBuyButton";
 import PayPalButton from "@/components/PayPalButton";
@@ -67,12 +68,22 @@ const checkoutSchema = (t: TFunction) =>
 
 type CheckoutFormValues = z.infer<ReturnType<typeof checkoutSchema>>;
 
-export default function CheckoutForm() {
+// ✅ PROMJENA OVDJE: Dodajte props za freeShippingThreshold i standardShippingRate
+interface CheckoutFormProps {
+  freeShippingThreshold: number;
+  standardShippingRate: number;
+}
+
+export default function CheckoutForm({
+  freeShippingThreshold,
+  standardShippingRate,
+}: CheckoutFormProps) {
   const { user } = useAuth();
   const { cartItems, cartTotal } = useCart();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { getSetting } = useSettings();
+  // ✅ PROMJENA OVDJE: Uklonjen je useSettings() poziv jer se postavke prosljeđuju kao propovi
+  // const { getSetting } = useSettings();
   const { t, translateText } = useLanguage();
   const schema = checkoutSchema(t);
 
@@ -83,38 +94,62 @@ export default function CheckoutForm() {
   const [clientSecret, setClientSecret] = useState<string>("");
   const [showStripeForm, setShowStripeForm] = useState(false);
 
-  // Dohvati postavke za dostavu
-  const { data: freeShippingThresholdSetting } = getSetting(
-    "freeShippingThreshold",
-  );
-  const { data: standardShippingRateSetting } = getSetting(
-    "standardShippingRate",
-  );
+  // ✅ PROMJENA OVDJE: Više ne dohvaćamo postavke, koristimo propove
+  // const { data: freeShippingThresholdSetting } = getSetting(
+  //   "freeShippingThreshold",
+  // );
+  // const { data: standardShippingRateSetting } = getSetting(
+  //   "standardShippingRate",
+  // );
 
-  // Dohvati vrijednosti iz localStorage ako postoje, inače koristi API vrijednosti
-  const localFreeShippingThreshold =
-    typeof window !== "undefined"
-      ? localStorage.getItem("freeShippingThreshold")
-      : null;
-  const localStandardShippingRate =
-    typeof window !== "undefined"
-      ? localStorage.getItem("standardShippingRate")
-      : null;
+  // ✅ PROMJENA OVDJE: Uklonjeno dohvaćanje iz localStorage i API-ja, koristimo propove
+  // const localFreeShippingThreshold =
+  //   typeof window !== "undefined"
+  //     ? localStorage.getItem("freeShippingThreshold")
+  //     : null;
+  // const localStandardShippingRate =
+  //   typeof window !== "undefined"
+  //     ? localStorage.getItem("standardShippingRate")
+  //     : null;
 
-  // Prioritet imaju localStorage vrijednosti, zatim API vrijednosti, i na kraju defaultne vrijednosti
-  const freeShippingThreshold = parseFloat(
-    localFreeShippingThreshold || freeShippingThresholdSetting?.value || "50",
-  );
-  const standardShippingRate = parseFloat(
-    localStandardShippingRate || standardShippingRateSetting?.value || "5",
-  );
+  // ✅ PROMJENA OVDJE: Vrijednosti se sada dobivaju iz propova
+  // const freeShippingThreshold = parseFloat(
+  //   localFreeShippingThreshold || freeShippingThresholdSetting?.value || "50",
+  // );
+  // const standardShippingRate = parseFloat(
+  //   localStandardShippingRate || standardShippingRateSetting?.value || "5",
+  // );
+
+  // Check if user has a valid discount
+  // PREMJEŠTENO OVDJE DA BUDE DOSTUPNO NA RAZINI KOMPONENTE
+  const hasDiscount =
+    user &&
+    user.discountAmount &&
+    parseFloat(user.discountAmount) > 0 &&
+    user.discountExpiryDate &&
+    new Date(user.discountExpiryDate) > new Date();
+
+  // Check if order meets minimum requirement for discount
+  // PREMJEŠTENO OVDJE
+  const meetsMinimumOrder =
+    !user?.discountMinimumOrder ||
+    parseFloat(user.discountMinimumOrder || "0") <= cartTotal;
+
+  // Apply discount if valid
+  // PREMJEŠTENO OVDJE
+  const discountAmount =
+    hasDiscount && meetsMinimumOrder
+      ? (user as any)?.discountType === "percentage"
+        ? (cartTotal * parseFloat(user.discountAmount || "0")) / 100
+        : parseFloat(user.discountAmount || "0")
+      : 0;
 
   // Calculate shipping and total
   const isFreeShipping =
-    standardShippingRate === 0 ||
-    (cartTotal >= freeShippingThreshold && freeShippingThreshold > 0);
+    standardShippingRate === 0 || // ✅ KORISTIMO standardShippingRate IZ PROPOVA
+    (cartTotal >= freeShippingThreshold && freeShippingThreshold > 0); // ✅ KORISTIMO freeShippingThreshold IZ PROPOVA
   const shipping = isFreeShipping ? 0 : standardShippingRate;
-  const total = cartTotal + shipping;
+  const total = Math.max(0, cartTotal + shipping - discountAmount); // AŽURIRANO: oduzmi popust
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(schema), // ✅ ispravljen resolver
@@ -153,37 +188,28 @@ export default function CheckoutForm() {
 
       // Add shipping cost if necessary
       const isFreeShipping =
-        standardShippingRate === 0 ||
-        (cartTotal >= freeShippingThreshold && freeShippingThreshold > 0);
+        standardShippingRate === 0 || // ✅ KORISTIMO standardShippingRate IZ PROPOVA
+        (cartTotal >= freeShippingThreshold && freeShippingThreshold > 0); // ✅ KORISTIMO freeShippingThreshold IZ PROPOVA
       const shippingCost = isFreeShipping ? 0 : standardShippingRate;
-
-      // Calculate any discounts
-      const hasDiscount =
-        user &&
-        user.discountAmount &&
-        parseFloat(user.discountAmount) > 0 &&
-        user.discountExpiryDate &&
-        new Date(user.discountExpiryDate) > new Date();
-
-      // Check if order meets minimum requirement for discount
-      const meetsMinimumOrder =
-        !user?.discountMinimumOrder ||
-        parseFloat(user.discountMinimumOrder || "0") <= cartTotal;
 
       // Apply discount if valid - handle percentage vs fixed discounts
       let discountAmount = 0;
       if (hasDiscount && meetsMinimumOrder) {
         const discountValue = parseFloat(user.discountAmount || "0");
         const discountType = (user as any).discountType || "fixed";
-        
+
         if (discountType === "percentage") {
           // For percentage discounts, calculate the actual discount amount
           discountAmount = (cartTotal * discountValue) / 100;
-          console.log(`Frontend: Applied ${discountValue}% discount = ${discountAmount.toFixed(2)}€ on cart total ${cartTotal}€`);
+          console.log(
+            `Frontend: Applied ${discountValue}% discount = ${discountAmount.toFixed(2)}€ on cart total ${cartTotal}€`,
+          );
         } else {
           // For fixed discounts, use the amount directly
           discountAmount = Math.min(discountValue, cartTotal);
-          console.log(`Frontend: Applied fixed discount = ${discountAmount.toFixed(2)}€`);
+          console.log(
+            `Frontend: Applied fixed discount = ${discountAmount.toFixed(2)}€`,
+          );
         }
       }
 
@@ -193,10 +219,16 @@ export default function CheckoutForm() {
         total: (cartTotal + shippingCost - discountAmount).toString(),
         subtotal: cartTotal.toString(),
         discountAmount: discountAmount.toString(),
-        discountType: hasDiscount && meetsMinimumOrder ? ((user as any).discountType || "fixed") : "fixed",
-        discountPercentage: hasDiscount && meetsMinimumOrder && (user as any).discountType === "percentage" 
-          ? parseFloat(user.discountAmount || "0").toString() 
-          : "0",
+        discountType:
+          hasDiscount && meetsMinimumOrder
+            ? (user as any).discountType || "fixed"
+            : "fixed",
+        discountPercentage:
+          hasDiscount &&
+          meetsMinimumOrder &&
+          (user as any).discountType === "percentage"
+            ? parseFloat(user.discountAmount || "0").toString()
+            : "0",
         shippingCost: shippingCost.toString(),
         items: orderItems,
         paymentMethod: paymentMethod || data.paymentMethod,
@@ -285,29 +317,39 @@ export default function CheckoutForm() {
       if (hasDiscount && meetsMinimumOrder) {
         const discountValue = parseFloat(user.discountAmount || "0");
         const discountType = (user as any).discountType || "fixed";
-        
+
         if (discountType === "percentage") {
           // For percentage discounts, calculate the actual discount amount
           discountAmount = (cartTotal * discountValue) / 100;
-          console.log(`Frontend onSubmit: Applied ${discountValue}% discount = ${discountAmount.toFixed(2)}€ on cart total ${cartTotal}€`);
+          console.log(
+            `Frontend onSubmit: Applied ${discountValue}% discount = ${discountAmount.toFixed(2)}€ on cart total ${cartTotal}€`,
+          );
         } else {
           // For fixed discounts, use the amount directly
           discountAmount = Math.min(discountValue, cartTotal);
-          console.log(`Frontend onSubmit: Applied fixed discount = ${discountAmount.toFixed(2)}€`);
+          console.log(
+            `Frontend onSubmit: Applied fixed discount = ${discountAmount.toFixed(2)}€`,
+          );
         }
       }
 
-      const shippingCost = isFreeShipping ? 0 : standardShippingRate;
+      const shippingCost = isFreeShipping ? 0 : standardShippingRate; // ✅ KORISTIMO isFreeShipping i standardShippingRate IZ PROPOVA
       const orderTotal = Math.max(0, cartTotal + shippingCost - discountAmount);
 
       const orderData = {
         total: orderTotal.toString(),
         subtotal: cartTotal.toString(),
         discountAmount: discountAmount.toString(),
-        discountType: hasDiscount && meetsMinimumOrder ? ((user as any).discountType || "fixed") : "fixed",
-        discountPercentage: hasDiscount && meetsMinimumOrder && (user as any).discountType === "percentage" 
-          ? parseFloat(user.discountAmount || "0").toString() 
-          : "0",
+        discountType:
+          hasDiscount && meetsMinimumOrder
+            ? (user as any).discountType || "fixed"
+            : "fixed",
+        discountPercentage:
+          hasDiscount &&
+          meetsMinimumOrder &&
+          (user as any).discountType === "percentage"
+            ? parseFloat(user.discountAmount || "0").toString()
+            : "0",
         shippingCost: shippingCost.toString(),
         paymentMethod: data.paymentMethod,
         paymentStatus: "pending",
@@ -1135,6 +1177,20 @@ export default function CheckoutForm() {
                   : `${shipping.toFixed(2)} €`}
               </span>
             </div>
+
+            {/* DODANI DIO ZA POPUST */}
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span className="font-medium">
+                  {t("cart.discount")} {/* Koristi prevođenje za "Rabatt" */}
+                </span>
+                <span className="font-medium">
+                  -{discountAmount.toFixed(2)} €
+                </span>
+              </div>
+            )}
+            {/* KRAJ DODANOG DIJELA */}
+
             <Separator />
             <div className="flex justify-between font-bold text-lg">
               <span>{t("orders.itemTotal")}:</span>

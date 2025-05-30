@@ -12,6 +12,43 @@ export type Language = "de" | "hr" | "en" | "it" | "sl";
 // Prijevodi po jezicima
 export const translations: Record<Language, Record<string, string>> = {
   de: {
+    // MAIL
+    "admin.inbox": "E-Mail Postfach", // <-- NEU
+    "admin.mailbox.title": "Posteingang", // <-- NEU
+    "admin.mailbox.description":
+      "Verwalten Sie Ihre E-Mails von Kunden und senden Sie neue Nachrichten.", // <-- NEU
+    "admin.mailbox.compose": "Neue E-Mail verfassen", // <-- NEU
+    "admin.mailbox.searchPlaceholder": "E-Mails durchsuchen...", // <-- NEU
+    "admin.mailbox.noEmails": "Keine E-Mails gefunden.", // <-- NEU
+    "admin.mailbox.sender": "Absender", // <-- NEU
+    "admin.mailbox.subject": "Betreff", // <-- NEU
+    "admin.mailbox.date": "Datum", // <-- NEU
+    "admin.mailbox.actions": "Aktionen", // <-- NEU
+    "admin.mailbox.unread": "Ungelesen", // <-- NEU
+    "admin.mailbox.reply": "Antworten", // <-- NEU
+    "admin.mailbox.replyTitle": "E-Mail beantworten", // <-- NEU
+    "admin.mailbox.replyDescription":
+      "Antworten Sie auf die ausgewählte E-Mail.", // <-- NEU
+    "admin.mailbox.composeTitle": "Neue E-Mail verfassen", // <-- NEU
+    "admin.mailbox.composeDescription":
+      "Senden Sie eine neue E-Mail an einen Kunden.", // <-- NEU
+    "admin.mailbox.recipient": "Empfänger", // <-- NEU
+    "admin.mailbox.message": "Nachricht", // <-- NEU
+    "admin.mailbox.cancel": "Abbrechen", // <-- NEU
+    "admin.mailbox.sending": "Senden...", // <-- NEU
+    "admin.mailbox.send": "Senden", // <-- NEU
+
+    "admin.visitorStats": "Besucherstatistik",
+    "admin.visitorStats.title": "Besucherstatistik nach Ländern",
+    "admin.visitorStats.description":
+      "Zeigt Seitenbesuche basierend auf der Herkunft der IP-Adresse an.",
+    "admin.visitorStats.country": "Land",
+    "admin.visitorStats.visits": "Besuche",
+    "admin.visitorStats.noData": "Keine Besucherdaten verfügbar.",
+    "admin.visitorStats.loading": "Lade Besucherdaten...",
+    "admin.visitorStats.error": "Fehler beim Laden der Besucherdaten.",
+    "admin.visitorStats.topCountries": "Top Länder",
+
     // Home Page
     "home.exploreCollection": "Kollektion erkunden →",
     "test.recenzija": "Rezension",
@@ -208,6 +245,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "orders.italian": "Italienisch",
     "orders.slovenian": "Slowenisch",
     "orders.backToList": "Zurück zur Bestellliste",
+    "admin.invoices.deliveryAndDiscount": "Versand & Rabatt",
+    "admin.invoices.shipping": "Versand",
+    "admin.invoices.freeShipping": "Kostenlos",
+    "admin.invoices.manualShipping": "Manuell eingeben",
+    "admin.invoices.discountAmount": "Rabattbetrag",
+    "admin.invoices.discount": "Rabatt", // Ako već ne postoji
 
     // Products page
     "products.allProducts": "Alle Produkte",
@@ -499,6 +542,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.scents.errorDelete": "Fehler",
     "admin.scents.errorDeleteDesc":
       "Beim Löschen des Dufts ist ein Fehler aufgetreten: {error}",
+    orderId: "Bestell-ID", // ✅ DODANO
+    invoiceNumber: "Rechnungsnummer",
 
     // Admin Colors Page
     "admin.colors.title": "Farben",
@@ -1177,6 +1222,21 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.contactSettings.saveError":
       "Fehler beim Speichern der Einstellungen",
 
+    // Dodatni prijevodi ako nedostaju (iz ranijih koraka)
+    "admin.invoices.priceEuro": "Preis (€)", // Za dodavanje stavke fakture
+    "admin.invoices.selectProduct": "Produkt auswählen",
+    "admin.invoices.addItemToInvoice": "Artikel zur Rechnung hinzufügen",
+    "admin.invoices.selectProductAndQuantity": "Produkt und Menge auswählen",
+    "admin.invoices.emptyProductList": "Produktenliste ist leer", // Poruka za praznu listu proizvoda
+    "admin.invoices.addProductsForInvoice":
+      "Bitte fügen Sie Produkte zur Rechnung hinzu.", // Opis za praznu listu
+
+    // Prijevodi koji se koriste u order-details-page.tsx
+    "orders.notSpecified": "Nicht spezifiziert", // Ako ne postoji
+    "orders.product": "Produkt", // Ako ne postoji
+    "orders.orderRetrievalError": "Fehler beim Abrufen der Bestelldaten.", // Ako ne postoji
+    "orderSuccessPage.noOrderInfo": "Keine Bestellinformationen gefunden.",
+
     // Admin Delivery Settings
     "admin.delivery.title": "Versandeinstellungen",
     "admin.delivery.subtitle": "Verwalten Sie Versandoptionen",
@@ -1217,7 +1277,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.delivery.zoneName": "Zonenname",
     "admin.delivery.zoneNamePlaceholder": "Zonennamen eingeben",
     "admin.delivery.zoneRegions": "Regionen in der Zone",
-    "admin.delivery.zoneRegionsPlaceholder": "Regionen auswählen",
+    "admin.delivery.zoneRegionsPlaceholder": "Regionen auswo�hlen",
     "admin.delivery.zoneMethods": "Versandmethoden für die Zone",
     "admin.delivery.zoneMethodsPlaceholder": "Versandmethoden auswählen",
     "admin.delivery.cancel": "Abbrechen",
@@ -2535,30 +2595,30 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.orders.customerAddress": "Adresa",
     "admin.orders.customerCity": "Grad",
     "admin.orders.customerPostalCode": "Poštanski broj",
-    "admin.orders.customerCountry": "Država",
+    "admin.orders.customerCountry": "Drzava",
     "admin.orders.customerNote": "Napomena kupca",
-    "admin.orders.paymentInformation": "Podaci o plaćanju",
-    "admin.orders.paymentMethod": "Način plaćanja",
-    "admin.orders.paymentStatus": "Status plaćanja",
+    "admin.orders.paymentInformation": "Podaci o placanju",
+    "admin.orders.paymentMethod": "Nacin placanja",
+    "admin.orders.paymentStatus": "Status placanja",
     "admin.orders.deliveryInformation": "Podaci o dostavi",
-    "admin.orders.deliveryMethod": "Način dostave",
+    "admin.orders.deliveryMethod": "Nacin dostave",
     "admin.orders.deliveryStatus": "Status dostave",
-    "admin.orders.orderItems": "Stavke narudžbe",
+    "admin.orders.orderItems": "Stavke narudzbe",
     "admin.orders.product": "Proizvod",
-    "admin.orders.quantity": "Količina",
+    "admin.orders.quantity": "Kolicina",
     "admin.orders.price": "Cijena",
-    "admin.orders.subtotal": "Međuzbroj",
+    "admin.orders.subtotal": "Ukupno",
     "admin.orders.tax": "Porez",
-    "admin.orders.shippingCost": "Trošak dostave",
+    "admin.orders.shippingCost": "Trosak dostave",
     "admin.orders.orderTotal": "Ukupno",
-    "admin.orders.statusPending": "Na čekanju",
+    "admin.orders.statusPending": "Na cekanju",
     "admin.orders.statusProcessing": "U obradi",
     "admin.orders.statusShipped": "Poslano",
     "admin.orders.statusDelivered": "Dostavljeno",
     "admin.orders.statusCancelled": "Otkazano",
     "admin.orders.statusRefunded": "Povrat novca",
     "admin.orders.statusFailed": "Neuspjelo",
-    "admin.orders.paymentStatusPending": "Na čekanju",
+    "admin.orders.paymentStatusPending": "Na cekanju",
     "admin.orders.paymentStatusPaid": "Plaćeno",
     "admin.orders.paymentStatusFailed": "Neuspjelo",
     "admin.orders.paymentStatusRefunded": "Povrat novca",
@@ -2603,6 +2663,31 @@ export const translations: Record<Language, Record<string, string>> = {
       "Greška prilikom ažuriranja informacija za praćenje",
     "product.recenzijebrisanje":
       "Ova akcija je nepovratna. Recenzija će biti trajno izbrisana iz sustava.",
+    // NOVI PRIJEVODI ZA ADMIN INVOICES
+    "admin.invoices.deliveryAndDiscount": "Dostava i popust",
+    "admin.invoices.shipping": "Dostava",
+    "admin.invoices.freeShipping": "Besplatno",
+    "admin.invoices.manualShipping": "Ručni unos",
+    "admin.invoices.discountAmount": "Iznos popusta",
+    "admin.invoices.discount": "Popust",
+
+    // Dodatni prijevodi
+    "admin.products.colorSelectionMode": "Način odabira boje",
+    "admin.products.singleColor": "Jedna boja",
+    "admin.products.multipleColors": "Više boja",
+    "admin.invoices.priceEuro": "Cijena (€)",
+    "admin.invoices.selectProduct": "Odaberite proizvod",
+    "admin.invoices.addItemToInvoice": "Dodaj stavku na račun",
+    "admin.invoices.selectProductAndQuantity": "Odaberite proizvod i količinu",
+    "admin.invoices.emptyProductList": "Lista proizvoda je prazna",
+    "admin.invoices.addProductsForInvoice":
+      "Molimo dodajte proizvode na račun.",
+
+    // Prijevodi koji se koriste u order-details-page.tsx
+    "orders.notSpecified": "Nije specificirano",
+    "orders.product": "Proizvod",
+    "orders.orderRetrievalError": "Greška pri dohvaćanju podataka o narudžbi.",
+    "orderSuccessPage.noOrderInfo": "Nema informacija o narudžbi.",
 
     // Admin Invoices Page
     "admin.invoices.noInvoicesCreated": "Nema kreiranih računa",
@@ -3687,6 +3772,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "profile.orders": "Narudžbe",
 
     // Order Details
+    orderId: "ID narudžbe", // ✅ DODANO
+    invoiceNumber: "Broj računa",
     "orders.order": "Narudžba",
     "orders.backToOrders": "Natrag na narudžbe",
     "orders.delivered": "Dostavljeno",
@@ -4825,6 +4912,33 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.product.actionsColumn": "Actions",
     "admin.product.inStock": "In Stock",
     "admin.product.active": "Active",
+    // NOVI PRIJEVODI ZA ADMIN INVOICES
+    "admin.invoices.deliveryAndDiscount": "Shipping & Discount",
+    "admin.invoices.shipping": "Shipping",
+    "admin.invoices.freeShipping": "Free",
+    "admin.invoices.manualShipping": "Manual Input",
+    "admin.invoices.discountAmount": "Discount Amount",
+    "admin.invoices.discount": "Discount",
+
+    // Dodatni prijevodi
+    "admin.products.colorSelectionMode": "Color selection mode",
+    "admin.products.singleColor": "Single Color",
+    "admin.products.multipleColors": "Multiple Colors",
+    "admin.invoices.priceEuro": "Price (€)",
+    "admin.invoices.selectProduct": "Select product",
+    "admin.invoices.addItemToInvoice": "Add item to invoice",
+    "admin.invoices.selectProductAndQuantity": "Select product and quantity",
+    "admin.invoices.emptyProductList": "Product list is empty",
+    "admin.invoices.addProductsForInvoice":
+      "Please add products to the invoice.",
+
+    // Prijevodi koji se koriste u order-details-page.tsx
+    "orders.notSpecified": "Not specified",
+    "orders.product": "Product",
+    "orders.orderRetrievalError": "Error retrieving order data.",
+    "orderSuccessPage.noOrderInfo": "No order information found.",
+    orderId: "Order ID",
+    invoiceNumber: "Invoice Number",
 
     // Admin Orders Page
     "admin.orderDetails": "Order Details",
@@ -6592,7 +6706,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.registerProcessing": "Registracija...",
     "auth.welcome": "Dobrodošli v svetu Kerzenwelt",
     "auth.welcomeDescription":
-      "Ročno izdelane sveče, ustvarjene s skrbnostjo in ljubeznijo, prav za vas. Odkrijte razliko, ki jo lahko naravne sestavine in obrtniška spretnost prinesejo v vaš dom.",
+      "Ročno izdelane sveče, ustvarjene s skrbnostjo in ljubeznijo, prav za vas. Odkrijte razliko, ki jo lahko naravne sestavine in obrtniška spretnost prinesejo v vad� dom.",
     "auth.usernameRequired": "Uporabniško ime je obvezno",
     "auth.usernameMinLength": "Uporabniško ime mora imeti vsaj 3 znake",
     "auth.emailRequired": "E-poštni naslov je obvezen",
@@ -6601,7 +6715,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.passwordMinLength": "Geslo mora imeti vsaj 6 znakov",
     "auth.passwordsDoNotMatch": "Gesli se ne ujemata",
     "auth.step1": "Ustvarite svoj račun in začnite nakupovati",
-    "auth.step2": "Odkrijte široko paleto ročno izdelanih sveč",
+    "auth.step2": "Odkrijte široko paleto ročno izdelanih svee�",
     "auth.step3": "Sledite svojim naročilom in uživajte v posebnih ugodnostih",
     "auth.quote":
       "Vsaka sveča, ki zapusti našo delavnico, nosi delček naše duše in strasti do te obrti.",

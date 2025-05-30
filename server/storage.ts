@@ -1,33 +1,67 @@
-import { 
-  type User, type InsertUser, 
-  type Product, type InsertProduct,
-  type Category, type InsertCategory,
-  type Order, type InsertOrder,
-  type OrderItem, type InsertOrderItem,
-  type CartItem, type InsertCartItem,
-  type Review, type InsertReview,
-  type Setting, type InsertSetting,
-  type Page, type InsertPage,
+import {
+  type User,
+  type InsertUser,
+  type Product,
+  type InsertProduct,
+  type Category,
+  type InsertCategory,
+  type Order,
+  type InsertOrder,
+  type OrderItem,
+  type InsertOrderItem,
+  type CartItem,
+  type InsertCartItem,
+  type Review,
+  type InsertReview,
+  type Setting,
+  type InsertSetting,
+  type Page,
+  type InsertPage,
   type CartItemWithProduct,
   type OrderItemWithProduct,
-  type Scent, type InsertScent,
-  type Color, type InsertColor,
-  type ProductScent, type InsertProductScent,
-  type ProductColor, type InsertProductColor,
-  type Collection, type InsertCollection,
+  type Scent,
+  type InsertScent,
+  type Color,
+  type InsertColor,
+  type ProductScent,
+  type InsertProductScent,
+  type ProductColor,
+  type InsertProductColor,
+  type Collection,
+  type InsertCollection,
   type ProductCollection,
-  type Invoice, type InsertInvoice,
-  type InvoiceItem, type InsertInvoiceItem,
-  type PageVisit, type InsertPageVisit,
-  type VerificationToken, type InsertVerificationToken,
-  users, products, categories, orders, orderItems, cartItems, reviews, settings, pages,
-  scents, colors, productScents, productColors, collections, productCollections, 
-  invoices, invoiceItems, pageVisits, verificationTokens
+  type Invoice,
+  type InsertInvoice,
+  type InvoiceItem,
+  type InsertInvoiceItem,
+  type PageVisit,
+  type InsertPageVisit,
+  type VerificationToken,
+  type InsertVerificationToken,
+  users,
+  products,
+  categories,
+  orders,
+  orderItems,
+  cartItems,
+  reviews,
+  settings,
+  pages,
+  scents,
+  colors,
+  productScents,
+  productColors,
+  collections,
+  productCollections,
+  invoices,
+  invoiceItems,
+  pageVisits,
+  verificationTokens,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { db, pool } from "./db";
-import { eq, and, desc, count, sql } from "drizzle-orm";
+import { eq, and, desc, count, sql } from "drizzle-orm"; // ✅ Provjerite da su 'and' i 'eq' importani
 import connectPg from "connect-pg-simple";
 
 const MemoryStore = createMemoryStore(session);
@@ -45,33 +79,43 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   verifyUserEmail(userId: number): Promise<User | undefined>;
-  
+
   // Email verification methods
-  createVerificationToken(token: InsertVerificationToken): Promise<VerificationToken>;
+  createVerificationToken(
+    token: InsertVerificationToken,
+  ): Promise<VerificationToken>;
   getVerificationToken(token: string): Promise<VerificationToken | undefined>;
   deleteVerificationToken(token: string): Promise<void>;
-  
+
   // Page visits methods
   incrementPageVisit(path: string): Promise<any>;
   getPageVisit(path: string): Promise<any | undefined>;
   getAllPageVisits(): Promise<any[]>;
-  
+
   // Product methods
   getProduct(id: number): Promise<Product | undefined>;
+  // ✅ PROMJENA OVDJE: Uklonjen includeInactive parametar iz interface-a
   getAllProducts(): Promise<Product[]>;
   getFeaturedProducts(): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
-  updateProduct(id: number, product: InsertProduct): Promise<Product | undefined>;
+  updateProduct(
+    id: number,
+    product: InsertProduct,
+  ): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<void>;
-  
+
   // Category methods
   getCategory(id: number): Promise<Category | undefined>;
   getAllCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
-  updateCategory(id: number, category: InsertCategory): Promise<Category | undefined>;
+  updateCategory(
+    id: number,
+    category: InsertCategory,
+  ): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<void>;
+  // ✅ PROMJENA OVDJE: Uklonjen includeInactive parametar iz interface-a
   getProductsByCategory(categoryId: number): Promise<Product[]>;
-  
+
   // Scent methods
   getScent(id: number): Promise<Scent | undefined>;
   getAllScents(): Promise<Scent[]>;
@@ -82,7 +126,7 @@ export interface IStorage {
   getProductScents(productId: number): Promise<Scent[]>;
   addScentToProduct(productId: number, scentId: number): Promise<ProductScent>;
   removeScentFromProduct(productId: number, scentId: number): Promise<void>;
-  
+
   // Color methods
   getColor(id: number): Promise<Color | undefined>;
   getAllColors(): Promise<Color[]>;
@@ -93,7 +137,7 @@ export interface IStorage {
   getProductColors(productId: number): Promise<Color[]>;
   addColorToProduct(productId: number, colorId: number): Promise<ProductColor>;
   removeColorFromProduct(productId: number, colorId: number): Promise<void>;
-  
+
   // Order methods
   getOrder(id: number): Promise<Order | undefined>;
   getAllOrders(): Promise<Order[]>;
@@ -101,25 +145,29 @@ export interface IStorage {
   createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
   getOrderItems(orderId: number): Promise<OrderItemWithProduct[]>;
-  
+
   // Cart methods
   getCartItems(userId: number): Promise<CartItemWithProduct[]>;
   addToCart(item: InsertCartItem): Promise<CartItem>;
-  updateCartItem(id: number, quantity: number, userId: number): Promise<CartItem | undefined>;
+  updateCartItem(
+    id: number,
+    quantity: number,
+    userId: number,
+  ): Promise<CartItem | undefined>;
   removeFromCart(id: number, userId: number): Promise<void>;
   clearCart(userId: number): Promise<void>;
-  
+
   // Review methods
   getProductReviews(productId: number): Promise<Review[]>;
   createReview(review: InsertReview): Promise<Review>;
-  
+
   // Settings methods
   getSetting(key: string): Promise<Setting | undefined>;
   getAllSettings(): Promise<Setting[]>;
   createSetting(setting: InsertSetting): Promise<Setting>;
   updateSetting(key: string, value: string): Promise<Setting | undefined>;
   deleteSetting(key: string): Promise<void>;
-  
+
   // Page methods
   getPage(id: number): Promise<Page | undefined>;
   getPageByType(type: string): Promise<Page | undefined>;
@@ -127,28 +175,40 @@ export interface IStorage {
   createPage(page: InsertPage): Promise<Page>;
   updatePage(id: number, page: Partial<InsertPage>): Promise<Page | undefined>;
   deletePage(id: number): Promise<void>;
-  
+
   // Collection methods
   getCollection(id: number): Promise<Collection | undefined>;
   getAllCollections(): Promise<Collection[]>;
   getActiveCollections(): Promise<Collection[]>;
   getFeaturedCollections(): Promise<Collection[]>;
   createCollection(collection: InsertCollection): Promise<Collection>;
-  updateCollection(id: number, collection: Partial<InsertCollection>): Promise<Collection | undefined>;
+  updateCollection(
+    id: number,
+    collection: Partial<InsertCollection>,
+  ): Promise<Collection | undefined>;
   deleteCollection(id: number): Promise<void>;
   getCollectionProducts(collectionId: number): Promise<Product[]>;
-  addProductToCollection(productId: number, collectionId: number): Promise<ProductCollection>;
-  removeProductFromCollection(productId: number, collectionId: number): Promise<void>;
-  
+  addProductToCollection(
+    productId: number,
+    collectionId: number,
+  ): Promise<ProductCollection>;
+  removeProductFromCollection(
+    productId: number,
+    collectionId: number,
+  ): Promise<void>;
+
   // Invoice methods
   getInvoice(id: number): Promise<Invoice | undefined>;
   getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined>;
   getAllInvoices(): Promise<Invoice[]>;
   getUserInvoices(userId: number): Promise<Invoice[]>;
-  createInvoice(invoice: InsertInvoice, items: InsertInvoiceItem[]): Promise<Invoice>;
+  createInvoice(
+    invoice: InsertInvoice,
+    items: InsertInvoiceItem[],
+  ): Promise<Invoice>;
   getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]>;
   deleteInvoice(id: number): Promise<void>;
-  
+
   // Session store
   sessionStore: SessionStore;
 }
@@ -173,7 +233,7 @@ export class MemStorage implements IStorage {
   private invoiceItems: Map<number, InvoiceItem> = new Map();
   private pageVisits: Map<number, PageVisit> = new Map();
   private verificationTokens: Map<number, VerificationToken> = new Map();
-  
+
   private userIdCounter: number;
   private productIdCounter: number;
   private categoryIdCounter: number;
@@ -191,10 +251,10 @@ export class MemStorage implements IStorage {
   private invoiceIdCounter: number;
   private invoiceItemIdCounter: number;
   private pageVisitIdCounter: number;
-  private verificationTokenIdCounter: number;
-  
+  private verificationTokenIdCounter = 1; // Initialize counter
+
   sessionStore: SessionStore;
-  
+
   constructor() {
     this.users = new Map();
     this.products = new Map();
@@ -212,7 +272,7 @@ export class MemStorage implements IStorage {
     this.productColors = [];
     this.productCollections = [];
     this.verificationTokens = new Map();
-    
+
     this.userIdCounter = 1;
     this.productIdCounter = 1;
     this.categoryIdCounter = 1;
@@ -231,21 +291,21 @@ export class MemStorage implements IStorage {
     this.invoiceItemIdCounter = 1;
     this.pageVisitIdCounter = 1;
     this.verificationTokenIdCounter = 1;
-    
+
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
     });
-    
+
     this.initializeCategories();
     this.initializeProducts();
     this.createDefaultAdmin();
   }
-  
+
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     for (const user of this.users.values()) {
       if (user.username === username) {
@@ -254,7 +314,7 @@ export class MemStorage implements IStorage {
     }
     return undefined;
   }
-  
+
   async getUserByEmail(email: string): Promise<User | undefined> {
     for (const user of this.users.values()) {
       if (user.email === email) {
@@ -263,7 +323,7 @@ export class MemStorage implements IStorage {
     }
     return undefined;
   }
-  
+
   async createUser(userData: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const now = new Date();
@@ -271,77 +331,47 @@ export class MemStorage implements IStorage {
       ...userData,
       id,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
     this.users.set(id, user);
     return user;
   }
-  
+
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
   }
-  
-  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+
+  async updateUser(
+    id: number,
+    userData: Partial<User>,
+  ): Promise<User | undefined> {
     const user = this.users.get(id);
     if (!user) return undefined;
-    
+
     const updatedUser: User = {
       ...user,
       ...userData,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     this.users.set(id, updatedUser);
     return updatedUser;
   }
-  
+
   async verifyUserEmail(userId: number): Promise<User | undefined> {
     const user = this.users.get(userId);
     if (!user) return undefined;
-    
+
     const updatedUser: User = {
       ...user,
       emailVerified: true,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     this.users.set(userId, updatedUser);
     return updatedUser;
   }
-  
-  // Email verification token methods
-  async createVerificationToken(tokenData: InsertVerificationToken): Promise<VerificationToken> {
-    const id = this.verificationTokenIdCounter++;
-    const now = new Date();
-    
-    const token: VerificationToken = {
-      ...tokenData,
-      id,
-      createdAt: now
-    };
-    
-    this.verificationTokens.set(id, token);
-    return token;
-  }
-  
-  async getVerificationToken(tokenString: string): Promise<VerificationToken | undefined> {
-    for (const token of this.verificationTokens.values()) {
-      if (token.token === tokenString) {
-        return token;
-      }
-    }
-    return undefined;
-  }
-  
-  async deleteVerificationToken(tokenString: string): Promise<void> {
-    for (const [id, token] of this.verificationTokens.entries()) {
-      if (token.token === tokenString) {
-        this.verificationTokens.delete(id);
-        return;
-      }
-    }
-  }
-  
+
   // Collection methods
   async getCollection(id: number): Promise<Collection | undefined> {
     return this.collections.get(id);
@@ -352,87 +382,109 @@ export class MemStorage implements IStorage {
   }
 
   async getActiveCollections(): Promise<Collection[]> {
-    return Array.from(this.collections.values()).filter(c => c.active);
+    return Array.from(this.collections.values()).filter((c) => c.active);
   }
 
   async getFeaturedCollections(): Promise<Collection[]> {
-    return Array.from(this.collections.values()).filter(c => c.active && c.featuredOnHome);
+    return Array.from(this.collections.values()).filter(
+      (c) => c.active && c.featuredOnHome,
+    );
   }
 
-  async createCollection(collectionData: InsertCollection): Promise<Collection> {
+  async createCollection(
+    collectionData: InsertCollection,
+  ): Promise<Collection> {
     const id = this.collectionIdCounter++;
     const now = new Date();
     const collection: Collection = {
       ...collectionData,
       id,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
     this.collections.set(id, collection);
     return collection;
   }
 
-  async updateCollection(id: number, collectionData: Partial<InsertCollection>): Promise<Collection | undefined> {
+  async updateCollection(
+    id: number,
+    collectionData: Partial<InsertCollection>,
+  ): Promise<Collection | undefined> {
     const collection = this.collections.get(id);
     if (!collection) return undefined;
-    
+
     const updatedCollection: Collection = {
       ...collection,
       ...collectionData,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     this.collections.set(id, updatedCollection);
     return updatedCollection;
   }
 
   async deleteCollection(id: number): Promise<void> {
     this.collections.delete(id);
-    this.productCollections = this.productCollections.filter(pc => pc.collectionId !== id);
+    this.productCollections = this.productCollections.filter(
+      (pc) => pc.collectionId !== id,
+    );
   }
 
   async getCollectionProducts(collectionId: number): Promise<Product[]> {
     const productIds = this.productCollections
-      .filter(pc => pc.collectionId === collectionId)
-      .map(pc => pc.productId);
-    
-    return Array.from(this.products.values())
-      .filter(product => productIds.includes(product.id));
+      .filter((pc) => pc.collectionId === collectionId)
+      .map((pc) => pc.productId);
+
+    return Array.from(this.products.values()).filter((product) =>
+      productIds.includes(product.id),
+    );
   }
 
-  async addProductToCollection(productId: number, collectionId: number): Promise<ProductCollection> {
+  async addProductToCollection(
+    productId: number,
+    collectionId: number,
+  ): Promise<ProductCollection> {
     // Check if relation already exists
-    const existingRelation = this.productCollections.find(pc => 
-      pc.productId === productId && pc.collectionId === collectionId
+    const existingRelation = this.productCollections.find(
+      (pc) => pc.productId === productId && pc.collectionId === collectionId,
     );
-    
+
     if (existingRelation) {
       return existingRelation;
     }
-    
+
     const id = this.productCollectionIdCounter++;
     const relation: ProductCollection = {
       id,
       productId,
-      collectionId
+      collectionId,
     };
-    
+
     this.productCollections.push(relation);
     return relation;
   }
 
-  async removeProductFromCollection(productId: number, collectionId: number): Promise<void> {
-    this.productCollections = this.productCollections.filter(pc => 
-      !(pc.productId === productId && pc.collectionId === collectionId)
+  async removeProductFromCollection(
+    productId: number,
+    collectionId: number,
+  ): Promise<void> {
+    this.productCollections = this.productCollections.filter(
+      (pc) => !(pc.productId === productId && pc.collectionId === collectionId),
     );
   }
-  
+
+  private async initializeRelationTables() {
+    // Your existing code
+  }
+
   // Invoice methods
   async getInvoice(id: number): Promise<Invoice | undefined> {
     return this.invoices.get(id);
   }
-  
-  async getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined> {
+
+  async getInvoiceByNumber(
+    invoiceNumber: string,
+  ): Promise<Invoice | undefined> {
     for (const invoice of Array.from(this.invoices.values())) {
       if (invoice.invoiceNumber === invoiceNumber) {
         return invoice;
@@ -440,104 +492,110 @@ export class MemStorage implements IStorage {
     }
     return undefined;
   }
-  
+
   async getAllInvoices(): Promise<Invoice[]> {
-    return Array.from(this.invoices.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return Array.from(this.invoices.values()).sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
   }
-  
+
   async getUserInvoices(userId: number): Promise<Invoice[]> {
     return Array.from(this.invoices.values())
-      .filter(invoice => invoice.userId === userId)
+      .filter((invoice) => invoice.userId === userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
-  
-  async createInvoice(invoiceData: InsertInvoice, items: InsertInvoiceItem[]): Promise<Invoice> {
+
+  async createInvoice(
+    invoiceData: InsertInvoice,
+    items: InsertInvoiceItem[],
+  ): Promise<Invoice> {
+    // Create the invoice
     const id = this.invoiceIdCounter++;
     const now = new Date();
-    
+
     const invoice: Invoice = {
       ...invoiceData,
       id,
-      createdAt: now
+      createdAt: now,
     };
-    
+
     this.invoices.set(id, invoice);
-    
+
     // Create invoice items
     for (const itemData of items) {
       const itemId = this.invoiceItemIdCounter++;
       const invoiceItem: InvoiceItem = {
         ...itemData,
         id: itemId,
-        invoiceId: id
+        invoiceId: id,
       };
-      
+
       this.invoiceItems.set(itemId, invoiceItem);
     }
-    
+
     return invoice;
   }
-  
+
   async getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]> {
-    return Array.from(this.invoiceItems.values())
-      .filter(item => item.invoiceId === invoiceId);
+    return Array.from(this.invoiceItems.values()).filter(
+      (item) => item.invoiceId === invoiceId,
+    );
   }
-  
+
   async deleteInvoice(id: number): Promise<void> {
     // Delete all items for this invoice
     const invoiceItemIds = Array.from(this.invoiceItems.values())
-      .filter(item => item.invoiceId === id)
-      .map(item => item.id);
-    
+      .filter((item) => item.invoiceId === id)
+      .map((item) => item.id);
+
     for (const itemId of invoiceItemIds) {
       this.invoiceItems.delete(itemId);
     }
-    
+
     // Delete the invoice
     this.invoices.delete(id);
   }
-  
-  // Metode za praćenje posjeta stranica
+
+  // Page visits methods
   async incrementPageVisit(path: string): Promise<PageVisit> {
     // Potraži postojeću posjetu za ovu putanju
     let existingVisit: PageVisit | undefined;
-    
+
     for (const visit of this.pageVisits.values()) {
       if (visit.path === path) {
         existingVisit = visit;
         break;
       }
     }
-    
+
     if (existingVisit) {
       // Ako posjet postoji, povećaj broj
       const updatedVisit: PageVisit = {
         ...existingVisit,
         count: existingVisit.count + 1,
-        lastVisited: new Date()
+        lastVisited: new Date(),
       };
-      
+
       this.pageVisits.set(existingVisit.id, updatedVisit);
       return updatedVisit;
     } else {
       // Ako posjet ne postoji, kreiraj novi
       const id = this.pageVisitIdCounter++;
       const now = new Date();
-      
+
       const newVisit: PageVisit = {
         id,
         path,
         count: 1,
         firstVisited: now,
-        lastVisited: now
+        lastVisited: now,
       };
-      
+
       this.pageVisits.set(id, newVisit);
       return newVisit;
     }
   }
-  
+
   async getPageVisit(path: string): Promise<PageVisit | undefined> {
     for (const visit of this.pageVisits.values()) {
       if (visit.path === path) {
@@ -546,22 +604,23 @@ export class MemStorage implements IStorage {
     }
     return undefined;
   }
-  
+
   async getAllPageVisits(): Promise<PageVisit[]> {
-    return Array.from(this.pageVisits.values())
-      .sort((a, b) => b.count - a.count);
+    return Array.from(this.pageVisits.values()).sort(
+      (a, b) => b.count - a.count,
+    );
   }
-  
+
   // ... rest of MemStorage implementation
-  
+
   private async initializeCategories() {
     // Your existing code
   }
-  
+
   private async initializeProducts() {
     // Your existing code
   }
-  
+
   private async createDefaultAdmin() {
     // Your existing code
   }
@@ -574,67 +633,87 @@ export class DatabaseStorage implements IStorage {
     // Initialize PostgreSQL session store
     this.sessionStore = new PgSession({
       pool,
-      tableName: 'session',
-      createTableIfMissing: true
+      tableName: "session",
+      createTableIfMissing: true,
     });
-    
+
     // Inicijaliziraj pomoćne tablice pri pokretanju
     this.initializeRelationTables();
   }
-  
+
   // Invoice methods
   async getInvoice(id: number): Promise<Invoice | undefined> {
-    const [invoice] = await db.select().from(invoices).where(eq(invoices.id, id));
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, id));
     return invoice;
   }
-  
-  async getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined> {
-    const [invoice] = await db.select().from(invoices).where(eq(invoices.invoiceNumber, invoiceNumber));
+
+  async getInvoiceByNumber(
+    invoiceNumber: string,
+  ): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceNumber, invoiceNumber));
     return invoice;
   }
-  
+
   async getAllInvoices(): Promise<Invoice[]> {
     return await db.select().from(invoices).orderBy(desc(invoices.createdAt));
   }
-  
+
   async getUserInvoices(userId: number): Promise<Invoice[]> {
-    return await db.select().from(invoices)
+    return await db
+      .select()
+      .from(invoices)
       .where(eq(invoices.userId, userId))
       .orderBy(desc(invoices.createdAt));
   }
-  
-  async createInvoice(invoiceData: InsertInvoice, items: InsertInvoiceItem[]): Promise<Invoice> {
+
+  async createInvoice(
+    invoiceData: InsertInvoice,
+    items: InsertInvoiceItem[],
+  ): Promise<Invoice> {
     // Create the invoice
     const [invoice] = await db.insert(invoices).values(invoiceData).returning();
-    
+
     // Create the invoice items
     if (items && items.length > 0) {
-      for (const item of items) {
-        await db.insert(invoiceItems).values({
+      // Use a batch insert for better performance
+      await db.insert(invoiceItems).values(
+        items.map((item) => ({
           ...item,
-          invoiceId: invoice.id
-        });
-      }
+          invoiceId: invoice.id,
+        })),
+      );
     }
-    
+
     return invoice;
   }
-  
+
   async getInvoiceItems(invoiceId: number): Promise<InvoiceItem[]> {
-    return await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+    return await db
+      .select()
+      .from(invoiceItems)
+      .where(eq(invoiceItems.invoiceId, invoiceId));
   }
-  
+
   async deleteInvoice(id: number): Promise<void> {
     // Delete all invoice items first
     await db.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
-    
+
     // Then delete the invoice
     await db.delete(invoices).where(eq(invoices.id, id));
   }
-  
+
   // Collection methods
   async getCollection(id: number): Promise<Collection | undefined> {
-    const [collection] = await db.select().from(collections).where(eq(collections.id, id));
+    const [collection] = await db
+      .select()
+      .from(collections)
+      .where(eq(collections.id, id));
     return collection;
   }
 
@@ -643,17 +722,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActiveCollections(): Promise<Collection[]> {
-    return await db.select().from(collections).where(eq(collections.active, true));
+    return await db
+      .select()
+      .from(collections)
+      .where(eq(collections.active, true));
   }
 
   async getFeaturedCollections(): Promise<Collection[]> {
-    return await db.select().from(collections).where(and(
-      eq(collections.active, true),
-      eq(collections.featuredOnHome, true)
-    ));
+    return await db
+      .select()
+      .from(collections)
+      .where(
+        and(eq(collections.active, true), eq(collections.featuredOnHome, true)),
+      );
   }
 
-  async createCollection(collectionData: InsertCollection): Promise<Collection> {
+  async createCollection(
+    collectionData: InsertCollection,
+  ): Promise<Collection> {
     const [collection] = await db
       .insert(collections)
       .values(collectionData)
@@ -661,7 +747,10 @@ export class DatabaseStorage implements IStorage {
     return collection;
   }
 
-  async updateCollection(id: number, collectionData: Partial<InsertCollection>): Promise<Collection | undefined> {
+  async updateCollection(
+    id: number,
+    collectionData: Partial<InsertCollection>,
+  ): Promise<Collection | undefined> {
     const [updatedCollection] = await db
       .update(collections)
       .set(collectionData)
@@ -672,8 +761,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCollection(id: number): Promise<void> {
     // Prvo ukloni sve proizvode iz kolekcije
-    await db.delete(productCollections).where(eq(productCollections.collectionId, id));
-    
+    await db
+      .delete(productCollections)
+      .where(eq(productCollections.collectionId, id));
+
     // Zatim izbriši kolekciju
     await db.delete(collections).where(eq(collections.id, id));
   }
@@ -681,13 +772,12 @@ export class DatabaseStorage implements IStorage {
   async getCollectionProducts(collectionId: number): Promise<Product[]> {
     try {
       const result = await pool.query(
-        `SELECT p.* 
-         FROM product_collections pc 
+        `SELECT p.* FROM product_collections pc 
          JOIN products p ON pc.product_id = p.id 
          WHERE pc.collection_id = $1`,
-        [collectionId]
+        [collectionId],
       );
-      
+
       return result.rows as Product[];
     } catch (error) {
       console.error("Error in getCollectionProducts:", error);
@@ -695,34 +785,37 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async addProductToCollection(productId: number, collectionId: number): Promise<ProductCollection> {
+  async addProductToCollection(
+    productId: number,
+    collectionId: number,
+  ): Promise<ProductCollection> {
     try {
       // Provjeri postoji li tablica product_collections
-      const tableExists = await this.tableExists('product_collections');
+      const tableExists = await this.tableExists("product_collections");
       if (!tableExists) {
         console.log("Kreiranje tablice product_collections jer ne postoji...");
         await this.initializeRelationTables();
       }
-      
+
       // Provjeri postojeću vezu
       const checkResult = await pool.query(
         `SELECT product_id, collection_id FROM product_collections 
          WHERE product_id = $1 AND collection_id = $2`,
-        [productId, collectionId]
+        [productId, collectionId],
       );
-      
+
       if (checkResult.rows.length > 0) {
         return checkResult.rows[0] as ProductCollection;
       }
-      
+
       // Dodaj novu vezu
       const result = await pool.query(
         `INSERT INTO product_collections (product_id, collection_id) 
          VALUES ($1, $2) 
          RETURNING id, product_id, collection_id`,
-        [productId, collectionId]
+        [productId, collectionId],
       );
-      
+
       return result.rows[0] as ProductCollection;
     } catch (error) {
       console.error("Error in addProductToCollection:", error);
@@ -730,23 +823,28 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async removeProductFromCollection(productId: number, collectionId: number): Promise<void> {
+  async removeProductFromCollection(
+    productId: number,
+    collectionId: number,
+  ): Promise<void> {
     try {
       await pool.query(
         `DELETE FROM product_collections 
          WHERE product_id = $1 AND collection_id = $2`,
-        [productId, collectionId]
+        [productId, collectionId],
       );
     } catch (error) {
       console.error("Error in removeProductFromCollection:", error);
       throw error;
     }
   }
-  
+
   private async initializeRelationTables() {
     try {
-      console.log("Inicijalizacija pomoćnih tablica za veze između entiteta...");
-      
+      console.log(
+        "Inicijalizacija pomoćnih tablica za veze između entiteta...",
+      );
+
       // Kreiraj tablicu product_scents ako ne postoji
       await pool.query(`
         CREATE TABLE IF NOT EXISTS product_scents (
@@ -756,7 +854,7 @@ export class DatabaseStorage implements IStorage {
           UNIQUE(product_id, scent_id)
         )
       `);
-      
+
       // Kreiraj tablicu product_colors ako ne postoji
       await pool.query(`
         CREATE TABLE IF NOT EXISTS product_colors (
@@ -766,7 +864,7 @@ export class DatabaseStorage implements IStorage {
           UNIQUE(product_id, color_id)
         )
       `);
-      
+
       // Kreiraj tablicu product_collections ako ne postoji
       await pool.query(`
         CREATE TABLE IF NOT EXISTS product_collections (
@@ -776,27 +874,33 @@ export class DatabaseStorage implements IStorage {
           UNIQUE(product_id, collection_id)
         )
       `);
-      
+
       console.log("Inicijalizacija pomoćnih tablica završena.");
     } catch (error) {
       console.error("Greška pri inicijalizaciji pomoćnih tablica:", error);
     }
   }
-  
+
   // Funkcija koja provjerava postojanje tablice u bazi podataka
   private async tableExists(tableName: string): Promise<boolean> {
     try {
-      const result = await pool.query(`
+      const result = await pool.query(
+        `
         SELECT EXISTS (
           SELECT FROM information_schema.tables 
           WHERE table_schema = 'public' 
           AND table_name = $1
         )
-      `, [tableName]);
-      
+      `,
+        [tableName],
+      );
+
       return result.rows[0].exists;
     } catch (error) {
-      console.error(`Greška pri provjeri postojanja tablice ${tableName}:`, error);
+      console.error(
+        `Greška pri provjeri postojanja tablice ${tableName}:`,
+        error,
+      );
       return false;
     }
   }
@@ -808,7 +912,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.username, username));
     return user;
   }
 
@@ -826,7 +933,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users);
   }
 
-  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+  async updateUser(
+    id: number,
+    userData: Partial<User>,
+  ): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set(userData)
@@ -837,12 +947,24 @@ export class DatabaseStorage implements IStorage {
 
   // Product methods
   async getProduct(id: number): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.id, id));
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, id));
     return product;
   }
 
-  async getAllProducts(): Promise<Product[]> {
-    return await db.select().from(products);
+  // ✅ PROMJENA OVDJE: getAllProducts sada prima includeInactive
+  async getAllProducts(includeInactive: boolean = false): Promise<Product[]> {
+    let query = db.select().from(products);
+    if (!includeInactive) {
+      query = query.where(eq(products.active, true));
+    }
+    const result = await query;
+    console.log(
+      `DEBUG: storage.getAllProducts - Retrieved ${result.length} products. Include Inactive: ${includeInactive}`,
+    );
+    return result;
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
@@ -854,7 +976,10 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
-  async updateProduct(id: number, productData: InsertProduct): Promise<Product | undefined> {
+  async updateProduct(
+    id: number,
+    productData: InsertProduct,
+  ): Promise<Product | undefined> {
     const [updatedProduct] = await db
       .update(products)
       .set(productData)
@@ -869,7 +994,10 @@ export class DatabaseStorage implements IStorage {
 
   // Category methods
   async getCategory(id: number): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
     return category;
   }
 
@@ -878,11 +1006,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(categoryData: InsertCategory): Promise<Category> {
-    const [category] = await db.insert(categories).values(categoryData).returning();
+    const [category] = await db
+      .insert(categories)
+      .values(categoryData)
+      .returning();
     return category;
   }
-  
-  async updateCategory(id: number, categoryData: InsertCategory): Promise<Category | undefined> {
+
+  async updateCategory(
+    id: number,
+    categoryData: InsertCategory,
+  ): Promise<Category | undefined> {
     const [updatedCategory] = await db
       .update(categories)
       .set(categoryData)
@@ -890,24 +1024,24 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedCategory;
   }
-  
+
   async deleteCategory(id: number): Promise<void> {
     // Prvo provjerimo ima li proizvoda povezanih s ovom kategorijom
     const relatedProducts = await db
       .select({ count: count() })
       .from(products)
       .where(eq(products.categoryId, id));
-    
+
     // Ako ima proizvoda, prvo ih premjestimo u "Razno" ili kreirajmo tu kategoriju ako ne postoji
     if (relatedProducts[0].count > 0) {
       let miscCategoryId: number;
-      
+
       // Pronađi ili kreiraj "Razno" kategoriju
       const [miscCategory] = await db
         .select()
         .from(categories)
         .where(eq(categories.name, "Razno"));
-      
+
       if (miscCategory) {
         miscCategoryId = miscCategory.id;
       } else {
@@ -915,25 +1049,72 @@ export class DatabaseStorage implements IStorage {
           .insert(categories)
           .values({
             name: "Razno",
-            description: "Razni proizvodi koji nisu kategorizirani"
+            description: "Razni proizvodi koji nisu kategorizirani",
           })
           .returning();
         miscCategoryId = newMiscCategory.id;
       }
-      
+
       // Prebaci sve proizvode iz kategorije koja se briše u "Razno"
       await db
         .update(products)
         .set({ categoryId: miscCategoryId })
         .where(eq(products.categoryId, id));
     }
-    
+
     // Sada možemo sigurno obrisati kategoriju
     await db.delete(categories).where(eq(categories.id, id));
   }
 
-  async getProductsByCategory(categoryId: number): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.categoryId, categoryId));
+  // Innerhalb deiner DatabaseStorage Klasse, in der Funktion getProductsByCategory
+  async getProductsByCategory(
+    categoryId: number,
+    includeInactive: boolean = false,
+  ): Promise<Product[]> {
+    const conditions = [eq(products.categoryId, categoryId)];
+    if (!includeInactive) {
+      conditions.push(eq(products.active, true));
+    }
+
+    const query = db
+      .select()
+      .from(products)
+      .where(and(...conditions));
+
+    // === HIER DAS SQL-LOGGING EINFÜGEN ===
+    try {
+      const sqlResult = query.toSQL(); // Oder .toParam(), je nach Drizzle-Version
+      console.log(
+        "DEBUG: storage.getProductsByCategory - Generated SQL:",
+        sqlResult.sql,
+      );
+      console.log(
+        "DEBUG: storage.getProductsByCategory - SQL Params:",
+        sqlResult.params,
+      );
+    } catch (e) {
+      console.error(
+        "DEBUG: storage.getProductsByCategory - Error getting SQL for logging:",
+        e,
+      );
+    }
+    // =====================================
+
+    const result = await query;
+
+    console.log(
+      `DEBUG: storage.getProductsByCategory - Category ID: ${categoryId}, Include Inactive: ${includeInactive}. Found ${result.length} products.`,
+    );
+    console.log(
+      "DEBUG: storage.getProductsByCategory - Sample products (first 3):",
+      result.slice(0, 3).map((p) => ({
+        id: p.id,
+        name: p.name,
+        categoryId: p.categoryId,
+        active: p.active,
+      })),
+    );
+    return result;
   }
 
   // Scent methods
@@ -955,7 +1136,10 @@ export class DatabaseStorage implements IStorage {
     return scent;
   }
 
-  async updateScent(id: number, scentData: InsertScent): Promise<Scent | undefined> {
+  async updateScent(
+    id: number,
+    scentData: InsertScent,
+  ): Promise<Scent | undefined> {
     const [updatedScent] = await db
       .update(scents)
       .set(scentData)
@@ -967,7 +1151,7 @@ export class DatabaseStorage implements IStorage {
   async deleteScent(id: number): Promise<void> {
     // Prvo ukloni sve poveznice proizvoda s ovim mirisom
     await db.delete(productScents).where(eq(productScents.scentId, id));
-    
+
     // Zatim izbriši miris
     await db.delete(scents).where(eq(scents.id, id));
   }
@@ -975,15 +1159,15 @@ export class DatabaseStorage implements IStorage {
   async getProductScents(productId: number): Promise<Scent[]> {
     try {
       console.log(`Dohvaćanje mirisa za proizvod ID: ${productId}`);
-      
+
       // Provjeri postoji li tablica product_scents
-      const tableExists = await this.tableExists('product_scents');
+      const tableExists = await this.tableExists("product_scents");
       if (!tableExists) {
         console.log("Kreiranje tablice product_scents jer ne postoji...");
         await this.initializeRelationTables();
         return []; // Vrati prazno polje jer tablica upravo kreirana i nema podataka
       }
-    
+
       // Direktno povezani upit koji dohvaća mirise povezane s proizvodom s eksplicitnim nazivima stupaca
       try {
         const result = await pool.query(
@@ -998,14 +1182,16 @@ export class DatabaseStorage implements IStorage {
              scents s ON ps.scent_id = s.id 
            WHERE 
              ps.product_id = $1`,
-          [productId]
+          [productId],
         );
-        
-        console.log(`Pronađeno ${result.rows.length} mirisa za proizvod ID: ${productId}`);
+
+        console.log(
+          `Pronađeno ${result.rows.length} mirisa za proizvod ID: ${productId}`,
+        );
         if (result.rows.length > 0) {
-          console.log('Prvi miris:', result.rows[0]);
+          console.log("Prvi miris:", result.rows[0]);
         }
-        
+
         return result.rows as Scent[];
       } catch (sqlError) {
         console.error("SQL Error u getProductScents:", sqlError);
@@ -1017,98 +1203,114 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async addScentToProduct(productId: number, scentId: number): Promise<ProductScent> {
+  async addScentToProduct(
+    productId: number,
+    scentId: number,
+  ): Promise<ProductScent> {
     console.log(`Attempting to add scent ${scentId} to product ${productId}`);
     try {
       // Prvo provjeri postojanje tablice
-      const tableExists = await this.tableExists('product_scents');
+      const tableExists = await this.tableExists("product_scents");
       if (!tableExists) {
         console.log("Kreiranje tablice product_scents jer ne postoji...");
         await this.initializeRelationTables();
       }
-    
+
       // Provjeri postojeću vezu direktnim SQL upitom
       console.log("Checking for existing product-scent link...");
       const checkResult = await pool.query(
         `SELECT product_id, scent_id FROM product_scents 
          WHERE product_id = $1 AND scent_id = $2`,
-        [productId, scentId]
+        [productId, scentId],
       );
-      
+
       if (checkResult.rows.length > 0) {
         console.log("Found existing link, returning it:", checkResult.rows[0]);
         return checkResult.rows[0] as ProductScent;
       }
-      
+
       // Dodaj novu vezu
       console.log("Creating new product-scent link...");
       console.log("Values:", { productId, scentId });
-      
+
       const insertResult = await pool.query(
         `INSERT INTO product_scents (product_id, scent_id) 
          VALUES ($1, $2) 
          RETURNING product_id, scent_id`,
-        [productId, scentId]
+        [productId, scentId],
       );
-      
+
       console.log("Insert result:", insertResult);
-      
+
       if (!insertResult.rows || insertResult.rows.length === 0) {
         throw new Error("Insert returned empty result");
       }
-      
+
       const link = insertResult.rows[0];
       console.log("Successfully added scent to product:", link);
-      
+
       return link as ProductScent;
     } catch (error) {
       console.error("Error in addScentToProduct:", error);
-      console.error("Stack trace:", error instanceof Error ? error.stack : "No stack trace");
-      throw new Error(`Failed to add scent to product: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        "Stack trace:",
+        error instanceof Error ? error.stack : "No stack trace",
+      );
+      throw new Error(
+        `Failed to add scent to product: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
-  async removeScentFromProduct(productId: number, scentId: number): Promise<void> {
+  async removeScentFromProduct(
+    productId: number,
+    scentId: number,
+  ): Promise<void> {
     try {
-      console.log(`Uklanjanje mirisa ID ${scentId} s proizvoda ID ${productId}`);
-      
+      console.log(
+        `Uklanjanje mirisa ID ${scentId} s proizvoda ID ${productId}`,
+      );
+
       // Provjeri postojanje tablice
-      const tableExists = await this.tableExists('product_scents');
+      const tableExists = await this.tableExists("product_scents");
       if (!tableExists) {
         console.log("Tablica product_scents ne postoji, ništa za ukloniti");
         return;
       }
-      
+
       const result = await pool.query(
         `DELETE FROM product_scents 
          WHERE product_id = $1 AND scent_id = $2
          RETURNING product_id, scent_id`,
-        [productId, scentId]
+        [productId, scentId],
       );
-      
-      console.log(`Uklonjeno ${result.rowCount} veza između proizvoda i mirisa.`);
+
+      console.log(
+        `Uklonjeno ${result.rowCount} veza između proizvoda i mirisa.`,
+      );
     } catch (error) {
       console.error("Greška pri uklanjanju mirisa s proizvoda:", error);
       // Ne bacamo grešku - obradimo je elegantno
     }
   }
-  
+
   async removeAllScentsFromProduct(productId: number): Promise<void> {
     try {
       // Provjeri postojanje tablice
-      const tableExists = await this.tableExists('product_scents');
+      const tableExists = await this.tableExists("product_scents");
       if (!tableExists) {
         console.log("Tablica product_scents ne postoji, ništa za ukloniti");
         return;
       }
-      
-      await pool.query(
-        `DELETE FROM product_scents WHERE product_id = $1`,
-        [productId]
-      );
+
+      await pool.query(`DELETE FROM product_scents WHERE product_id = $1`, [
+        productId,
+      ]);
     } catch (error) {
       console.error("Error in removeAllScentsFromProduct:", error);
-      throw new Error(`Failed to remove all scents from product: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to remove all scents from product: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -1131,7 +1333,10 @@ export class DatabaseStorage implements IStorage {
     return color;
   }
 
-  async updateColor(id: number, colorData: InsertColor): Promise<Color | undefined> {
+  async updateColor(
+    id: number,
+    colorData: InsertColor,
+  ): Promise<Color | undefined> {
     const [updatedColor] = await db
       .update(colors)
       .set(colorData)
@@ -1143,7 +1348,7 @@ export class DatabaseStorage implements IStorage {
   async deleteColor(id: number): Promise<void> {
     // Prvo ukloni sve poveznice proizvoda s ovom bojom
     await db.delete(productColors).where(eq(productColors.colorId, id));
-    
+
     // Zatim izbriši boju
     await db.delete(colors).where(eq(colors.id, id));
   }
@@ -1151,15 +1356,15 @@ export class DatabaseStorage implements IStorage {
   async getProductColors(productId: number): Promise<Color[]> {
     try {
       console.log(`Dohvaćanje boja za proizvod ID: ${productId}`);
-      
+
       // Provjeri postoji li tablica product_colors
-      const tableExists = await this.tableExists('product_colors');
+      const tableExists = await this.tableExists("product_colors");
       if (!tableExists) {
         console.log("Kreiranje tablice product_colors jer ne postoji...");
         await this.initializeRelationTables();
         return []; // Vrati prazno polje jer tablica upravo kreirana i nema podataka
       }
-    
+
       // Direktno povezani upit koji dohvaća boje povezane s proizvodom
       try {
         const result = await pool.query(
@@ -1174,14 +1379,16 @@ export class DatabaseStorage implements IStorage {
              colors c ON pc.color_id = c.id 
            WHERE 
              pc.product_id = $1`,
-          [productId]
+          [productId],
         );
-        
-        console.log(`Pronađeno ${result.rows.length} boja za proizvod ID: ${productId}`);
+
+        console.log(
+          `Pronađeno ${result.rows.length} boja za proizvod ID: ${productId}`,
+        );
         if (result.rows.length > 0) {
-          console.log('Prva boja:', result.rows[0]);
+          console.log("Prva boja:", result.rows[0]);
         }
-        
+
         return result.rows as Color[];
       } catch (sqlError) {
         console.error("SQL Error u getProductColors:", sqlError);
@@ -1193,98 +1400,110 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async addColorToProduct(productId: number, colorId: number): Promise<ProductColor> {
+  async addColorToProduct(
+    productId: number,
+    colorId: number,
+  ): Promise<ProductColor> {
     console.log(`Attempting to add color ${colorId} to product ${productId}`);
     try {
       // Prvo provjeri postojanje tablice
-      const tableExists = await this.tableExists('product_colors');
+      const tableExists = await this.tableExists("product_colors");
       if (!tableExists) {
         console.log("Kreiranje tablice product_colors jer ne postoji...");
         await this.initializeRelationTables();
       }
-    
+
       // Provjeri postojeću vezu direktnim SQL upitom
       console.log("Checking for existing product-color link...");
       const checkResult = await pool.query(
         `SELECT product_id, color_id FROM product_colors 
          WHERE product_id = $1 AND color_id = $2`,
-        [productId, colorId]
+        [productId, colorId],
       );
-      
+
       if (checkResult.rows.length > 0) {
         console.log("Found existing link, returning it:", checkResult.rows[0]);
         return checkResult.rows[0] as ProductColor;
       }
-      
+
       // Dodaj novu vezu
       console.log("Creating new product-color link...");
       console.log("Values:", { productId, colorId });
-      
+
       const insertResult = await pool.query(
         `INSERT INTO product_colors (product_id, color_id) 
          VALUES ($1, $2) 
          RETURNING product_id, color_id`,
-        [productId, colorId]
+        [productId, colorId],
       );
-      
+
       console.log("Insert result:", insertResult);
-      
+
       if (!insertResult.rows || insertResult.rows.length === 0) {
         throw new Error("Insert returned empty result");
       }
-      
+
       const link = insertResult.rows[0];
       console.log("Successfully added color to product:", link);
-      
+
       return link as ProductColor;
     } catch (error) {
       console.error("Error in addColorToProduct:", error);
-      console.error("Stack trace:", error instanceof Error ? error.stack : "No stack trace");
-      throw new Error(`Failed to add color to product: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        "Stack trace:",
+        error instanceof Error ? error.stack : "No stack trace",
+      );
+      throw new Error(
+        `Failed to add color to product: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
-  async removeColorFromProduct(productId: number, colorId: number): Promise<void> {
+  async removeColorFromProduct(
+    productId: number,
+    colorId: number,
+  ): Promise<void> {
     try {
       console.log(`Uklanjanje boje ID ${colorId} s proizvoda ID ${productId}`);
-      
+
       // Provjeri postojanje tablice
-      const tableExists = await this.tableExists('product_colors');
+      const tableExists = await this.tableExists("product_colors");
       if (!tableExists) {
         console.log("Tablica product_colors ne postoji, ništa za ukloniti");
         return;
       }
-      
+
       const result = await pool.query(
         `DELETE FROM product_colors 
          WHERE product_id = $1 AND color_id = $2
          RETURNING product_id, color_id`,
-        [productId, colorId]
+        [productId, colorId],
       );
-      
+
       console.log(`Uklonjeno ${result.rowCount} veza između proizvoda i boja.`);
     } catch (error) {
       console.error("Greška pri uklanjanju boje s proizvoda:", error);
       // Ne bacamo grešku - obradimo je elegantno
     }
   }
-  
+
   async removeAllColorsFromProduct(productId: number): Promise<void> {
     try {
       // Provjeri postojanje tablice
-      const tableExists = await this.tableExists('product_colors');
+      const tableExists = await this.tableExists("product_colors");
       if (!tableExists) {
         console.log("Tablica product_colors ne postoji, ništa za ukloniti");
         return;
       }
-      
-      await pool.query(
-        `DELETE FROM product_colors WHERE product_id = $1`,
-        [productId]
-      );
+
+      await pool.query(`DELETE FROM product_colors WHERE product_id = $1`, [
+        productId,
+      ]);
     } catch (error) {
       console.error("Error in removeAllColorsFromProduct:", error);
-      throw new Error(`Failed to remove all colors from product: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to remove all colors from product: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -1306,24 +1525,30 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(orders.createdAt));
   }
 
-  async createOrder(orderData: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+  async createOrder(
+    orderData: InsertOrder,
+    items: InsertOrderItem[],
+  ): Promise<Order> {
     // Create the order
     const [order] = await db.insert(orders).values(orderData).returning();
-    
+
     // Create the order items with the order ID
     if (items.length > 0) {
       await db.insert(orderItems).values(
         items.map((item) => ({
           ...item,
           orderId: order.id,
-        }))
+        })),
       );
     }
-    
+
     return order;
   }
 
-  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+  async updateOrderStatus(
+    id: number,
+    status: string,
+  ): Promise<Order | undefined> {
     const [updatedOrder] = await db
       .update(orders)
       .set({ status })
@@ -1333,46 +1558,61 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
-    return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+    return await db
+      .select()
+      .from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
   }
 
   // Cart methods
   async getCartItems(userId: number): Promise<CartItemWithProduct[]> {
     // Dohvati stavke košarice
-    const items = await db.select().from(cartItems).where(eq(cartItems.userId, userId));
-    
+    const items = await db
+      .select()
+      .from(cartItems)
+      .where(eq(cartItems.userId, userId));
+
     // Za svaku stavku košarice, dohvati pripadajući proizvod, miris i boju
     const itemsWithProducts: CartItemWithProduct[] = [];
-    
+
     for (const item of items) {
-      const [product] = await db.select().from(products).where(eq(products.id, item.productId));
-      
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.id, item.productId));
+
       if (product) {
         const cartItemWithProduct: CartItemWithProduct = {
           ...item,
           product,
         };
-        
+
         // Ako postoji ID mirisa, dohvati miris
         if (item.scentId) {
-          const [scent] = await db.select().from(scents).where(eq(scents.id, item.scentId));
+          const [scent] = await db
+            .select()
+            .from(scents)
+            .where(eq(scents.id, item.scentId));
           if (scent) {
             cartItemWithProduct.scent = scent;
           }
         }
-        
+
         // Ako postoji ID boje, dohvati boju
         if (item.colorId) {
-          const [color] = await db.select().from(colors).where(eq(colors.id, item.colorId));
+          const [color] = await db
+            .select()
+            .from(colors)
+            .where(eq(colors.id, item.colorId));
           if (color) {
             cartItemWithProduct.color = color;
           }
         }
-        
+
         itemsWithProducts.push(cartItemWithProduct);
       }
     }
-    
+
     return itemsWithProducts;
   }
 
@@ -1384,8 +1624,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(cartItems.userId, itemData.userId),
-          eq(cartItems.productId, itemData.productId)
-        )
+          eq(cartItems.productId, itemData.productId),
+        ),
       );
 
     if (existingItem) {
@@ -1400,7 +1640,10 @@ export class DatabaseStorage implements IStorage {
       return updatedItem;
     } else {
       // Insert new item
-      const [cartItem] = await db.insert(cartItems).values(itemData).returning();
+      const [cartItem] = await db
+        .insert(cartItems)
+        .values(itemData)
+        .returning();
       return cartItem;
     }
   }
@@ -1408,7 +1651,7 @@ export class DatabaseStorage implements IStorage {
   async updateCartItem(
     id: number,
     quantity: number,
-    userId: number
+    userId: number,
   ): Promise<CartItem | undefined> {
     const [updatedItem] = await db
       .update(cartItems)
@@ -1444,7 +1687,10 @@ export class DatabaseStorage implements IStorage {
 
   // Settings methods
   async getSetting(key: string): Promise<Setting | undefined> {
-    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    const [setting] = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, key));
     return setting;
   }
 
@@ -1457,12 +1703,15 @@ export class DatabaseStorage implements IStorage {
     return setting;
   }
 
-  async updateSetting(key: string, value: string): Promise<Setting | undefined> {
+  async updateSetting(
+    key: string,
+    value: string,
+  ): Promise<Setting | undefined> {
     const [setting] = await db
       .update(settings)
-      .set({ 
+      .set({
         value,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(settings.key, key))
       .returning();
@@ -1472,39 +1721,42 @@ export class DatabaseStorage implements IStorage {
   async deleteSetting(key: string): Promise<void> {
     await db.delete(settings).where(eq(settings.key, key));
   }
-  
+
   // Page methods
   async getPage(id: number): Promise<Page | undefined> {
     const [page] = await db.select().from(pages).where(eq(pages.id, id));
     return page;
   }
-  
+
   async getPageByType(type: string): Promise<Page | undefined> {
     const [page] = await db.select().from(pages).where(eq(pages.type, type));
     return page;
   }
-  
+
   async getAllPages(): Promise<Page[]> {
     return await db.select().from(pages);
   }
-  
+
   async createPage(pageData: InsertPage): Promise<Page> {
     const [page] = await db.insert(pages).values(pageData).returning();
     return page;
   }
-  
-  async updatePage(id: number, pageData: Partial<InsertPage>): Promise<Page | undefined> {
+
+  async updatePage(
+    id: number,
+    pageData: Partial<InsertPage>,
+  ): Promise<Page | undefined> {
     const [updatedPage] = await db
       .update(pages)
-      .set({ 
+      .set({
         ...pageData,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(pages.id, id))
       .returning();
     return updatedPage;
   }
-  
+
   async deletePage(id: number): Promise<void> {
     await db.delete(pages).where(eq(pages.id, id));
   }

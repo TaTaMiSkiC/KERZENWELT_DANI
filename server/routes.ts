@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import { z } from "zod";
-import { eq, sql, and, isNull } from "drizzle-orm";
+import { eq, sql, and, isNull, sum, desc } from "drizzle-orm";
 import { db, pool } from "./db";
 import { registerDocumentRoutes } from "./documentRoutes";
 import { generateInvoiceFromOrder } from "./invoiceService";
@@ -46,9 +46,80 @@ import {
   subscriberSchema,
   insertSubscriberSchema,
   subscribers,
+  InsertMailboxMessageSchema,
+  mailboxMessages, // <-- Diese Zeile hinzufügen
+  pageVisits,
 } from "@shared/schema";
 import { authMiddleware, adminMiddleware } from "./auth"; // <-- Promijenjeno!
 import { handleStripeWebhook } from "./stripeWebhookHandler";
+import { InsertMailboxMessageSchema } from "@shared/schema"; // Stelle sicher, dass dies importiert ist, falls noch nicht geschehen
+
+import multer from "multer"; // <-- HIER HINZUFÜGEN
+import { simpleParser } from "mailparser"; // <-- NEU: Importiere simpleParser
+
+// NEU: Importiere die E-Mail-Sende-Funktion von sendgrid.ts
+// (Angenommen, du hast eine `sendgrid.ts` Datei, die die sendEmail Funktion exportiert)
+import { sendEmail as sendgridEmail } from "./sendgrid"; // Um Konflikte mit deiner notificationService.ts sendEmail zu vermeiden, benenne diese um
+
+// Konfiguriere multer für den Inbound Parse Webhook
+// SendGrid sendet keine Dateien, aber es ist `multipart/form-data`.
+// Wir brauchen nur die Textfelder, also können wir `none()` verwenden
+// oder `fields()` wenn du spezifische Textfelder benötigst.
+const uploadInboundEmail = multer().none(); // Verarbeitet nur Textfelder
+import fetch from "node-fetch";
+
+// Globaler Cache für das Mapping im Backend
+let backendCountryAlpha2ToNumericIdMap: Record<string, string> | null = null;
+let backendCountryNumericIdToAlpha2Map: Record<string, string> | null = null;
+
+// Funktion zum Laden der Mapping-Daten im Backend (einmalig beim Serverstart)
+async function loadBackendCountryMappings() {
+  if (backendCountryAlpha2ToNumericIdMap) return; // Schon geladen
+
+  try {
+    const response = await fetch(
+      "https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.json",
+    );
+    const data: any[] = await response.json();
+
+    backendCountryAlpha2ToNumericIdMap = {};
+    backendCountryNumericIdToAlpha2Map = {};
+
+    data.forEach((country) => {
+      if (country["alpha-2"] && country.numeric) {
+        backendCountryAlpha2ToNumericIdMap[country["alpha-2"]] =
+          country.numeric;
+        backendCountryNumericIdToAlpha2Map[country.numeric] =
+          country["alpha-2"];
+      }
+    });
+    backendCountryAlpha2ToNumericIdMap["Localhost"] = "Localhost"; // Führe dies auch hier ein
+    backendCountryNumericIdToAlpha2Map["Localhost"] = "Localhost";
+    console.log("Backend Country Mappings loaded successfully.");
+  } catch (error) {
+    console.error("Backend Error loading country mappings:", error);
+    // Handle Fehlerfall, z.B. Server nicht starten lassen
+    throw error; // Server sollte nicht ohne Mappings starten, wenn diese kritisch sind
+  }
+}
+
+async function getCountryFromIp(ip: string): Promise<string | null> {
+  // Für localhost-IPs wird es nicht funktionieren, gib 'Localhost' zurück
+  if (ip === "::1" || ip === "127.0.0.1") {
+    return "Localhost"; // Kannst du auch auf `null` setzen, wenn diese ignoriert werden sollen
+  }
+  // Verwende einen Dienst wie ip-api.com (kostenlos mit Rate Limits)
+  try {
+    const response = await fetch(`http://ip-api.com/json/${ip}`);
+    const data = await response.json();
+    if (data.status === "success" && data.countryCode) {
+      return data.countryCode; // Gibt z.B. 'AT' für Österreich zurück
+    }
+  } catch (error) {
+    console.error(`Error getting country for IP ${ip}:`, error);
+  }
+  return null;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -363,39 +434,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ imageUrl: req.body.imageUrl });
   });
 
-  // Products
+  // ===== API rute za proizvode (Javno dostupne - samo aktivni proizvodi) =====
   app.get("/api/products", async (req, res) => {
     try {
-      // Provjera je li korisnik admin - ako je admin, dohvati i neaktivne proizvode
-      const includeInactive = req.isAuthenticated() && req.user?.isAdmin;
+      // includeInactive je uvijek false za javne rute
+      const includeInactive = false;
 
-      // Check if category filter is applied
       const categoryId = req.query.category
         ? parseInt(req.query.category as string)
         : null;
 
       let products;
       if (categoryId) {
-        console.log(`Filtering products by category ID: ${categoryId}`);
-
-        // Use the storage method for consistency
+        console.log(
+          `API: Filtriranje proizvoda po ID-u kategorije: ${categoryId}`,
+        );
         products = await storage.getProductsByCategory(
           categoryId,
           includeInactive,
         );
-
         console.log(
-          `Found ${products.length} products in category ${categoryId}`,
+          `DEBUG: API /api/products - Pronađeno ${products.length} proizvoda u kategoriji ${categoryId}`,
+        );
+        console.log(
+          "DEBUG: API /api/products - Uzorak proizvoda:",
+          products.slice(0, 5).map((p) => ({
+            id: p.id,
+            name: p.name,
+            categoryId: p.categoryId,
+            active: p.active,
+          })),
         );
       } else {
-        console.log("Getting all products, includeInactive:", includeInactive);
+        console.log(
+          "API: Dohvaćanje svih proizvoda, includeInactive:",
+          includeInactive,
+        );
         products = await storage.getAllProducts(includeInactive);
-        console.log(`Retrieved ${products.length} total products`);
+        console.log(
+          `DEBUG: API /api/products - Dohvaćeno ${products.length} ukupno proizvoda`,
+        );
       }
 
       res.json(products);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Greška pri dohvaćanju proizvoda:", error);
       res.status(500).json({ message: "Failed to fetch products" });
     }
   });
@@ -415,13 +498,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const product = await storage.getProduct(id);
 
-      // Provjera postoji li proizvod
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
 
-      // Provjera je li proizvod aktivan za ne-admin korisnike
-      if (!product.active && (!req.isAuthenticated() || !req.user?.isAdmin)) {
+      // Proizvod se vraća samo ako postoji i ako je aktivan
+      if (!product.active) {
         return res.status(404).json({ message: "Product not found" });
       }
 
@@ -431,29 +513,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  // ===== API Route für öffentliche Produktlisten (mit optionalem Kategorie-Filter) =====
+  app.get("/api/products", async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
+      const categoryIdString = req.query.category as string | undefined; // Hole den 'category' Query-Parameter
+
+      let products;
+
+      if (categoryIdString) {
+        // Wenn eine categoryId übergeben wurde
+        const categoryId = parseInt(categoryIdString);
+        if (isNaN(categoryId)) {
+          return res
+            .status(400)
+            .json({ message: "Invalid category ID format" });
+        }
+        console.log(
+          `Backend: Fetching products for category ID: ${categoryId}`,
+        );
+        // Rufe Produkte für diese Kategorie ab (nur aktive Produkte für öffentliche Routen)
+        // Du hast bereits storage.getProductsByCategory
+        products = await storage.getProductsByCategory(categoryId, false); // false für includeInactive
+      } else {
+        // Wenn keine categoryId übergeben wurde, hole alle aktiven Produkte
+        console.log("Backend: Fetching all active products");
+        // Du brauchst eine Funktion wie storage.getAllActiveProducts() oder
+        // storage.getAllProducts(false) die nur aktive Produkte liefert.
+        // Angenommen, du hast eine Funktion storage.getAllProducts(includeInactive: boolean)
+        products = await storage.getAllProducts(false); // false für includeInactive
       }
 
-      const validatedData = insertProductSchema.parse(req.body);
-      const product = await storage.createProduct(validatedData);
-      res.status(201).json(product);
+      res.json(products);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create product" });
+      console.error("Backend: Failed to fetch products:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
     }
   });
 
-  app.put("/api/products/:id", async (req, res) => {
+  app.put("/api/products/:id", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const id = parseInt(req.params.id);
       console.log(
         "Ažuriranje proizvoda ID:",
@@ -462,7 +560,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         JSON.stringify(req.body),
       );
 
-      // Provjera postoji li proizvod
       const existingProduct = await storage.getProduct(id);
       if (!existingProduct) {
         console.log("Proizvod nije pronađen. ID:", id);
@@ -494,12 +591,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PATCH endpoint za parcijalnu izmjenu podataka proizvoda (npr. status aktivnosti)
-  app.patch("/api/products/:id", async (req, res) => {
+  app.patch("/api/products/:id", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const id = parseInt(req.params.id);
       console.log(
         "Parcijalno ažuriranje proizvoda ID:",
@@ -508,7 +601,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         JSON.stringify(req.body),
       );
 
-      // Provjera postoji li proizvod
       const existingProduct = await storage.getProduct(id);
       if (!existingProduct) {
         console.log("Proizvod nije pronađen. ID:", id);
@@ -516,7 +608,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        // Dohvatimo trenutne podatke proizvoda za ažuriranje samo određenih polja
         const currentData = {
           name: existingProduct.name,
           description: existingProduct.description,
@@ -525,7 +616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           categoryId: existingProduct.categoryId,
           stock: existingProduct.stock,
           featured: existingProduct.featured,
-          active: existingProduct.active !== false, // osiguravamo da je boolean
+          active: existingProduct.active !== false,
           hasColorOptions: existingProduct.hasColorOptions,
           allowMultipleColors: existingProduct.allowMultipleColors,
           scent: existingProduct.scent,
@@ -538,18 +629,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           maintenance: existingProduct.maintenance,
         };
 
-        // Kombiniramo postojeće podatke s novim podacima
-        // Pretvorimo active eksplicitno u boolean ako postoji u req.body
         let updatedData = { ...currentData };
 
         if (req.body) {
           if ("active" in req.body) {
-            // Sigurno konvertiramo u boolean
             updatedData.active =
               req.body.active === true || req.body.active === "true";
           }
 
-          // Kopiramo ostale vrijednosti
           Object.keys(req.body).forEach((key) => {
             if (key !== "active" && key in currentData) {
               updatedData[key as keyof typeof currentData] = req.body[key];
@@ -559,35 +646,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log("Ažurirani podaci:", JSON.stringify(updatedData));
 
-        // Ažuriramo proizvod
-        try {
-          console.log(
-            "Pozivam storage.updateProduct s podacima:",
-            JSON.stringify(updatedData),
-          );
-          const product = await storage.updateProduct(id, updatedData);
-          if (!product) {
-            console.log("Product not found nakon updateProduct");
-            return res.status(404).json({ message: "Product not found" });
-          }
-
-          console.log("Proizvod uspješno ažuriran:", JSON.stringify(product));
-          // Šaljemo pojednostavljeni odgovor koji sadrži samo podstawne informacije
-          // kako bismo izbjegli probleme s JSON parsanjem
-          const simplifiedResponse = {
-            id: product.id,
-            name: product.name,
-            active: product.active === true,
-          };
-          console.log("Šaljem odgovor:", JSON.stringify(simplifiedResponse));
-          res.setHeader("Content-Type", "application/json");
-          return res.status(200).json(simplifiedResponse);
-        } catch (err) {
-          console.error("Greška pri storage.updateProduct:", err);
-          return res
-            .status(500)
-            .json({ message: "Server error during product update" });
+        const product = await storage.updateProduct(id, updatedData);
+        if (!product) {
+          console.log("Product not found nakon updateProduct");
+          return res.status(404).json({ message: "Product not found" });
         }
+
+        console.log("Proizvod uspješno ažuriran:", JSON.stringify(product));
+        const simplifiedResponse = {
+          id: product.id,
+          name: product.name,
+          active: product.active === true,
+        };
+        console.log("Šaljem odgovor:", JSON.stringify(simplifiedResponse));
+        res.setHeader("Content-Type", "application/json");
+        return res.status(200).json(simplifiedResponse);
       } catch (validationError) {
         console.error("Greška pri validaciji:", validationError);
         return res.status(400).json({
@@ -601,12 +674,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const id = parseInt(req.params.id);
       await storage.deleteProduct(id);
       res.status(204).send();
@@ -615,9 +684,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Categories
+  app.get("/api/admin/products", adminMiddleware, async (req, res) => {
+    try {
+      const products = await storage.getAllProducts(true); // Dohvati i neaktivne
+      res.json(products);
+    } catch (error) {
+      console.error("Greška pri dohvaćanju admin proizvoda:", error);
+      res.status(500).json({ message: "Failed to fetch admin products" });
+    }
+  });
+
+  app.get("/api/admin/products/:id", adminMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id); // Dohvati proizvod bez obzira na aktivnost
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      res.json(product);
+    } catch (error) {
+      console.error("Greška pri dohvaćanju admin proizvoda po ID-u:", error);
+      res.status(500).json({ message: "Failed to fetch admin product" });
+    }
+  });
+
+  app.get(
+    "/api/admin/categories/:id/products",
+    adminMiddleware,
+    async (req, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const products = await storage.getProductsByCategory(id, true); // Dohvati i neaktivne
+        res.json(products);
+      } catch (error) {
+        console.error(
+          "Greška pri dohvaćanju admin kategorijskih proizvoda:",
+          error,
+        );
+        res
+          .status(500)
+          .json({ message: "Failed to fetch admin category products" });
+      }
+    },
+  );
+
+  // ===== API rute za kategorije (Javno dostupne) =====
   app.get("/api/categories", async (req, res) => {
     try {
+      // getAllCategories bi trebao filtrirati samo aktivne kategorije
       const categories = await storage.getAllCategories();
       res.json(categories);
     } catch (error) {
@@ -641,8 +755,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories/:id/products", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      // Provjera je li korisnik admin - ako je admin, dohvati i neaktivne proizvode
-      const includeInactive = req.isAuthenticated() && req.user?.isAdmin;
+      // includeInactive je uvijek false za javne rute
+      const includeInactive = false;
       const products = await storage.getProductsByCategory(id, includeInactive);
       res.json(products);
     } catch (error) {
@@ -650,12 +764,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", async (req, res) => {
+  // ===== API rute za kategorije (ADMIN) =====
+  app.post("/api/categories", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const validatedData = insertCategorySchema.parse(req.body);
       const category = await storage.createCategory(validatedData);
       res.status(201).json(category);
@@ -667,12 +778,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/categories/:id", async (req, res) => {
+  app.put("/api/categories/:id", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const id = parseInt(req.params.id);
       const validatedData = insertCategorySchema.parse(req.body);
       const category = await storage.updateCategory(id, validatedData);
@@ -690,12 +797,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", async (req, res) => {
+  app.delete("/api/categories/:id", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const id = parseInt(req.params.id);
       await storage.deleteCategory(id);
       res.status(204).send();
@@ -1212,7 +1315,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/orders", async (req, res) => {
-    console.log(`🚀 [ORDER ENDPOINT] Starting order creation for user ${req.user?.id}`);
+    console.log(
+      `🚀 [ORDER ENDPOINT] Starting order creation for user ${req.user?.id}`,
+    );
     try {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -1220,14 +1325,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user discount info before creating order
       const userForDiscountInfo = await storage.getUser(req.user.id);
-      const currentDiscountType = (userForDiscountInfo as any)?.discountType || "fixed";
-      const currentDiscountPercentage = currentDiscountType === "percentage" 
-        ? parseFloat(userForDiscountInfo?.discountAmount || "0")
-        : 0;
+      const currentDiscountType =
+        (userForDiscountInfo as any)?.discountType || "fixed";
+      const currentDiscountPercentage =
+        currentDiscountType === "percentage"
+          ? parseFloat(userForDiscountInfo?.discountAmount || "0")
+          : 0;
 
       // Process discount for this user BEFORE creating validatedData
       let appliedDiscount = 0;
-      console.log(`🔍 [DIRECT ORDER DEBUG] Processing discount for user ${req.user.id}`);
+      console.log(
+        `n��� [DIRECT ORDER DEBUG] Processing discount for user ${req.user.id}`,
+      );
       console.log(`🔍 [DIRECT ORDER DEBUG] Request body:`, req.body);
       try {
         const userForDiscount = await storage.getUser(req.user.id);
@@ -1235,69 +1344,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
           discountAmount: userForDiscount?.discountAmount,
           discountType: (userForDiscount as any)?.discountType,
           discountUsageType: (userForDiscount as any)?.discountUsageType,
-          discountBalance: userForDiscount?.discountBalance
+          discountBalance: userForDiscount?.discountBalance,
         });
         if (userForDiscount) {
           const discountType = (userForDiscount as any).discountType || "fixed";
-          const discountUsageType = (userForDiscount as any).discountUsageType || "permanent";
-          const discountAmount = parseFloat(userForDiscount.discountAmount || "0");
+          const discountUsageType =
+            (userForDiscount as any).discountUsageType || "permanent";
+          const discountAmount = parseFloat(
+            userForDiscount.discountAmount || "0",
+          );
           const orderTotal = parseFloat(req.body.total);
-          
+
           console.log(`[Direct Order] Processing discount:`, {
             discountType,
             discountUsageType,
             discountAmount,
-            orderTotal
+            orderTotal,
           });
-          
+
           if (discountType === "percentage" && discountAmount > 0) {
             // For percentage discounts, calculate based on order total
             appliedDiscount = (orderTotal * discountAmount) / 100;
-            console.log(`[Direct Order] Applied percentage discount: ${discountAmount}% = ${appliedDiscount}€, usage type: ${discountUsageType}`);
-            
+            console.log(
+              `[Direct Order] Applied percentage discount: ${discountAmount}% = ${appliedDiscount}€, usage type: ${discountUsageType}`,
+            );
+
             // Remove one-time percentage discounts after use
             if (discountUsageType === "one_time") {
-              await storage.updateUser(req.user.id, { 
-                discountAmount: "0", 
+              await storage.updateUser(req.user.id, {
+                discountAmount: "0",
                 discountType: "fixed",
                 discountUsageType: "permanent",
-                discountExpiryDate: null 
+                discountExpiryDate: null,
               });
-              console.log(`[Direct Order] Removed one-time percentage discount for user ${req.user.id}`);
+              console.log(
+                `[Direct Order] Removed one-time percentage discount for user ${req.user.id}`,
+              );
             }
           } else if (discountType === "fixed" && discountAmount > 0) {
             // For fixed discounts, use discount balance system
-            const currentBalance = parseFloat(userForDiscount.discountBalance || userForDiscount.discountAmount || "0");
+            const currentBalance = parseFloat(
+              userForDiscount.discountBalance ||
+                userForDiscount.discountAmount ||
+                "0",
+            );
             appliedDiscount = Math.min(currentBalance, orderTotal);
-            
+
             // For one-time fixed discounts, remove after use regardless of remaining balance
             if (discountUsageType === "one_time") {
-              await storage.updateUser(req.user.id, { 
-                discountAmount: "0", 
+              await storage.updateUser(req.user.id, {
+                discountAmount: "0",
                 discountBalance: "0",
                 discountType: "fixed",
                 discountUsageType: "permanent",
-                discountExpiryDate: null 
+                discountExpiryDate: null,
               });
-              console.log(`[Direct Order] Removed one-time fixed discount for user ${req.user.id}, applied: ${appliedDiscount}€`);
+              console.log(
+                `[Direct Order] Removed one-time fixed discount for user ${req.user.id}, applied: ${appliedDiscount}€`,
+              );
             } else {
               // For permanent discounts, update balance and remove if it reaches 0
               const newBalance = currentBalance - appliedDiscount;
-              await storage.updateUser(req.user.id, { 
+              await storage.updateUser(req.user.id, {
                 discountBalance: newBalance.toString(),
                 // Remove discount if balance reaches 0
-                ...(newBalance <= 0 && { 
-                  discountAmount: "0", 
+                ...(newBalance <= 0 && {
+                  discountAmount: "0",
                   discountType: "fixed",
-                  discountExpiryDate: null 
-                })
+                  discountExpiryDate: null,
+                }),
               });
-              console.log(`[Direct Order] Applied fixed discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`);
+              console.log(
+                `[Direct Order] Applied fixed discount: ${appliedDiscount}€, remaining balance: ${newBalance}€`,
+              );
             }
           }
         }
       } catch (discountError) {
-        console.error(`[Direct Order] Error processing discount:`, discountError);
+        console.error(
+          `[Direct Order] Error processing discount:`,
+          discountError,
+        );
       }
 
       // Calculate the final total after discount
@@ -1319,7 +1446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalTotal: req.body.total,
         appliedDiscount,
         discountType: currentDiscountType,
-        discountPercentage: currentDiscountPercentage
+        discountPercentage: currentDiscountPercentage,
       });
 
       // Kreiraj narudžbu
@@ -1442,16 +1569,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products/:id/reviews", async (req, res) => {
+  app.get("/api/products/:id/reviews", async (req, res) => {
     try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      const productId = parseInt(req.params.id);
+      const reviews = await storage.getProductReviews(productId);
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
 
+  app.post("/api/products/:id/reviews", authMiddleware, async (req, res) => {
+    try {
       const productId = parseInt(req.params.id);
       const validatedData = insertReviewSchema.parse({
         ...req.body,
-        userId: req.user.id,
+        userId: req.user!.id,
         productId,
       });
 
@@ -1465,18 +1598,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Brisanje recenzije (samo admin)
-  app.delete("/api/reviews/:id", async (req, res) => {
+  app.delete("/api/reviews/:id", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const reviewId = parseInt(req.params.id);
-
-      // Izbriši recenziju
       await db.execute(sql`DELETE FROM reviews WHERE id = ${reviewId}`);
-
       res.status(204).send();
     } catch (error) {
       console.error("Failed to delete review:", error);
@@ -1484,13 +1609,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Users (admin only)
-  app.get("/api/users", async (req, res) => {
+  // ===== API rute za korisnike (ADMIN) =====
+  app.get("/api/users", adminMiddleware, async (req, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const users = await storage.getAllUsers();
       res.json(users);
     } catch (error) {
@@ -2081,7 +2202,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { subject, message } = req.body;
 
       if (!subject || !message) {
-        return res.status(400).json({ message: "Subject and message are required" });
+        return res
+          .status(400)
+          .json({ message: "Subject and message are required" });
       }
 
       const user = await storage.getUser(id);
@@ -2091,9 +2214,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import sendEmailNotification from notificationService
       const { sendEmailNotification } = await import("./notificationService");
-      
-      const emailSent = await sendEmailNotification(subject, message, user.email);
-      
+
+      const emailSent = await sendEmailNotification(
+        subject,
+        message,
+        user.email,
+      );
+
       if (emailSent) {
         res.json({ message: "Email sent successfully" });
       } else {
@@ -2106,7 +2233,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Helper function to process discount balance
-  async function processDiscountBalance(userId: number, orderTotal: number): Promise<{
+  async function processDiscountBalance(
+    userId: number,
+    orderTotal: number,
+  ): Promise<{
     appliedDiscount: number;
     remainingBalance: number;
   }> {
@@ -2115,7 +2245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const currentBalance = parseFloat(user.discountBalance || "0");
     const discountType = (user as any).discountType || "fixed";
-    
+
     if (currentBalance <= 0) {
       return { appliedDiscount: 0, remainingBalance: 0 };
     }
@@ -2127,18 +2257,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For percentage discounts, calculate based on the discount percentage
       const discountPercentage = parseFloat(user.discountAmount || "0");
       appliedDiscount = (orderTotal * discountPercentage) / 100;
-      console.log(`[processDiscountBalance] Applied percentage discount: ${discountPercentage}% = ${appliedDiscount}€`);
-      
+      console.log(
+        `[processDiscountBalance] Applied percentage discount: ${discountPercentage}% = ${appliedDiscount}€`,
+      );
+
       // For one-time percentage discounts, remove after use
       const discountUsageType = (user as any).discountUsageType || "permanent";
       if (discountUsageType === "one_time") {
-        await storage.updateUser(userId, { 
-          discountAmount: "0", 
+        await storage.updateUser(userId, {
+          discountAmount: "0",
           discountType: "fixed",
           discountUsageType: "permanent",
-          discountExpiryDate: null 
+          discountExpiryDate: null,
         });
-        console.log(`[processDiscountBalance] Removed one-time percentage discount for user ${userId}`);
+        console.log(
+          `[processDiscountBalance] Removed one-time percentage discount for user ${userId}`,
+        );
       }
       // Percentage discounts don't reduce balance
       newBalance = currentBalance;
@@ -2146,39 +2280,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For fixed discounts, use the balance directly
       appliedDiscount = Math.min(currentBalance, orderTotal);
       newBalance = currentBalance - appliedDiscount;
-      console.log(`[processDiscountBalance] Applied fixed discount: ${appliedDiscount}€ from balance ${currentBalance}€`);
+      console.log(
+        `[processDiscountBalance] Applied fixed discount: ${appliedDiscount}€ from balance ${currentBalance}€`,
+      );
     }
 
     // Update user's remaining balance for fixed discounts
     if (discountType === "fixed" && newBalance !== currentBalance) {
       const discountUsageType = (user as any).discountUsageType || "permanent";
-      
+
       if (discountUsageType === "one_time") {
         // For one-time fixed discounts, remove completely after use
-        await storage.updateUser(userId, { 
-          discountAmount: "0", 
+        await storage.updateUser(userId, {
+          discountAmount: "0",
           discountBalance: "0",
           discountType: "fixed",
           discountUsageType: "permanent",
-          discountExpiryDate: null 
+          discountExpiryDate: null,
         });
-        console.log(`[processDiscountBalance] Removed one-time fixed discount for user ${userId}`);
+        console.log(
+          `[processDiscountBalance] Removed one-time fixed discount for user ${userId}`,
+        );
       } else {
         // For permanent fixed discounts, update balance
-        await storage.updateUser(userId, { 
+        await storage.updateUser(userId, {
           discountBalance: newBalance.toString(),
           // Remove discount if balance reaches 0
-          ...(newBalance <= 0 && { 
-            discountAmount: "0", 
+          ...(newBalance <= 0 && {
+            discountAmount: "0",
             discountType: "fixed",
-            discountExpiryDate: null 
-          })
+            discountExpiryDate: null,
+          }),
         });
-        console.log(`[processDiscountBalance] Updated fixed discount balance: ${newBalance}€`);
+        console.log(
+          `[processDiscountBalance] Updated fixed discount balance: ${newBalance}€`,
+        );
       }
     }
 
-    console.log(`Discount processed for user ${userId}: applied=${appliedDiscount}, remaining=${newBalance}`);
+    console.log(
+      `Discount processed for user ${userId}: applied=${appliedDiscount}, remaining=${newBalance}`,
+    );
     return { appliedDiscount, remainingBalance: newBalance };
   }
 
@@ -2191,18 +2333,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const id = parseInt(req.params.id);
       const user = await storage.getUser(id);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
       const balance = parseFloat(user.discountBalance || "0");
       const discountType = (user as any).discountType || "fixed";
-      
+
       res.json({
         balance,
         discountType,
-        hasActiveDiscount: balance > 0 || (discountType === "percentage" && parseFloat(user.discountAmount || "0") > 0)
+        hasActiveDiscount:
+          balance > 0 ||
+          (discountType === "percentage" &&
+            parseFloat(user.discountAmount || "0") > 0),
       });
     } catch (error) {
       console.error("Error getting user discount balance:", error);
@@ -2218,8 +2363,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const id = parseInt(req.params.id);
-      const { discountAmount, discountMinimumOrder, discountExpiryDate, discountType, discountUsageType } =
-        req.body;
+      const {
+        discountAmount,
+        discountMinimumOrder,
+        discountExpiryDate,
+        discountType,
+        discountUsageType,
+      } = req.body;
 
       // Convert date string to proper Date object
       let expiryDate = null;
@@ -2227,15 +2377,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiryDate = new Date(discountExpiryDate);
         // Ensure it's a valid date
         if (isNaN(expiryDate.getTime())) {
-          return res.status(400).json({ message: "Invalid expiry date format" });
+          return res
+            .status(400)
+            .json({ message: "Invalid expiry date format" });
         }
       }
 
       // When setting a new discount, set the discount balance correctly
       // For fixed amounts: set the balance to the amount
       // For percentage: keep balance at 0 since percentage doesn't use balance
-      const discountBalanceValue = discountType === "fixed" ? discountAmount : "0";
-      
+      const discountBalanceValue =
+        discountType === "fixed" ? discountAmount : "0";
+
       const updatedUser = await storage.updateUser(id, {
         discountAmount,
         discountMinimumOrder: discountMinimumOrder || "0",
@@ -2245,14 +2398,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         discountBalance: discountBalanceValue, // Set initial balance for fixed amounts
       });
 
-      console.log(`Set discount for user ${id}: type=${discountType}, amount=${discountAmount}, balance=${discountBalanceValue}`);
+      console.log(
+        `Set discount for user ${id}: type=${discountType}, amount=${discountAmount}, balance=${discountBalanceValue}`,
+      );
 
       // Send email notification to user about the discount
       if (updatedUser && updatedUser.email) {
         try {
-          const discountText = discountType === "percentage" ? `${discountAmount}%` : `${discountAmount}€`;
-          const usageText = discountUsageType === "one_time" ? "einmalig für Ihre nächste Bestellung" : "dauerhaft für alle Ihre Bestellungen";
-          
+          const discountText =
+            discountType === "percentage"
+              ? `${discountAmount}%`
+              : `${discountAmount}€`;
+          const usageText =
+            discountUsageType === "one_time"
+              ? "einmalig für Ihre nächste Bestellung"
+              : "dauerhaft für alle Ihre Bestellungen";
+
           await sendEmail({
             to: updatedUser.email,
             from: "info@kerzenweltbydani.com",
@@ -2268,20 +2429,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   <h3 style="color: #D4AF37; margin: 0;">Ihr Rabatt: ${discountText}</h3>
                   <p style="margin: 10px 0 0 0; color: #666;">Gültig ${usageText}</p>
                 </div>
-                ${discountMinimumOrder && parseFloat(discountMinimumOrder) > 0 ? 
-                  `<p><strong>Mindestbestellwert:</strong> ${discountMinimumOrder}€</p>` : 
-                  ''
+                ${
+                  discountMinimumOrder && parseFloat(discountMinimumOrder) > 0
+                    ? `<p><strong>Mindestbestellwert:</strong> ${discountMinimumOrder}€</p>`
+                    : ""
                 }
-                ${expiryDate ? 
-                  `<p><strong>Gültig bis:</strong> ${expiryDate.toLocaleDateString('de-DE')}</p>` : 
-                  ''
+                ${
+                  expiryDate
+                    ? `<p><strong>Gültig bis:</strong> ${expiryDate.toLocaleDateString("de-DE")}</p>`
+                    : ""
                 }
                 <p>Vielen Dank für Ihr Vertrauen in Kerzenwelt by Dani!</p>
                 <p>Mit freundlichen Grüßen,<br>Daniela</p>
               </div>
             `,
           });
-          console.log(`Discount notification email sent to ${updatedUser.email}`);
+          console.log(
+            `Discount notification email sent to ${updatedUser.email}`,
+          );
         } catch (error) {
           console.error("Error sending discount notification email:", error);
           // Continue even if email fails
@@ -2307,7 +2472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const id = parseInt(req.params.id);
-      
+
       const updatedUser = await storage.updateUser(id, {
         discountAmount: "0",
         discountMinimumOrder: "0",
@@ -3463,16 +3628,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Rute za praćenje posjeta
+  // Rute za praćenje posjeta (Page Visit Tracking Routes)
   app.post("/api/page-visits", async (req, res) => {
     try {
       if (!req.body.path) {
         return res.status(400).json({ error: "Missing path parameter" });
       }
 
-      // Povećaj broj posjeta za putanju
-      const visit = await storage.incrementPageVisit(req.body.path);
-      res.status(200).json(visit);
+      const path = req.body.path;
+
+      // Verbessert die Erfassung der IP-Adresse
+      // Priorisiere X-Forwarded-For, da dies die echte Client-IP hinter Proxys ist
+      const forwardedIps = req.headers["x-forwarded-for"];
+      let clientIp: string | null = null;
+
+      if (forwardedIps) {
+        // X-Forwarded-For kann eine kommaseparierte Liste sein. Der erste ist der Client.
+        clientIp = (
+          Array.isArray(forwardedIps)
+            ? forwardedIps[0]
+            : forwardedIps.split(",")[0]
+        ).trim();
+      } else {
+        // Fallback zu req.ip oder req.socket.remoteAddress
+        clientIp = req.ip || req.socket.remoteAddress || null;
+      }
+
+      let country: string | null = null;
+      if (clientIp) {
+        country = await getCountryFromIp(clientIp); // Verwende die ermittelte Client-IP
+        console.log(
+          `Page visit from Client IP: ${clientIp}, Country: ${country}`,
+        );
+      } else {
+        console.warn("Could not determine client IP address for page visit.");
+      }
+
+      const resolvedCountry = country || "Unknown";
+
+      const [existingVisit] = await db
+        .select()
+        .from(pageVisits)
+        .where(
+          and(
+            eq(pageVisits.path, path),
+            eq(pageVisits.country, resolvedCountry),
+          ),
+        );
+
+      if (existingVisit) {
+        const [updatedVisit] = await db
+          .update(pageVisits)
+          .set({
+            count: existingVisit.count + 1,
+            lastVisited: new Date(),
+          })
+          .where(eq(pageVisits.id, existingVisit.id))
+          .returning();
+        res.status(200).json(updatedVisit);
+      } else {
+        const [newVisit] = await db
+          .insert(pageVisits)
+          .values({
+            path,
+            count: 1,
+            country: resolvedCountry,
+          })
+          .returning();
+        res.status(200).json(newVisit);
+      }
     } catch (error) {
       console.error("Error incrementing page visit:", error);
       res.status(500).json({ error: "Failed to increment page visit" });
@@ -3481,11 +3705,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/page-visits/:path", async (req, res) => {
     try {
-      // Samo admin može pregledati posjete
+      // Nur Admin kann Besuche einsehen
       if (!req.isAuthenticated() || !req.user.isAdmin) {
         return res.status(403).json({ error: "Forbidden" });
       }
 
+      // Wenn der Pfad für einzelne Besuche nach Land gefiltert werden soll,
+      // müsstest du hier eine weitere Parameter (z.B. req.query.country) hinzufügen.
+      // Ansonsten holt diese Route weiterhin den Visit für den Pfad (unabhängig vom Land),
+      // wenn du das in dbStorage so implementiert hast.
       const visit = await storage.getPageVisit(req.params.path);
       if (!visit) {
         return res.status(404).json({ error: "No visits found for this path" });
@@ -3500,7 +3728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/page-visits", async (req, res) => {
     try {
-      // Samo admin može pregledati posjete
+      // Nur Admin kann Besuche einsehen
       if (!req.isAuthenticated() || !req.user.isAdmin) {
         return res.status(403).json({ error: "Forbidden" });
       }
@@ -3512,6 +3740,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to get page visits" });
     }
   });
+
+  // GET /api/admin/page-visits/countries (KORRIGIERTE VERSION)
+  app.get(
+    "/api/admin/page-visits/countries",
+    adminMiddleware,
+    async (req, res) => {
+      try {
+        console.log("Backend: Request for page visits by country.");
+
+        // Sicherstellen, dass Mappings geladen sind (relevant, wenn Serverstart asynchron ist)
+        if (!backendCountryAlpha2ToNumericIdMap) {
+          await loadBackendCountryMappings();
+        }
+
+        // Gruppiere Besuche nach dem 2-Buchstaben-Ländercode
+        const countryVisitsRaw = await db
+          .select({
+            country: pageVisits.country, // Das ist der 2-Buchstaben-Code (z.B. 'AT')
+            totalVisits: sql<number>`sum(${pageVisits.count})`.mapWith(Number),
+          })
+          .from(pageVisits)
+          .groupBy(pageVisits.country)
+          .orderBy(desc(sql<number>`sum(${pageVisits.count})`))
+          .execute();
+
+        // ✅ NEU: Transformation der Daten HIER im Backend
+        const countryVisitsForFrontend = countryVisitsRaw
+          .map((cv) => {
+            const numericId = backendCountryAlpha2ToNumericIdMap
+              ? backendCountryAlpha2ToNumericIdMap[cv.country]
+              : null;
+            return {
+              // Sende die numerische ID (aus TopoJSON) und die ISO_A2 (für Tabelle)
+              // oder nur die numerische ID, wenn das Frontend nur diese braucht.
+              // Senden wir beide, um flexibel zu bleiben.
+              id: numericId || cv.country, // '040' oder 'AT' (Fallback)
+              iso_a2: cv.country, // 'AT'
+              totalVisits: cv.totalVisits,
+            };
+          })
+          .filter((cv) => cv.id !== "Localhost" && cv.id !== "Unknown"); // Filtern
+
+        console.log(
+          `Backend: Page visits by country (transformed for frontend):`,
+          countryVisitsForFrontend,
+        );
+        res.json(countryVisitsForFrontend); // Sende die transformierten Daten an das Frontend
+      } catch (error) {
+        console.error("Backend: Error fetching page visits by country:", error);
+        res
+          .status(500)
+          .json({ message: "Failed to fetch page visits by country" });
+      }
+    },
+  );
 
   // Newsletter subscription
   app.post("/api/subscribe", async (req, res) => {
@@ -3742,59 +4025,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Endpoint za automatsko generiranje PDF računa i slanje preko email-a (kao postojeći "Generiere PDF" gumb)
   app.post("/api/orders/:id/generate-pdf", async (req, res) => {
-    console.log("🔥 PDF ENDPOINT POZVAN - orderId:", req.params.id);
     try {
       const orderId = parseInt(req.params.id);
-      console.log("📧 PDF endpoint - parsing orderId:", orderId);
       if (isNaN(orderId)) {
-        console.log("❌ PDF endpoint - nevaljan orderId");
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
       // Dohvati podatke o narudžbi
-      console.log("🔍 PDF endpoint - dohvaćam narudžbu:", orderId);
       const order = await storage.getOrder(orderId);
       if (!order) {
-        console.log("❌ PDF endpoint - narudžba nije pronađena:", orderId);
         return res.status(404).json({ message: "Order not found" });
       }
-      console.log(
-        "✅ PDF endpoint - narudžba pronađena:",
-        order.id,
-        "korisnik:",
-        order.userId,
-      );
 
-      // Dohvati korisnika
-      console.log("🔍 PDF endpoint - dohvaćam korisnika:", order.userId);
+      // NOVI LOGOVI KOJI TREBAJU BITI OVDJE:
+      console.log(
+        `[DEBUG INVOICE INPUT] Order values received for invoice generation:`,
+      );
+      console.log(`  - order.id: ${order.id}`);
+      console.log(`  - order.total: ${order.total}`);
+      console.log(`  - order.subtotal: ${order.subtotal}`);
+      console.log(`  - order.discountAmount: ${order.discountAmount}`);
+      console.log(`  - order.shippingCost: ${order.shippingCost}`);
+
       const user = await storage.getUser(order.userId);
       if (!user) {
-        console.log("❌ PDF endpoint - korisnik nije pronađen:", order.userId);
         return res.status(404).json({ message: "User not found" });
       }
-      console.log("✅ PDF endpoint - korisnik pronađen:", user.email);
 
-      // Dohvati stavke narudžbe
-      console.log("🔍 PDF endpoint - dohvaćam stavke narudžbe:", orderId);
       const orderItems = await storage.getOrderItems(orderId);
       if (!orderItems || orderItems.length === 0) {
-        console.log("❌ PDF endpoint - nema stavki narudžbe:", orderId);
         return res.status(404).json({ message: "No order items found" });
       }
-      console.log(
-        "✅ PDF endpoint - pronađeno",
-        orderItems.length,
-        "stavki narudžbe",
-      );
 
       // Generiraj PDF sadržaj
-      console.log("📄 PDF endpoint - počinje generiranje PDF-a");
       const jsPDF = (await import("jspdf")).default;
       const autoTable = (await import("jspdf-autotable")).default;
       const { format } = await import("date-fns"); // Import date-fns for date formatting
 
       const doc = new jsPDF();
-      console.log("✅ PDF endpoint - jsPDF inicijalizovan");
 
       // --- Start of PDF content generation from pdf-izgled-koji-valja.tsx ---
 
@@ -3936,12 +4204,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Header with logo
       try {
-        const fs = await import('fs');
-        const path = await import('path');
-        const logoPath = path.join(process.cwd(), 'client/src/assets/Kerzenwelt by Dani.png');
+        const fs = await import("fs");
+        const path = await import("path");
+        const logoPath = path.join(
+          process.cwd(),
+          "client/src/assets/Kerzenwelt by Dani.png",
+        );
         const logoBuffer = fs.readFileSync(logoPath);
-        const logoBase64 = "data:image/png;base64," + logoBuffer.toString('base64');
-        
+        const logoBase64 =
+          "data:image/png;base64," + logoBuffer.toString("base64");
+
         console.log("🖼️ Logo loaded successfully, adding to PDF");
         doc.addImage(logoBase64, "PNG", 20, 15, 30, 30);
       } catch (logoError) {
@@ -4186,60 +4458,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
 
-      // Calculate total amount
-      let subtotal = orderItems.reduce(
-        (sum, item) => sum + parseFloat(item.price) * item.quantity,
-        0,
-      ); //
-
-      // Safe check for shippingCost - if it doesn't exist, set to 0
-      const shippingCost = order.shippingCost
-        ? parseFloat(order.shippingCost)
-        : 0; //
-
-      // Total amount with shipping
-      const total = parseFloat(order.total) || subtotal + shippingCost; //
+      // NEU: Verwende die bereits im 'order'-Objekt gespeicherten Werte
+      // (Diese Werte sollten den Rabatt bereits enthalten, wie sie vom Webhook in die DB geschrieben wurden)
+      let subtotalInvoice = parseFloat(order.subtotal || "0"); // <- Nutze den Subtotal aus der DB
+      const shippingCostInvoice = parseFloat(order.shippingCost || "0"); // <- Nutze Versandkosten aus der DB
+      const totalInvoice = parseFloat(order.total || "0"); // <- Nutze den Total aus der DB
 
       // Get position after the table
-      const finalY = (doc as any).lastAutoTable.finalY || 200; //
+      const finalY = (doc as any).lastAutoTable.finalY || 200; // Početna pozicija za zbrojeve
 
-      // Add total amount
-      doc.setFontSize(10); //
-      doc.text(`${t.subtotal}:`, 160, finalY + 10, { align: "right" }); //
-      doc.text(`${subtotal.toFixed(2)} €`, 190, finalY + 10, {
+      // Početna Y pozicija za prvu sumarnu liniju (Međuzbroj)
+      let currentY = finalY + 10;
+
+      // 1. Međuzbroj (Subtotal)
+      doc.setFontSize(10);
+      doc.text(`${t.subtotal}:`, 160, currentY, { align: "right" });
+      doc.text(`${subtotalInvoice.toFixed(2)} €`, 190, currentY, {
         align: "right",
-      }); //
+      });
+      currentY += 5; // Pomakni za sljedeću liniju
 
-      // Add discount if exists
-      let currentY = finalY + 15;
-      if (order.discountAmount && parseFloat(order.discountAmount) > 0) {
-        const discountText = (order as any).discountType === 'percentage' 
-          ? `Rabatt (-${parseFloat((order as any).discountPercentage || 0).toFixed(0)}%):`
-          : `Rabatt:`;
-        doc.text(discountText, 160, currentY, { align: "right" });
-        doc.text(`-${parseFloat(order.discountAmount).toFixed(2)} €`, 190, currentY, {
+      // 2. Popust (Rabatt) - DODANO NOVO
+      // Provjeri postoji li popust u narudžbi
+      const orderDiscountAmount = parseFloat(order.discountAmount || "0");
+      const orderDiscountType = (order as any)?.discountType; // Fixed ili Percentage
+      const orderDiscountPercentage = parseFloat(
+        order.discountPercentage || "0",
+      ); // Postotak za postotni popust
+
+      if (orderDiscountAmount > 0) {
+        let discountDisplayText = `Rabatt:`;
+        if (orderDiscountType === "percentage" && orderDiscountPercentage > 0) {
+          discountDisplayText = `Rabatt (-${orderDiscountPercentage.toFixed(0)}%):`;
+        }
+
+        doc.text(discountDisplayText, 160, currentY, { align: "right" });
+        doc.text(`-${orderDiscountAmount.toFixed(2)} €`, 190, currentY, {
           align: "right",
         });
-        currentY += 5;
+        currentY += 5; // Pomakni za sljedeću liniju
       }
 
-      // Add shipping costs if they exist
-      doc.text(`${t.shipping}:`, 160, currentY, { align: "right" }); //
-      doc.text(`${shippingCost.toFixed(2)} €`, 190, currentY, {
+      // 3. Dostava (Shipping)
+      doc.text(`${t.shipping}:`, 160, currentY, { align: "right" });
+      doc.text(`${shippingCostInvoice.toFixed(2)} €`, 190, currentY, {
         align: "right",
-      }); //
-      currentY += 5;
+      });
+      currentY += 5; // Pomakni za sljedeću liniju
 
-      // For simplicity of tax model, set VAT to 0%
-      doc.text(`${t.tax}:`, 160, currentY, { align: "right" }); //
-      doc.text("0.00 €", 190, currentY, { align: "right" }); //
-      currentY += 5;
+      // 4. Porez (Tax) - PDV
+      doc.text(`${t.tax}:`, 160, currentY, { align: "right" });
+      doc.text("0.00 €", 190, currentY, { align: "right" });
+      currentY += 5; // Pomakni za sljedeću liniju
 
-      // Total amount
-      doc.setFont("helvetica", "bold"); //
-      doc.text(`${t.totalAmount}:`, 160, currentY, { align: "right" }); //
-      doc.text(`${total.toFixed(2)} €`, 190, currentY, { align: "right" }); //
-      doc.setFont("helvetica", "normal"); //
+      // 5. Ukupan Iznos (Total Amount)
+      doc.setFont("helvetica", "bold");
+      doc.text(`${t.totalAmount}:`, 160, currentY, { align: "right" });
+      doc.text(`${totalInvoice.toFixed(2)} €`, 190, currentY, {
+        align: "right",
+      }); // totalInvoice sadrži konačan iznos (7.64€)
+      doc.setFont("helvetica", "normal");
 
       // Payment information
       doc.setDrawColor(200, 200, 200); //
@@ -4334,6 +4612,284 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate and send invoice" });
     }
   });
+
+  // ===== API rute für E-Mail Postfach (ADMIN) =====
+  // GET /api/admin/emails
+  app.get("/api/admin/emails", adminMiddleware, async (req, res) => {
+    try {
+      console.log("Backend: Request to get all mailbox messages.");
+      const emails = await storage.getAllMailboxMessages();
+      res.json(emails);
+    } catch (error) {
+      console.error("Backend: Error fetching mailbox messages:", error);
+      res.status(500).json({ message: "Failed to fetch emails" });
+    }
+  });
+
+  // POST /api/admin/emails/send
+  app.post("/api/admin/emails/send", adminMiddleware, async (req, res) => {
+    try {
+      console.log("Backend: Request to send new email from admin.");
+
+      const { recipient, subject, body, inReplyToMessageId } = req.body;
+
+      // Validierung mit Zod Schema
+      const validatedData = InsertMailboxMessageSchema.parse({
+        senderEmail: "info@kerzenweltbydani.com", // Absender ist immer die Admin-Adresse
+        recipientEmail: recipient,
+        subject: subject,
+        body: body,
+        type: "outbound",
+        read: true, // E-Mails, die vom Admin gesendet werden, sind immer 'gelesen'
+        inReplyToMessageId: inReplyToMessageId || null,
+      });
+
+      // E-Mail tatsächlich senden über SendGrid
+      // Hier verwenden wir die importierte `sendEmail` Funktion aus `notificationService.ts`
+      const emailSentSuccessfully = await sendEmail({
+        // <-- Hier `sendEmail` verwenden
+        to: validatedData.recipientEmail,
+        from: validatedData.senderEmail, // Dies ist deine `info@kerzenweltbydani.com` Adresse
+        subject: validatedData.subject,
+        html: validatedData.body.replace(/\n/g, "<br>"), // Grundlegende Konvertierung für HTML-E-Mail
+        text: validatedData.body,
+      });
+
+      if (!emailSentSuccessfully) {
+        console.warn(
+          "Backend: E-Mail konnte nicht über SendGrid versendet werden.",
+        );
+        // Optional: Du könntest hier einen Fehler werfen, wenn das Senden der E-Mail kritisch ist
+        // throw new Error("E-Mail-Versand über SendGrid fehlgeschlagen.");
+      }
+
+      // E-Mail in der Datenbank speichern (als ausgehend)
+      const sentMessage = await storage.createMailboxMessage(validatedData);
+      res.status(201).json(sentMessage);
+    } catch (error) {
+      console.error("Backend: Error sending email:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors });
+      }
+      // Wenn der Fehler vom `sendEmail`-Aufruf kommt und du ihn als kritisch betrachtest
+      // kannst du hier eine spezifischere Fehlermeldung zurückgeben.
+      res.status(500).json({ message: "Failed to send email" });
+    }
+  });
+
+  // PUT /api/admin/emails/:id/read
+  app.put("/api/admin/emails/:id/read", adminMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { read } = req.body; // Erwarte { read: true } oder { read: false }
+
+      if (typeof read !== "boolean") {
+        return res
+          .status(400)
+          .json({ message: "Invalid 'read' status. Must be boolean." });
+      }
+
+      console.log(
+        `Backend: Request to update read status for email ID ${id} to ${read}.`,
+      );
+      const updatedMessage = await storage.updateMailboxMessageReadStatus(
+        id,
+        read,
+      );
+
+      if (!updatedMessage) {
+        return res.status(404).json({ message: "Email not found." });
+      }
+      res.json(updatedMessage);
+    } catch (error) {
+      console.error(
+        `Backend: Error updating read status for email ID ${req.params.id}:`,
+        error,
+      );
+      res.status(500).json({ message: "Failed to update email read status." });
+    }
+  });
+
+  // DELETE /api/admin/emails/:id
+  app.delete("/api/admin/emails/:id", adminMiddleware, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      console.log(`Backend: Request to delete email ID ${id}.`);
+      await storage.deleteMailboxMessage(id);
+      res.status(204).send(); // 204 No Content for successful deletion
+    } catch (error) {
+      console.error(
+        `Backend: Error deleting email ID ${req.params.id}:`,
+        error,
+      );
+      res.status(500).json({ message: "Failed to delete email." });
+    }
+  });
+
+  // POST /api/admin/emails/receive (Dies wäre ein interner Endpunkt, der von deinem E-Mail-Provider-Webhook aufgerufen wird)
+  // HINWEIS: Dieser Endpunkt MUSS UNTER JEDER AUTORISIERUNGS-MIDDLEWARE liegen, wenn er öffentlich erreichbar sein soll.
+  // Oder du implementierst eine eigene, spezifische Authentifizierung für den Webhook.
+  app.post("/api/admin/emails/receive", async (req, res) => {
+    try {
+      // Hier musst du die Datenstruktur des Webhooks deines E-Mail-Providers verstehen
+      // Beispiel (vereinfacht für SendGrid Inbound Parse Webhook):
+      const { from, subject, text, html, to } = req.body;
+
+      if (!from || !subject || (!text && !html) || !to) {
+        console.error("Missing required fields for inbound email.");
+        return res
+          .status(400)
+          .json({ message: "Missing required email fields." });
+      }
+
+      // 'to' kann ein Array sein, oder einen String wie "info@example.com" oder "Name <info@example.com>"
+      const recipientEmail = Array.isArray(to) ? to[0] : to;
+      const actualRecipient = (recipientEmail.match(/<([^>]+)>/) || [
+        null,
+        recipientEmail,
+      ])[1]; // Extrahiere E-Mail aus "Name <email>" Format
+
+      // 'from' kann auch "Name <email>" sein
+      const senderInfo = from.match(/^(.*?)\s*<([^>]+)>$/) || [
+        null,
+        null,
+        from,
+      ];
+      const senderName = senderInfo[1] || null;
+      const senderEmail = senderInfo[2] || from;
+
+      const inboundMessage: InsertMailboxMessage = {
+        senderEmail: senderEmail,
+        senderName: senderName,
+        recipientEmail: actualRecipient || "info@kerzenweltbydani.com", // Fallback, falls nicht extrahierbar
+        subject: subject,
+        body: text || html, // Speichere Text oder HTML-Inhalt
+        receivedAt: new Date(), // Aktueller Zeitstempel
+        type: "inbound",
+        read: false, // Standardmäßig ungelesen
+        inReplyToMessageId: null, // Konversationserkennung wäre hier komplexer
+      };
+
+      const savedMessage = await storage.createMailboxMessage(inboundMessage);
+      console.log(
+        `Backend: Eingehende E-Mail gespeichert mit ID: ${savedMessage.id}`,
+      );
+      res
+        .status(200)
+        .json({ message: "Email received and stored.", id: savedMessage.id });
+    } catch (error) {
+      console.error("Backend: Error processing inbound email:", error);
+      res.status(500).json({ message: "Failed to process inbound email." });
+    }
+  });
+
+  app.post("/api/emails/inbound", uploadInboundEmail, async (req, res) => {
+    try {
+      console.log("Backend: Received inbound email webhook from SendGrid.");
+      console.log(
+        "Inbound Webhook - Raw req.body (Full):",
+        JSON.stringify(req.body, null, 2),
+      ); // Logge den gesamten Body für Debugging
+
+      // Überprüfe, ob das 'email'-Feld mit dem rohen E-Mail-Inhalt vorhanden ist
+      if (!req.body.email) {
+        console.error(
+          "Backend: Missing 'email' field in inbound webhook body.",
+        );
+        return res.status(400).json({ message: "Missing raw email content." });
+      }
+
+      // Parse den rohen E-Mail-Inhalt mit mailparser
+      const parsedEmail = await simpleParser(req.body.email);
+
+      // Extrahiere die benötigten Felder aus dem geparsten E-Mail-Objekt
+      const senderEmailRaw = parsedEmail.from?.value[0]?.address || null;
+      const senderName = parsedEmail.from?.value[0]?.name || null;
+      const recipientEmailRaw = parsedEmail.to?.value[0]?.address || null;
+      const subject = parsedEmail.subject || "(no subject)";
+      const textBody = parsedEmail.text || parsedEmail.html || null; // Bevorzuge Text, fallback auf HTML
+
+      if (!senderEmailRaw || !recipientEmailRaw || !subject || !textBody) {
+        console.error(
+          "Backend: Missing required fields after parsing raw email content.",
+          {
+            from: senderEmailRaw,
+            to: recipientEmailRaw,
+            subject: subject,
+            bodyPresent: !!textBody,
+          },
+        );
+        return res.status(400).json({ message: "Missing required email data" });
+      }
+
+      // Optional: Bereinigung der E-Mail-Adressen, falls sie noch Header-Infos enthalten
+      // (mailparser sollte das meistens schon korrekt machen, aber zur Sicherheit)
+      const finalSenderEmail = senderEmailRaw;
+      const finalRecipientEmail = recipientEmailRaw;
+
+      // Validierung mit Zod Schema für eingehende Nachrichten
+      const validatedData = InsertMailboxMessageSchema.parse({
+        senderEmail: finalSenderEmail,
+        senderName: senderName, // Füge den extrahierten Namen hinzu
+        recipientEmail: finalRecipientEmail,
+        subject: subject,
+        body: textBody,
+        type: "inbound", // Typ ist 'inbound'
+        read: false, // Standardmäßig ungelesen
+        receivedAt: new Date(), // Setze den Empfangszeitpunkt
+        inReplyToMessageId: null, // Initial NULL, Konversationen später erkennen
+      });
+
+      // E-Mail in der Datenbank speichern (als eingehend)
+      const savedMessage = await storage.createMailboxMessage(validatedData);
+
+      console.log(
+        `Backend: Inbound email from ${finalSenderEmail} saved with ID: ${savedMessage.id}`,
+      );
+      res.status(200).json({
+        message: "Inbound email processed successfully",
+        id: savedMessage.id,
+      });
+    } catch (error) {
+      console.error("Backend: Error processing inbound email webhook:", error);
+      if (error instanceof z.ZodError) {
+        console.error(
+          "Backend: Validacijska greška kod obrade dolaznog e-maila:",
+          error.errors,
+        );
+        return res.status(400).json({
+          message: "Invalid inbound email data",
+          errors: error.errors,
+        });
+      }
+      // Füge einen Log für den ursprünglichen Fehler hinzu, wenn er nicht von Zod ist
+      console.error("Original error details:", error);
+      res.status(500).json({ message: "Failed to process inbound email" });
+    }
+  });
+
+  // NEUE ROUTE: GET /api/admin/emails/unread/count
+  app.get(
+    "/api/admin/emails/unread/count",
+    adminMiddleware,
+    async (req, res) => {
+      try {
+        console.log("Backend: Request for unread email count from admin.");
+
+        const unreadCount = await db
+          .select({ count: sql<number>`count(*)` }) // Zähle die Zeilen
+          .from(mailboxMessages)
+          .where(eq(mailboxMessages.read, false)) // Wo 'read' false ist
+          .then((rows) => rows[0]?.count || 0); // Hole den Zählerwert oder 0
+
+        console.log(`Backend: Unread email count: ${unreadCount}`);
+        res.json({ count: unreadCount });
+      } catch (error) {
+        console.error("Backend: Error fetching unread email count:", error);
+        res.status(500).json({ message: "Failed to fetch unread email count" });
+      }
+    },
+  );
 
   // Create HTTP server
   const httpServer = createServer(app);

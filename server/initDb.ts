@@ -51,16 +51,16 @@ export async function initializeDatabase() {
 
   try {
     // Provjeri prisutnost tablice za dokumente tvrtke
-    console.log("Provjera postojanja tablice za dokumente tvrtke...");
+    // console.log("Provjera postojanja tablice za dokumente tvrtke...");
     await db.select().from(companyDocuments).limit(1);
-    console.log("Tablica za dokumente tvrtke već postoji");
+    // console.log("Tablica za dokumente tvrtke već postoji");
   } catch (error) {
     // Ako tablica ne postoji, drizzle će automatski stvoriti tablicu kada se
     // pokuša pristupiti nepostojećoj tablici kroz drizzle orm.
-    console.log("Kreiranje tablice za dokumente tvrtke...");
+    // console.log("Kreiranje tablice za dokumente tvrtke...");
   }
 
-  console.log("Inicijalizacija baze podataka završena");
+  // console.log("Inicijalizacija baze podataka završena");
 }
 
 // Funkcija za provjeru postoji li admin korisnik

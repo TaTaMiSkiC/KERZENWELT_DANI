@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Helmet } from 'react-helmet';
+import { Helmet } from "react-helmet";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Category, InsertCategory } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -46,14 +46,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Schema za validaciju forme
-const getCategorySchema = (t: any) => z.object({
-  name: z.string().min(2, t("admin.categories.nameValidation")),
-  description: z.string().min(10, t("admin.categories.descriptionValidation")),
-  imageUrl: z.string().optional(),
-});
+const getCategorySchema = (t: any) =>
+  z.object({
+    name: z.string().min(2, t("admin.categories.nameValidation")),
+    description: z
+      .string()
+      .min(10, t("admin.categories.descriptionValidation")),
+    imageUrl: z.string().optional(),
+  });
 
 type CategoryFormValues = z.infer<ReturnType<typeof getCategorySchema>>;
 
@@ -63,12 +76,12 @@ export default function AdminCategories() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
-  
+
   // Dohvati kategorije
   const { data: categories, isLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
-  
+
   // Forma za dodavanje/uređivanje kategorije
   const categorySchema = getCategorySchema(t);
   const form = useForm<CategoryFormValues>({
@@ -79,7 +92,7 @@ export default function AdminCategories() {
       imageUrl: "",
     },
   });
-  
+
   // Mutacija za dodavanje kategorije
   const createCategoryMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
@@ -101,12 +114,18 @@ export default function AdminCategories() {
         description: `${t("admin.categories.errorAddDesc")}: ${error.message}`,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Mutacija za ažuriranje kategorije
   const updateCategoryMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: CategoryFormValues }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: CategoryFormValues;
+    }) => {
       const response = await apiRequest("PUT", `/api/categories/${id}`, data);
       return response.json();
     },
@@ -126,9 +145,9 @@ export default function AdminCategories() {
         description: `${t("admin.categories.errorUpdateDesc")}: ${error.message}`,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Mutacija za brisanje kategorije
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -149,9 +168,9 @@ export default function AdminCategories() {
         description: `${t("admin.categories.errorDeleteDesc")}: ${error.message}`,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Otvori formu za dodavanje nove kategorije
   const handleAddCategory = () => {
     form.reset({
@@ -162,7 +181,7 @@ export default function AdminCategories() {
     setCurrentCategory(null);
     setIsFormOpen(true);
   };
-  
+
   // Otvori formu za uređivanje kategorije
   const handleEditCategory = (category: Category) => {
     form.reset({
@@ -173,20 +192,20 @@ export default function AdminCategories() {
     setCurrentCategory(category);
     setIsFormOpen(true);
   };
-  
+
   // Otvori dijalog za brisanje kategorije
   const handleDeleteCategory = (category: Category) => {
     setCurrentCategory(category);
     setIsDeleteDialogOpen(true);
   };
-  
+
   // Potvrdi brisanje kategorije
   const confirmDeleteCategory = () => {
     if (currentCategory) {
       deleteCategoryMutation.mutate(currentCategory.id);
     }
   };
-  
+
   // Predaj formu za kategoriju
   const onSubmit = (data: CategoryFormValues) => {
     if (currentCategory) {
@@ -197,31 +216,40 @@ export default function AdminCategories() {
       createCategoryMutation.mutate(data);
     }
   };
-  
-  const isSubmitting = form.formState.isSubmitting || 
-                      createCategoryMutation.isPending || 
-                      updateCategoryMutation.isPending || 
-                      deleteCategoryMutation.isPending;
-  
+
+  const isSubmitting =
+    form.formState.isSubmitting ||
+    createCategoryMutation.isPending ||
+    updateCategoryMutation.isPending ||
+    deleteCategoryMutation.isPending;
+
   return (
     <AdminLayout title={t("admin.categories.title")}>
       <Helmet>
-        <title>{t("admin.categories.pageTitle")} | {t("admin.panel")} | Kerzenwelt by Dani</title>
+        <title>
+          {t("admin.categories.pageTitle")} | {t("admin.panel")} | Kerzenwelt by
+          Dani
+        </title>
       </Helmet>
-      
+
       <div className="space-y-6">
         {/* Header s akcijama */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold">{t("admin.categories.title")}</h1>
-            <p className="text-muted-foreground">{t("admin.categories.subtitle")}</p>
+            <h1 className="text-2xl font-bold">
+              {t("admin.categories.title")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("admin.categories.subtitle")}
+            </p>
           </div>
-          
+
           <Button onClick={handleAddCategory} disabled={isSubmitting}>
-            <Plus className="mr-2 h-4 w-4" /> {t("admin.categories.addCategory")}
+            <Plus className="mr-2 h-4 w-4" />{" "}
+            {t("admin.categories.addCategory")}
           </Button>
         </div>
-        
+
         {/* Tablica kategorija */}
         <Card>
           <CardHeader>
@@ -230,7 +258,7 @@ export default function AdminCategories() {
               {t("admin.categories.allCategoriesDesc")}
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-8">
@@ -245,17 +273,27 @@ export default function AdminCategories() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[80px]">{t("admin.categories.id")}</TableHead>
-                      <TableHead className="w-[80px]">{t("admin.categories.image")}</TableHead>
+                      <TableHead className="w-[80px]">
+                        {t("admin.categories.id")}
+                      </TableHead>
+                      <TableHead className="w-[80px]">
+                        {t("admin.categories.image")}
+                      </TableHead>
                       <TableHead>{t("admin.categories.name")}</TableHead>
-                      <TableHead className="hidden md:table-cell">{t("admin.categories.description")}</TableHead>
-                      <TableHead className="w-[150px] text-right">{t("admin.categories.actions")}</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        {t("admin.categories.description")}
+                      </TableHead>
+                      <TableHead className="w-[150px] text-right">
+                        {t("admin.categories.actions")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {categories.map((category) => (
                       <TableRow key={category.id}>
-                        <TableCell className="font-medium">{category.id}</TableCell>
+                        <TableCell className="font-medium">
+                          {category.id}
+                        </TableCell>
                         <TableCell>{category.name}</TableCell>
                         <TableCell className="hidden md:table-cell truncate max-w-[300px]">
                           {category.description}
@@ -290,22 +328,23 @@ export default function AdminCategories() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Forma za kategoriju */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>
-              {currentCategory ? t("admin.categories.editCategory") : t("admin.categories.addNewCategory")}
+              {currentCategory
+                ? t("admin.categories.editCategory")
+                : t("admin.categories.addNewCategory")}
             </DialogTitle>
             <DialogDescription>
               {currentCategory
                 ? t("admin.categories.editCategoryDesc")
-                : t("admin.categories.addCategoryDesc")
-              }
+                : t("admin.categories.addCategoryDesc")}
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -315,22 +354,29 @@ export default function AdminCategories() {
                   <FormItem>
                     <FormLabel>{t("admin.categories.nameLabel")} *</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("admin.categories.namePlaceholder")} {...field} />
+                      <Input
+                        placeholder={t("admin.categories.namePlaceholder")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.categories.descriptionLabel")} *</FormLabel>
+                    <FormLabel>
+                      {t("admin.categories.descriptionLabel")} *
+                    </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={t("admin.categories.descriptionPlaceholder")}
+                        placeholder={t(
+                          "admin.categories.descriptionPlaceholder",
+                        )}
                         rows={4}
                         {...field}
                       />
@@ -342,7 +388,7 @@ export default function AdminCategories() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="imageUrl"
@@ -350,7 +396,10 @@ export default function AdminCategories() {
                   <FormItem>
                     <FormLabel>{t("admin.categories.imageUrlLabel")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("admin.categories.imageUrlPlaceholder")} {...field} />
+                      <Input
+                        placeholder={t("admin.categories.imageUrlPlaceholder")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription>
                       {t("admin.categories.imageUrlHelp")}
@@ -358,14 +407,17 @@ export default function AdminCategories() {
                     <FormMessage />
                     {field.value && (
                       <div className="mt-2">
-                        <p className="text-sm mb-2">{t("admin.categories.imagePreview")}:</p>
+                        <p className="text-sm mb-2">
+                          {t("admin.categories.imagePreview")}:
+                        </p>
                         <div className="rounded-md overflow-hidden w-full max-w-[200px] h-[120px] bg-secondary">
                           <img
                             src={field.value}
                             alt={t("admin.categories.imageAlt")}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = "https://via.placeholder.com/200x120?text=Slika+nije+dostupna";
+                              e.currentTarget.src =
+                                "https://via.placeholder.com/200x120?text=Slika+nije+dostupna";
                             }}
                           />
                         </div>
@@ -374,7 +426,7 @@ export default function AdminCategories() {
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
                 <Button
                   type="button"
@@ -388,11 +440,15 @@ export default function AdminCategories() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {currentCategory ? t("admin.categories.updating") : t("admin.categories.saving")}
+                      {currentCategory
+                        ? t("admin.categories.updating")
+                        : t("admin.categories.saving")}
                     </>
                   ) : (
                     <>
-                      {currentCategory ? t("admin.categories.saveChanges") : t("admin.categories.saveCategory")}
+                      {currentCategory
+                        ? t("admin.categories.saveChanges")
+                        : t("admin.categories.saveCategory")}
                     </>
                   )}
                 </Button>
@@ -401,20 +457,30 @@ export default function AdminCategories() {
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Dijalog za potvrdu brisanja */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("admin.categories.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("admin.categories.deleteTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("admin.categories.deleteConfirmation").replace("{name}", currentCategory?.name || "")}
+              {t("admin.categories.deleteConfirmation").replace(
+                "{name}",
+                currentCategory?.name || "",
+              )}
               {t("admin.categories.deleteWarning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteCategoryMutation.isPending}>{t("admin.categories.cancel")}</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel disabled={deleteCategoryMutation.isPending}>
+              {t("admin.categories.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={confirmDeleteCategory}
               disabled={deleteCategoryMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

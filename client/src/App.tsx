@@ -3,7 +3,9 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { ToastProvider } from "@/hooks/use-toast"; // ili gdje god si smjestio
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SettingsProvider } from "@/hooks/use-settings";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -35,6 +37,8 @@ import AdminSettings from "@/pages/admin/settings-page";
 import PageSettingsPage from "@/pages/admin/page-settings";
 import ContactSettingsPage from "@/pages/admin/contact-settings";
 import DocumentManagementPage from "@/pages/admin/document-management";
+import AdminMailboxPage from "@/pages/admin/AdminMailboxPage"; // NEU IMPORTIEREN
+import VisitorStatsPage from "@/pages/admin/VisitorStatsPage";
 
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
@@ -42,7 +46,7 @@ import { CartProvider } from "./hooks/use-cart";
 import { ThemeProvider } from "./hooks/use-theme";
 import { LanguageProvider } from "./hooks/use-language";
 import CookieConsent from "./components/CookieConsent";
-import { SecurityProvider } from "./components/SecurityProvider"; // <--- Pobrini se da je ovo ispravan import
+// import { SecurityProvider } from "./components/SecurityProvider"; // <--- Pobrini se da je ovo ispravan import
 
 function Router() {
   return (
@@ -154,6 +158,16 @@ function Router() {
           component={AdminSubscribers}
         />
       </Route>
+      <Route path="/admin/inbox">
+        <AdminMailboxPage />
+        <ProtectedRoute
+          path="/admin/AdminMailboxPage"
+          component={AdminMailboxPage}
+        />
+      </Route>
+      <Route path="/admin/visitor-stats">
+        <VisitorStatsPage />
+      </Route>
       <Route path="/admin/documents">
         <ProtectedRoute
           path="/admin/documents"
@@ -170,18 +184,21 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <LanguageProvider>
-          <AuthProvider>
-            {/* SecurityProvider je omotan oko cijele aplikacije nakon autentifikacije */}
-            <SecurityProvider>
+          <ToastProvider>
+            <AuthProvider>
+              {/* <SecurityProvider> */}
               <CartProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Router />
-                  <CookieConsent />
-                </TooltipProvider>
+                <SettingsProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Router />
+                    <CookieConsent />
+                  </TooltipProvider>
+                </SettingsProvider>
               </CartProvider>
-            </SecurityProvider>
-          </AuthProvider>
+              {/* </SecurityProvider> */}
+            </AuthProvider>
+          </ToastProvider>
         </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>

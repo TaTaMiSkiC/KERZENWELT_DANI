@@ -2,6 +2,26 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import logoImg from "@assets/Kerzenwelt by Dani.png";
+import { useToast } from "@/hooks/use-toast";
+
+function SomeComponent() {
+  const { toast } = useToast(); // ✅ Hook pravilno pozvan
+
+  const handleCreateInvoice = () => {
+    try {
+      const invoiceData = buildInvoiceData(rawOrderData);
+      generateInvoicePdf(invoiceData, toast); // ✅ toast proslijeđen kao argument
+    } catch (err) {
+      toast({
+        title: "Neuspješno",
+        description: "Račun nije generiran.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return <button onClick={handleCreateInvoice}>Kreiraj račun</button>;
+}
 
 // Funkcija za prevođenje načina plaćanja
 export const getPaymentMethodText = (
@@ -35,6 +55,38 @@ export const getPaymentMethodText = (
       return formattedMethod;
   }
 };
+
+// Ovo je čista funkcija koja samo formatira podatke
+export function buildInvoiceData(raw: any) {
+  const subtotal = parseFloat(raw.subtotal || "0");
+  const shipping = parseFloat(raw.shippingCost || "0");
+  const discount = parseFloat(raw.discountAmount || "0");
+  const tax = parseFloat(raw.tax || "0");
+
+  const total = subtotal + shipping - discount + tax;
+
+  return {
+    invoiceNumber: raw.invoiceNumber,
+    createdAt: raw.createdAt,
+    customerName: raw.customerName || "",
+    customerEmail: raw.customerEmail || "",
+    customerAddress: raw.customerAddress || "",
+    customerCity: raw.customerCity || "",
+    customerPostalCode: raw.customerPostalCode || "",
+    customerCountry: raw.customerCountry || "",
+    customerPhone: raw.customerPhone || "",
+    customerNote: raw.customerNote || "",
+    paymentMethod: raw.paymentMethod || "cash",
+    paymentStatus: raw.paymentStatus || "unpaid",
+    subtotal,
+    shippingCost: shipping,
+    discountAmount: discount,
+    tax,
+    total,
+    language: raw.language || "hr",
+    items: raw.items || [],
+  };
+}
 
 // Funkcija za generiranje PDF-a identična onoj u order-details-page.tsx
 export const generateInvoicePdf = (data: any, toast: any) => {
@@ -225,32 +277,43 @@ export const generateInvoicePdf = (data: any, toast: any) => {
     let customerY = 62;
 
     // Dodajemo informacije o kupcu
-    if (data.customerName) {
-      doc.text(data.customerName, 20, customerY);
+    // Sva polja osiguravamo sa || "" da ne budu undefined ili null
+    const customerName = data.customerName || "";
+    const customerEmail = data.customerEmail || "";
+    const customerAddress = data.customerAddress || "";
+    const customerCity = data.customerCity || "";
+    const customerPostalCode = data.customerPostalCode || "";
+    const customerCountry = data.customerCountry || "";
+    const customerPhone = data.customerPhone || ""; // Dodaj i phone ako ga šalješ iz admin-invoices
+    const customerNote = data.customerNote || ""; // Dodaj i customerNote
+
+    if (customerName) {
+      doc.text(customerName, 20, customerY);
       customerY += 5;
     }
 
-    if (data.customerEmail) {
-      doc.text(`Email: ${data.customerEmail}`, 20, customerY);
+    if (customerEmail) {
+      doc.text(`Email: ${customerEmail}`, 20, customerY);
       customerY += 5;
     }
 
-    if (data.customerAddress) {
-      doc.text(`${t.deliveryAddress}: ${data.customerAddress}`, 20, customerY);
+    if (customerAddress) {
+      doc.text(`${t.deliveryAddress}: ${customerAddress}`, 20, customerY);
       customerY += 5;
     }
 
-    if (data.customerPostalCode || data.customerCity) {
-      doc.text(
-        `${data.customerPostalCode || ""} ${data.customerCity || ""}`,
-        20,
-        customerY,
-      );
+    if (customerPostalCode || customerCity) {
+      doc.text(`${customerPostalCode} ${customerCity}`, 20, customerY);
       customerY += 5;
     }
 
-    if (data.customerCountry) {
-      doc.text(data.customerCountry, 20, customerY);
+    if (customerCountry) {
+      doc.text(customerCountry, 20, customerY);
+      customerY += 5;
+    }
+    // Dodaj i telefon ako ga želiš prikazati
+    if (customerPhone) {
+      doc.text(`Telefon: ${customerPhone}`, 20, customerY);
       customerY += 5;
     }
 
@@ -264,7 +327,7 @@ export const generateInvoicePdf = (data: any, toast: any) => {
       doc.setFontSize(10);
 
       // Napravimo potreban broj redova za napomenu - maksimalno 3 reda
-      const noteLines = doc.splitTextToSize(data.customerNote, 65); // Nešto uži prostor za napomene
+      const noteLines = doc.splitTextToSize(customerNote, 65); // Nešto uži prostor za napomene
       const maxLines = Math.min(3, noteLines.length); // Maksimalno 3 reda
 
       for (let i = 0; i < maxLines; i++) {
@@ -366,66 +429,68 @@ export const generateInvoicePdf = (data: any, toast: any) => {
       },
     });
 
-    // Izračunavanje ukupnog iznosa
-    let subtotal =
-      data.items && Array.isArray(data.items)
-        ? data.items.reduce(
-            (sum: number, item: any) =>
-              sum + parseFloat(item.price) * item.quantity,
-            0,
-          )
-        : 0;
+    let subtotalPDF = parseFloat(data.subtotal || "0"); // Puni međuzbroj proizvoda (iz data)
+    const shippingCostPDF = parseFloat(data.shippingCost || "0"); // Trošak dostave (iz data)
+    const discountAmountPDF = parseFloat(data.discountAmount || "0"); // Iznos popusta (iz data)
+    const discountTypePDF = data.discountType || "fixed"; // Tip popusta (iz data)
+    const discountPercentagePDF = parseFloat(data.discountPercentage || "0"); // Postotak popusta (iz data)
+    const totalPDF = parseFloat(data.total || "0"); // Konačni plaćeni iznos (iz data)
 
-    // Sigurnosna provjera za shippingCost - ako ne postoji, stavi 0
-    const shippingCost = data.shippingCost
-      ? parseFloat(data.shippingCost)
-      : 5.0;
-
-    // Ukupan iznos s dostavom
-    const total = parseFloat(data.total) || subtotal + shippingCost;
+    // **DEBUG LOGOVI ZA PDF GEN:**
+    console.log(`[DEBUG PDF CALCS] Vrijednosti za generiranje PDF-a:`);
+    console.log(`  - subtotalPDF (iz data): ${subtotalPDF}`);
+    console.log(`  - shippingCostPDF (iz data): ${shippingCostPDF}`);
+    console.log(`  - discountAmountPDF (iz data): ${discountAmountPDF}`);
+    console.log(`  - discountTypePDF: ${discountTypePDF}`);
+    console.log(`  - discountPercentagePDF: ${discountPercentagePDF}`);
+    console.log(`  - totalPDF (iz data - KRAJNJI PLAĆENI): ${totalPDF}`);
 
     // Dohvati poziciju nakon tablice
     const finalY = (doc as any).lastAutoTable.finalY || 200;
 
-    // Dodavanje ukupnog iznosa
-    doc.setFontSize(10);
-    doc.text(`${t.subtotal}:`, 160, finalY + 10, { align: "right" });
-    doc.text(`${subtotal.toFixed(2)} €`, 190, finalY + 10, { align: "right" });
+    let currentY = finalY + 10; // Početna Y pozicija za prvu sumarnu liniju
 
-    // Add discount if exists
-    let currentY = finalY + 15;
-    if (data.discountAmount && parseFloat(data.discountAmount) > 0) {
-      const discountText = data.discountType === 'percentage' 
-        ? `Rabatt (-${parseFloat(data.discountPercentage || 0).toFixed(0)}%):`
-        : `Rabatt:`;
-      doc.text(discountText, 160, currentY, { align: "right" });
-      doc.text(`-${parseFloat(data.discountAmount).toFixed(2)} €`, 190, currentY, {
+    // 1. Međuzbroj (Subtotal - puni iznos proizvoda)
+    doc.setFontSize(10);
+    doc.text(`${t.subtotal}:`, 160, currentY, { align: "right" });
+    doc.text(`${subtotalPDF.toFixed(2)} €`, 190, currentY, { align: "right" });
+    currentY += 5;
+
+    // 2. Popust (Rabatt) - prikaži ako postoji
+    if (discountAmountPDF > 0) {
+      let discountDisplayText = `Rabatt:`;
+      if (discountTypePDF === "percentage" && discountPercentagePDF > 0) {
+        discountDisplayText = `Rabatt (-${discountPercentagePDF.toFixed(0)}%):`;
+      }
+
+      doc.text(discountDisplayText, 160, currentY, { align: "right" });
+      doc.text(`-${discountAmountPDF.toFixed(2)} €`, 190, currentY, {
         align: "right",
       });
       currentY += 5;
     }
 
-    // Dodaj troškove dostave ako postoje
+    // 3. Dostava (Shipping)
     doc.text(`${t.shipping}:`, 160, currentY, { align: "right" });
-    doc.text(`${shippingCost.toFixed(2)} €`, 190, currentY, {
+    doc.text(`${shippingCostPDF.toFixed(2)} €`, 190, currentY, {
       align: "right",
     });
     currentY += 5;
 
-    // Zbog jednostavnosti porezni model, stavljamo PDV 0%
+    // 4. Porez (Tax) - PDV
     doc.text(`${t.tax}:`, 160, currentY, { align: "right" });
     doc.text("0.00 €", 190, currentY, { align: "right" });
     currentY += 5;
 
-    // Ukupan iznos
+    // 5. Ukupan Iznos (Total Amount)
     doc.setFont("helvetica", "bold");
     doc.text(`${t.totalAmount}:`, 160, currentY, { align: "right" });
-    doc.text(`${total.toFixed(2)} €`, 190, currentY, { align: "right" });
+    doc.text(`${totalPDF.toFixed(2)} €`, 190, currentY, { align: "right" }); // totalPDF je finalni plaćeni iznos (7.64€)
     doc.setFont("helvetica", "normal");
 
     // Informacije o plaćanju
     doc.setDrawColor(200, 200, 200);
-    doc.line(20, finalY + 30, 190, finalY + 30);
+    doc.line(20, finalY + 32, 190, finalY + 32);
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
@@ -434,11 +499,11 @@ export const generateInvoicePdf = (data: any, toast: any) => {
     doc.setFontSize(10);
 
     const paymentMethod = getPaymentMethodText(
-      data.paymentMethod || "bank_transfer",
+      data.paymentMethod || "bank_transfer", // Osiguraj default
       lang,
       t,
     );
-    const paymentStatus = getPaymentStatusText(data.paymentStatus);
+    const paymentStatus = getPaymentStatusText(data.paymentStatus || ""); // <- DODANO: osiguraj prazan string
 
     doc.text(`${t.paymentMethod}: ${paymentMethod}`, 20, finalY + 45);
     doc.text(`${t.paymentStatus}: ${paymentStatus}`, 20, finalY + 50);

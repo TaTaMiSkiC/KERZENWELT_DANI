@@ -5,10 +5,12 @@ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
   optimizeDeps: {
-    exclude: ["chunk-S34NKWM7.js"], // Add your excluded dependency here
+    exclude: ["chunk-S34NKWM7.js"], // Ostavite samo ovo ako je bilo potrebno, inače uklonite cijelu liniju 'exclude'
   },
   plugins: [
-    react(),
+    react({
+      fastRefresh: false,
+    }),
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined

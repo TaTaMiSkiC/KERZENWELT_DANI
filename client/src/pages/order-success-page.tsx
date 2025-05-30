@@ -5,24 +5,25 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   CheckCircle,
   Package,
   Clock,
   ArrowRight,
-  ShoppingBag,
+  ShoppingCart, // Icona za "Continue shopping" button
   LoaderCircle,
 } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/hooks/use-language";
+import { format } from "date-fns"; // Dodano za formatiranje datuma
 
 export default function OrderSuccessPage() {
   const [location] = useLocation();
   const { user } = useAuth();
   const [order, setOrder] = useState<any>(null);
-  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [orderItems, setOrderItems] = useState<any[]>([]); // Stavke narudžbe
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { t } = useLanguage();
@@ -39,17 +40,17 @@ export default function OrderSuccessPage() {
   console.log(
     "Pokušavam dohvatiti orderId iz sessionStorage (na početku page-a):",
     storedOrderId,
-  ); // ADD THIS LOG
+  );
   if (!orderIdFromUrl && storedOrderId) {
     orderIdFromUrl = storedOrderId;
     console.log(
       "Dohvaćen orderId iz sessionStorage i postavljen kao orderIdFromUrl:",
       orderIdFromUrl,
-    ); // ADD THIS LOG
+    );
     // Nakon što ga upotrijebimo, možemo ga obrisati iz sessionStorage
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("lastProcessedOrderId");
-      console.log("Obrisan orderId iz sessionStorage."); // ADD THIS LOG
+      console.log("Obrisan orderId iz sessionStorage.");
     }
   }
 
@@ -70,20 +71,28 @@ export default function OrderSuccessPage() {
       setLoading(true);
       setError(null);
 
-      // Webhook će se pobrinuti za ažuriranje narudžbe na backendu.
-      // Ovdje samo pokušavamo dohvatiti detalje narudžbe ako je orderId dostupan.
       if (orderIdFromUrl) {
         console.log(
           "Dohvaćam narudžbu po orderIdFromUrl (iz URL-a ili sessionStorage):",
           orderIdFromUrl,
         );
         try {
-          const orderDetails = await apiRequest(
+          // Dohvati osnovne podatke o narudžbi
+          const orderDetailsResponse = await apiRequest(
             "GET",
             `/api/orders/${orderIdFromUrl}`,
           );
+          const orderDetails = await orderDetailsResponse.json();
+
+          // Dohvati stavke narudžbe
+          const orderItemsResponse = await apiRequest(
+            "GET",
+            `/api/orders/${orderIdFromUrl}/items`,
+          );
+          const items = await orderItemsResponse.json();
+
           setOrder(orderDetails);
-          setOrderItems(orderDetails.orderItems || []);
+          setOrderItems(items || []);
 
           // Automatski pozovi postojeću funkcionalnost za generiranje PDF-a iz order details
           if (orderDetails && orderDetails.id) {
@@ -93,13 +102,10 @@ export default function OrderSuccessPage() {
                 orderDetails.id,
               );
 
-              // Pozovi isti endpoint koji se koristi u "Meine Bestellungen" > order details
-              // Ovo će automatski generirati PDF sa svim podacima i poslati ga na email
               console.log(
                 "📞 CLIENT - Pozivam endpoint:",
                 `/api/orders/${orderDetails.id}/generate-pdf`,
               );
-
 
               const pdfResponse = await fetch(
                 `/api/orders/${orderDetails.id}/generate-pdf`,
@@ -133,12 +139,8 @@ export default function OrderSuccessPage() {
                 "❌ CLIENT - Greška pri generiranju PDF računa:",
                 invoiceError,
               );
-              // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
             }
           }
-
-          // Ovdje možete dodati provjeru statusa narudžbe.
-          // Ako je status 'pending', možete prikazati poruku da se čeka potvrda plaćanja.
         } catch (err: any) {
           console.error(
             "Fehler beim Abrufen der Bestelldaten (Frontend):",
@@ -161,22 +163,25 @@ export default function OrderSuccessPage() {
             console.log("🔍 CLIENT - Šaljem zahtev za narudžbe...");
             const response = await fetch("/api/orders", {
               method: "GET",
-              credentials: "include"
+              credentials: "include",
             });
             const userOrders = await response.json();
             console.log("🔍 CLIENT - Odgovor sa narudžbama:", userOrders);
             if (userOrders && userOrders.length > 0) {
-              // Uzmi zadnju narudžbu (prva u nizu jer su sortirane po datumu)
-              const latestOrder = userOrders[0];
-              console.log("✅ CLIENT - Dohvaćena zadnja narudžba:", latestOrder);
+              const latestOrder = userOrders[0]; // Uzmi zadnju narudžbu (prva u nizu jer su sortirane po datumu)
+              console.log(
+                "✅ CLIENT - Dohvaćena zadnja narudžba:",
+                latestOrder,
+              );
               setOrder(latestOrder);
 
               // Dohvati stavke narudžbe
-              const orderItems = await apiRequest(
+              const orderItemsResponse = await apiRequest(
                 "GET",
                 `/api/orders/${latestOrder.id}/items`,
               );
-              setOrderItems(orderItems || []);
+              const items = await orderItemsResponse.json();
+              setOrderItems(items || []);
 
               // Automatski generiraj i pošalji PDF račun na email
               if (latestOrder && latestOrder.id) {
@@ -190,7 +195,6 @@ export default function OrderSuccessPage() {
                     "📞 CLIENT - Pozivam endpoint:",
                     `/api/orders/${latestOrder.id}/generate-pdf`,
                   );
-
 
                   const pdfResponse = await fetch(
                     `/api/orders/${latestOrder.id}/generate-pdf`,
@@ -227,52 +231,44 @@ export default function OrderSuccessPage() {
                     "❌ CLIENT - Greška pri generiranju PDF računa:",
                     invoiceError,
                   );
-                  // Ne prekidamo proces jer je glavno da korisnik vidi potvrdu narudžbe
                 }
               }
             } else {
-              setOrder({
-                id: "N/A",
-                total: "N/A",
-                paymentMethod: "Online Payment (processing)",
-                status: "pending",
-                customerNote: t("orderSuccessPage.processingPaymentNote"),
-              });
+              setError(
+                t("orderSuccessPage.noOrderInfo") ||
+                  "Nema informacija o narudžbi.",
+              );
+              setOrder(null);
             }
           } catch (err: any) {
             console.error("Greška pri dohvaćanju zadnje narudžbe:", err);
-            setOrder({
-              id: "N/A",
-              total: "N/A",
-              paymentMethod: "Online Payment (processing)",
-              status: "pending",
-              customerNote: t("orderSuccessPage.processingPaymentNote"),
-            });
+            setError(
+              t("orderSuccessPage.orderRetrievalError") +
+                (err.message ? ` (${err.message})` : ""),
+            );
+            setOrder(null);
           }
         } else {
-          setOrder({
-            id: "N/A",
-            total: "N/A",
-            paymentMethod: "Online Payment (processing)",
-            status: "pending",
-            customerNote: t("orderSuccessPage.processingPaymentNote"),
-          });
+          // Korisnik nije prijavljen i nema orderId u URL-u
+          setError(
+            t("orderSuccessPage.noOrderInfo") ||
+              "Nema informacija o narudžbi. Molimo prijavite se.",
+          );
+          setOrder(null);
         }
-        setError(null);
       }
       setLoading(false);
     };
 
     processOrder();
-  }, [orderIdFromUrl, user?.id, t]); // sessionId više nije potreban kao dependency
+  }, [orderIdFromUrl, user?.id, t]);
 
   if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[50vh]">
           <LoaderCircle className="animate-spin h-8 w-8 text-primary" />
-          <p className="ml-3">{t("orderSuccessPage.loadingOrder")}</p>{" "}
-          {/* Poruka na njemačkom */}
+          <p className="ml-3">{t("orderSuccessPage.loadingOrder")}</p>
         </div>
       </Layout>
     );
@@ -297,7 +293,33 @@ export default function OrderSuccessPage() {
     );
   }
 
-  // ... (ostatak vašeg koda za prikaz uspješne narudžbe) ...
+  // Dohvati formatirane iznose za prikaz
+  const orderTotal = parseFloat(order.total || 0).toFixed(2);
+  const orderSubtotal = parseFloat(order.subtotal || 0).toFixed(2);
+  const orderShippingCost = parseFloat(order.shippingCost || 0).toFixed(2);
+  const orderDiscountAmount = parseFloat(order.discountAmount || 0).toFixed(2);
+
+  // Funkcija za prevođenje načina plaćanja (kopirana iz order-details-page)
+  const getPaymentMethodText = (method: string | undefined) => {
+    if (!method) return t("orders.notDefined");
+    switch (method) {
+      case "cash":
+        return t("orders.cash");
+      case "bank":
+        return t("orders.bankTransfer"); // Ako ti je bank transfer 'bank' u bazi
+      case "paypal":
+        return t("orders.paypal");
+      case "stripe":
+        return t("orders.creditCard"); // Ako StripePaymentElement šalje 'stripe'
+      case "nachnahme":
+        return t("checkout.paymentMethods.cash.title"); // Za Nachnahme
+      case "pickup":
+        return t("checkout.paymentMethods.pickup.title"); // Za Selbstabholung
+      default:
+        return method.charAt(0).toUpperCase() + method.slice(1);
+    }
+  };
+
   return (
     <Layout>
       <Helmet>
@@ -335,22 +357,16 @@ export default function OrderSuccessPage() {
                         <p className="text-sm text-gray-600">
                           {t("orderSuccessPage.total")}
                         </p>
-                        <p className="font-semibold">
-                          {parseFloat(order.total || 0).toFixed(2)} €
-                        </p>
-                        {(order as any).discountAmount && parseFloat((order as any).discountAmount) > 0 && (
+                        {/* OVDJE JE KLJUČNO: KORISTIMO orderTotal KOJI JE 7.64€ */}
+                        <p className="font-semibold">{orderTotal} €</p>
+                        {/* UKLONJENO PRERAČUNAVANJE POPUSTA OVDJE, SAMO PRIKAZ AKO ŽELIŠ */}
+                        {/* orderDiscountAmount je već 0.85 ako postoji popust */}
+                        {/* Ako želiš ovdje prikazati liniju "Rabatt: -0.85€", možeš dodati: */}
+                        {/* {parseFloat(orderDiscountAmount) > 0 && (
                           <p className="text-sm text-green-600">
-                            {(order as any).discountType === 'percentage' 
-                              ? (() => {
-                                  const percentage = parseFloat((order as any).discountPercentage || 0);
-                                  const subtotal = parseFloat(order.subtotal || order.total || 0);
-                                  const actualDiscount = (subtotal * percentage) / 100;
-                                  return `Rabatt: -${percentage.toFixed(0)}% = -${actualDiscount.toFixed(2)}€`;
-                                })()
-                              : `Rabatt: -${parseFloat((order as any).discountAmount).toFixed(2)}€`
-                            }
+                            Rabatt: -{orderDiscountAmount} €
                           </p>
-                        )}
+                        )} */}
                       </div>
                       {order.status && (
                         <div>
@@ -366,14 +382,17 @@ export default function OrderSuccessPage() {
                             {t("orderSuccessPage.orderDate")}
                           </p>
                           <p className="font-semibold">
-                            {new Date(order.createdAt).toLocaleDateString()}
+                            {format(
+                              new Date(order.createdAt),
+                              "dd.MM.yyyy. HH:mm",
+                            )}
                           </p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Order Items */}
+                  {/* Order Items - ovaj dio je ostao nepromijenjen, samo se prikazuje */}
                   {orderItems.length > 0 && (
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">
@@ -529,64 +548,11 @@ export default function OrderSuccessPage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-              </div>{" "}
-              {/* OVO JE KRAJ DIVE S GUMBIMA */}
-            </CardContent>{" "}
-            {/* <-- DODAJTE OVU LINIJU OVDJE! */}
+              </div>
+            </CardContent>
           </Card>
         </div>
       </div>
     </Layout>
   );
 }
-
-// Dodajte ove definicije u vaš JSON za jezik (npr. de.json)
-// U de.json:
-// {
-//   "orderSuccessPage": {
-//     "title": "Bestellbestätigung",
-//     "loadingOrder": "Bestellung wird geladen...",
-//     "errorTitle": "Fehler bei der Bestellung",
-//     "continueShopping": "Weiter einkaufen",
-//     "orderConfirmed": "Bestellung bestätigt!",
-//     "thankYou": "Vielen Dank für Ihre Bestellung. Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet.",
-//     "orderNumber": "Bestellnummer",
-//     "total": "Gesamt",
-//     "paymentMethod": "Zahlungsmethode",
-//     "paymentMethodStripe": "Stripe (Online-Zahlung)",
-//     "paymentMethodPaypal": "PayPal",
-//     "paymentMethodPickup": "Abholung im Geschäft",
-//     "statusPending": "Status: Ausstehend (Warten auf Zahlung)",
-//     "statusCompleted": "Status: Abgeschlossen (Zahlung erhalten)",
-//     "orderDetails": "Bestelldetails",
-//     "scent": "Duft",
-//     "color": "Farbe",
-//     "pickupDetails": "Details zur Abholung im Geschäft",
-//     "pickupAddress": "Abholadresse",
-//     "companyName": "Kerzenwelt by Dani",
-//     "addressLine1": "Seebacherstr. 35",
-//     "addressLine2": "9500 Villach, Österreich",
-//     "pickupContact": "Kontakt für Abholung",
-//     "contactEmail": "info@kerzenweltbydani.com",
-//     "pickupNotice": "Bitte vereinbaren Sie einen Abholtermin nach Erhalt der Bestätigungs-E-Mail.",
-//     "bankTransferDetails": "Banküberweisungsdetails",
-//     "bankName": "Bankname",
-//     "bankNameValue": "Sparkasse",
-//     "ibanValue": "ATxxxxxxxxxxxxxxxxxx",
-//     "bicValue": "SPKXXXAT22",
-//     "accountHolder": "Kontoinhaber",
-//     "accountHolderValue": "Daniela Mustermann",
-//     "referenceModel": "Referenzmodell",
-//     "referenceNumber": "Referenznummer",
-//     "amount": "Betrag",
-//     "paymentDescription": "Zahlungsbeschreibung",
-//     "order": "Bestellung",
-//     "myOrders": "Meine Bestellungen",
-//     "continueShoppingButton": "Weiter einkaufen",
-//     "noOrderIdFromBackend": "Bestell-ID wurde vom Server nicht zurückgegeben.",
-//     "genericError": "Es ist ein unerwarteter Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-//     "processingError": "Fehler bei der Bearbeitung der Stripe-Sitzung. Bitte versuchen Sie es erneut.",
-//     "orderRetrievalError": "Fehler beim Abrufen der Bestelldaten. Bitte versuchen Sie es erneut.",
-//     "noOrderInfo": "Keine Bestellinformationen gefunden. Bitte kontaktieren Sie den Support."
-//   }
-// }

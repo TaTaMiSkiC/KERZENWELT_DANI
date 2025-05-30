@@ -8,10 +8,12 @@ import {
   timestamp,
   json,
   varchar,
+  uniqueIndex, // <-- DIESE ZEILE HINZUFÜGEN
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -301,6 +303,32 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   createdAt: true,
 });
 
+// --- Mailbox Messages Schema ---
+export const mailboxMessages = pgTable("mailbox_messages", {
+  id: serial("id").primaryKey(),
+  senderEmail: varchar("sender_email", { length: 255 }).notNull(),
+  senderName: varchar("sender_name", { length: 255 }), // Nullable
+  recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 512 }).notNull(),
+  body: text("body").notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(), // PostgreSQL specific
+  read: boolean("read").default(false).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'inbound' or 'outbound'
+  inReplyToMessageId: integer("in_reply_to_message_id").references(
+    () => mailboxMessages.id,
+    { onDelete: "set null" },
+  ), // Self-referencing FK
+});
+
+// Zod-Schemas für Typ-Validierung und Inferenz
+export const InsertMailboxMessageSchema = createInsertSchema(mailboxMessages);
+export const SelectMailboxMessageSchema = createSelectSchema(mailboxMessages);
+
+export type MailboxMessage = z.infer<typeof SelectMailboxMessageSchema>;
+export type InsertMailboxMessage = z.infer<typeof InsertMailboxMessageSchema>;
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -418,19 +446,22 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
 
 // Schema for hero section settings
 export const heroSettingsSchema = z.object({
-  titleText: z.record(z.string(), z.array(
-    // Prihvati ili string ili TitleItem objekt
-    z.union([
-      z.string(),
-      z.object({
-        text: z.string(),
-        fontSize: z.string().optional().default("xl"),
-        fontWeight: z.string().optional().default("medium"),
-        color: z.string().optional().default("white"),
-        fontFamily: z.string().optional(),
-      })
-    ])
-  )),
+  titleText: z.record(
+    z.string(),
+    z.array(
+      // Prihvati ili string ili TitleItem objekt
+      z.union([
+        z.string(),
+        z.object({
+          text: z.string(),
+          fontSize: z.string().optional().default("xl"),
+          fontWeight: z.string().optional().default("medium"),
+          color: z.string().optional().default("white"),
+          fontFamily: z.string().optional(),
+        }),
+      ]),
+    ),
+  ),
   subtitleText: z.record(z.string(), z.string()), // Multi-language subtitle text
   subtitleFontSize: z.string().default("lg md:text-xl"),
   subtitleFontWeight: z.string().default("normal"),
@@ -566,9 +597,15 @@ export const invoices = pgTable("invoices", {
   paymentMethod: text("payment_method").default("cash").notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
-  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
+  discountAmount: decimal("discount_amount", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
   discountType: text("discount_type").default("fixed"),
-  discountPercentage: decimal("discount_percentage", { precision: 5, scale: 2 }).default("0"),
+  discountPercentage: decimal("discount_percentage", {
+    precision: 5,
+    scale: 2,
+  }).default("0"),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   language: text("language").default("hr").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -658,23 +695,23 @@ export const companyDocumentsRelations = relations(
   }),
 );
 
-// Tablica za praćenje posjeta na stranici
-export const pageVisits = pgTable("page_visits", {
-  id: serial("id").primaryKey(),
-  path: text("path").notNull(),
-  count: integer("count").default(0).notNull(),
-  lastVisited: timestamp("last_visited").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+// // Tablica za praćenje posjeta na stranici
+// export const pageVisits = pgTable("page_visits", {
+//   id: serial("id").primaryKey(),
+//   path: text("path").notNull(),
+//   count: integer("count").default(0).notNull(),
+//   lastVisited: timestamp("last_visited").defaultNow().notNull(),
+//   createdAt: timestamp("created_at").defaultNow().notNull(),
+// });
 
-export const insertPageVisitSchema = createInsertSchema(pageVisits).omit({
-  id: true,
-  createdAt: true,
-  lastVisited: true,
-});
+// export const insertPageVisitSchema = createInsertSchema(pageVisits).omit({
+//   id: true,
+//   createdAt: true,
+//   lastVisited: true,
+// });
 
-export type PageVisit = typeof pageVisits.$inferSelect;
-export type InsertPageVisit = z.infer<typeof insertPageVisitSchema>;
+// export type PageVisit = typeof pageVisits.$inferSelect;
+// export type InsertPageVisit = z.infer<typeof insertPageVisitSchema>;
 
 // Newsletter subscribers
 export const subscribers = pgTable("subscriber", {
@@ -699,3 +736,32 @@ export const subscriberSchema = z.object({
 
 export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
+
+export const pageVisits = pgTable(
+  "page_visits",
+  {
+    id: serial("id").primaryKey(),
+    path: varchar("path", { length: 255 }).notNull(), // `unique()` hier entfernen, da wir einen Composite Unique Index erstellen
+    count: integer("count").default(1).notNull(),
+    lastVisited: timestamp("last_visited", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    country: varchar("country", { length: 255 }).notNull().default("Unknown"), // <-- country sollte NOT NULL sein und einen Default haben, um Konflikte zu vermeiden
+  },
+  (table) => {
+    return {
+      // NEU: Composite Unique Constraint auf (path, country)
+      uniquePathCountry: uniqueIndex("page_visits_path_country_idx").on(
+        table.path,
+        table.country,
+      ),
+    };
+  },
+);
+
+// Ensure these exist only once
+export const InsertPageVisitSchema = createInsertSchema(pageVisits);
+export const SelectPageVisitSchema = createSelectSchema(pageVisits);
+
+export type PageVisit = z.infer<typeof SelectPageVisitSchema>;
+export type InsertPageVisit = z.infer<typeof InsertPageVisitSchema>;

@@ -43,7 +43,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       emailData.text = params.text;
     }
 
-    // Only add html if it's provided and not empty  
+    // Only add html if it's provided and not empty
     if (params.html && params.html.trim().length > 0) {
       emailData.html = params.html;
     }
@@ -54,7 +54,10 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   } catch (error) {
     console.error("SendGrid email error:", error);
     if (error.response && error.response.body) {
-      console.error("SendGrid error details:", JSON.stringify(error.response.body, null, 2));
+      console.error(
+        "SendGrid error details:",
+        JSON.stringify(error.response.body, null, 2),
+      );
     }
     return false;
   }
