@@ -4868,6 +4868,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "admin.product.imageResizeInfo":
       "Images will be automatically resized to 800x800px",
     "admin.product.imageLoadingError": "Error loading image",
+    "admin.product.multipleImages": "Multiple Images",
+    "admin.product.addImage": "Add Image",
+    "admin.product.setPrimary": "Set as Primary",
+    "admin.product.primaryImage": "Primary Image",
+    "admin.product.deleteImage": "Delete Image",
+    "admin.product.noImages": "No images added yet",
+    "admin.product.imageOrder": "Image Order",
     "admin.product.price": "Price",
     "admin.product.pricePlaceholder": "Enter price",
     "admin.product.stock": "Stock",
