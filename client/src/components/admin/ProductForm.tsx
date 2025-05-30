@@ -108,6 +108,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       materials: product?.materials || "",
       instructions: product?.instructions || "",
       maintenance: product?.maintenance || "",
+      additionalImages: product?.additionalImages || [],
     },
   });
 
@@ -212,6 +213,23 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
     }
   };
 
+  // Dodavanje nove slike u galeriju
+  const addAdditionalImage = () => {
+    if (newImageUrl.trim()) {
+      const updatedImages = [...additionalImages, newImageUrl.trim()];
+      setAdditionalImages(updatedImages);
+      form.setValue('additionalImages', updatedImages);
+      setNewImageUrl('');
+    }
+  };
+
+  // Uklanjanje slike iz galerije
+  const removeAdditionalImage = (index: number) => {
+    const updatedImages = additionalImages.filter((_, i) => i !== index);
+    setAdditionalImages(updatedImages);
+    form.setValue('additionalImages', updatedImages);
+  };
+
   // Submit handler
   const onSubmit = async (values: z.infer<typeof validationSchema>) => {
     setIsSubmitting(true);
@@ -233,6 +251,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         hasColorOptions,
         allowMultipleColors,
         active, // Dodana vrijednost za aktivaciju/deaktivaciju proizvoda
+        additionalImages, // Dodane dodatne slike
         // Postavljamo na null da ih ne bi API izbacio kao grešku
         scent: null,
         color: null,
@@ -790,6 +809,60 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
               </div>
             </div>
           )}
+
+          {/* Sekcija za dodatne slike */}
+          <div className="space-y-4">
+            <label className="text-sm font-medium">
+              {t("admin.product.additionalImages")}
+            </label>
+            
+            {/* Dodavanje nove slike */}
+            <div className="flex gap-2">
+              <Input
+                placeholder={t("admin.product.imageUrlPlaceholder")}
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={addAdditionalImage}
+                disabled={!newImageUrl.trim()}
+                variant="outline"
+              >
+                <ImageIcon className="h-4 w-4 mr-2" />
+                {t("admin.product.addImage")}
+              </Button>
+            </div>
+
+            {/* Prikaz postojećih dodatnih slika */}
+            {additionalImages.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {additionalImages.map((imageUrl, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={imageUrl}
+                      alt={`${t("admin.product.additionalImage")} ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-md border"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://placehold.co/200x200/gray/white?text=${encodeURIComponent(t("admin.product.imageLoadingError"))}`;
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeAdditionalImage(index)}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           
           <div className="flex justify-end space-x-4">
             <Button 
