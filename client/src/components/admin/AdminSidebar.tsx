@@ -116,7 +116,7 @@ export default function AdminSidebar({ onItemClick }: AdminSidebarProps) {
     },
     {
       name: t("admin.inbox"),
-      path: "/admin/inbox",
+      path: "/admin/emails",
       icon: <Inbox size={20} />,
       badgeCount: unreadCount,
     },
